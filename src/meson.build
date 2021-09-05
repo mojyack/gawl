@@ -49,7 +49,7 @@ gawl_headers = files(
 gawl = shared_module(
     'gawl',
     gawl_files,
-    dependencies: gawl_dep,
+    dependencies: [gawl_dep],
     install: true
 )
 
@@ -57,7 +57,7 @@ install_headers(gawl_headers, subdir: 'gawl')
 
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
-    libraries: gawl,
+    libraries: [gawl, gawl_dep],
     subdirs: 'gawl',
     name: 'gawl',
     filebase: 'gawl',
