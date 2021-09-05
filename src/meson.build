@@ -59,4 +59,5 @@ pkgconfig.generate(
     subdirs: 'gawl',
     name: 'gawl',
     filebase: 'gawl',
+    description: 'libgawl'
 )
