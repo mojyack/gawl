@@ -53,6 +53,8 @@ gawl = shared_module(
     install: true
 )
 
+install_headers(gawl_headers, subdir: 'gawl')
+
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
     libraries: gawl,
