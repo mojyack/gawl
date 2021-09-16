@@ -35,5 +35,4 @@ class EmptyTexture {
     EmptyTexture(){};
     EmptyTexture(int width, int height);
 };
-
 } // namespace gawl

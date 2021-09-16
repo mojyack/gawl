@@ -5,6 +5,7 @@
 #include "graphic-base.hpp"
 #include "misc.hpp"
 #include "type.hpp"
+#include "error.hpp"
 
 namespace gawl {
 extern GlobalVar* global;
@@ -61,25 +62,25 @@ auto Shader::get_shader() -> GLuint {
 }
 Shader::Shader(const char* const vertex_shader_source, const char* const fragment_shader_source) {
     GLint status;
+
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
-    if(glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status); status != GL_TRUE) {
-        throw std::runtime_error("vertex shader");
-    }
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
+    ASSERT(status == GL_TRUE, "failed to load vertex shader")
+
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
     glCompileShader(fragment_shader);
-    if(glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status); status != GL_TRUE) {
-        throw std::runtime_error("fragment shader");
-    }
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
+    ASSERT(status == GL_TRUE, "failed to load fragment shader")
+
     shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
-    if(glGetProgramiv(shader_program, GL_LINK_STATUS, &status); status != GL_TRUE) {
-        throw std::runtime_error("link shader");
-    }
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
+    ASSERT(status == GL_TRUE, "failed to link shaders")
     glBindFragDataLocation(shader_program, 0, "outColor");
 
     glGenVertexArrays(1, &vao);
@@ -88,11 +89,11 @@ Shader::Shader(const char* const vertex_shader_source, const char* const fragmen
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    auto pos_attrib = glGetAttribLocation(shader_program, "position");
+    const auto pos_attrib = glGetAttribLocation(shader_program, "position");
     glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, 0);
     glEnableVertexAttribArray(pos_attrib);
 
-    auto tex_attrib = glGetAttribLocation(shader_program, "texcoord");
+    const auto tex_attrib = glGetAttribLocation(shader_program, "texcoord");
     glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, (void*)(sizeof(GLfloat) * 2));
     glEnableVertexAttribArray(tex_attrib);
     glUseProgram(shader_program);
@@ -114,7 +115,7 @@ auto GraphicBase::get_width(FrameBufferInfo info) const -> int {
 auto GraphicBase::get_height(FrameBufferInfo info) const -> int {
     return height / info.get_scale();
 }
-auto GraphicBase::draw(FrameBufferInfo info, double x, double y) const -> void {
+auto GraphicBase::draw(FrameBufferInfo info, const double x, const double y) const -> void {
     draw_rect(info, {x, y, x + width, y + height});
 }
 auto GraphicBase::draw_rect(FrameBufferInfo info, Area area) const -> void {

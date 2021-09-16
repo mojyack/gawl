@@ -4,6 +4,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+#include "error.hpp"
 #include "wayland-application.hpp"
 #include "wayland-window.hpp"
 
@@ -18,48 +19,33 @@ EGLContext eglcontext         = nullptr;
 auto WaylandWindow::init_egl() -> void {
     if(egl_count == 0) {
         egldisplay = eglGetDisplay(display);
-        if(egldisplay == EGL_NO_DISPLAY) {
-            throw std::runtime_error("eglGetDisplay");
-        }
+        ASSERT(egldisplay != EGL_NO_DISPLAY, "eglGetDisplay() failed")
 
-        EGLint major = 0;
-        EGLint minor = 0;
-        if(eglInitialize(egldisplay, &major, &minor) == EGL_FALSE) {
-            throw std::runtime_error("eglInitialize");
-        }
-        if(!((major == 1 && minor >= 4) || major >= 2)) {
-            throw std::runtime_error("EGL version too old");
-        }
+        auto major = EGLint(0);
+        auto minor = EGLint(0);
+        ASSERT(eglInitialize(egldisplay, &major, &minor) != EGL_FALSE, "eglInitialize() failed")
+        ASSERT((major == 1 && minor >= 4) || major >= 2, "EGL version too old")
+        ASSERT(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE, "eglBindAPI() failed")
 
-        if(eglBindAPI(EGL_OPENGL_API) == EGL_FALSE) {
-            throw std::runtime_error("eglBindAPI");
-        }
+        constexpr auto config_attribs = std::array<EGLint, 13>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+                                                               EGL_RED_SIZE, 8,
+                                                               EGL_GREEN_SIZE, 8,
+                                                               EGL_BLUE_SIZE, 8,
+                                                               EGL_ALPHA_SIZE, 8,
+                                                               EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+                                                               EGL_NONE};
 
-        std::array<EGLint, 13> config_attribs = {{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                                                  EGL_RED_SIZE, 8,
-                                                  EGL_GREEN_SIZE, 8,
-                                                  EGL_BLUE_SIZE, 8,
-                                                  EGL_ALPHA_SIZE, 8,
-                                                  EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-                                                  EGL_NONE}};
+        auto num = EGLint(0);
+        ASSERT(eglChooseConfig(egldisplay, config_attribs.data(), &eglconfig, 1, &num) != EGL_FALSE && num != 0, "eglChooseConfig() failed")
 
-        EGLint num = 0;
-        if(eglChooseConfig(egldisplay, config_attribs.data(), &eglconfig, 1, &num) == EGL_FALSE || num == 0) {
-            throw std::runtime_error("eglChooseConfig");
-        }
-
-        std::array<EGLint, 3> context_attribs = {{EGL_CONTEXT_CLIENT_VERSION, 2,
-                                                  EGL_NONE}};
+        constexpr auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2,
+                                                               EGL_NONE};
 
         eglcontext = eglCreateContext(egldisplay, eglconfig, EGL_NO_CONTEXT, context_attribs.data());
-        if(eglcontext == EGL_NO_CONTEXT) {
-            throw std::runtime_error("eglCreateContext");
-        }
+        ASSERT(eglcontext != EGL_NO_CONTEXT, "eglCreateContext() failed")
     }
     eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, egl_window, nullptr);
-    if(eglsurface == EGL_NO_SURFACE) {
-        throw std::runtime_error("eglCreateWindowSurface");
-    }
+    ASSERT(eglsurface != EGL_NO_SURFACE, "eglCreateWindowSurface() failed")
     choose_surface();
     egl_count += 1;
 }
@@ -127,8 +113,8 @@ auto WaylandWindow::refresh() -> void {
 
     frame_cb           = surface.frame();
     frame_cb.on_done() = [&](uint32_t /* elapsed */) {
-        frame_ready = true;
-        bool current;
+        frame_ready  = true;
+        auto current = bool();
         {
             std::lock_guard<std::mutex> lock(current_frame.mutex);
             current            = current_frame.data;
@@ -142,17 +128,13 @@ auto WaylandWindow::refresh() -> void {
     app.tell_event(this);
 }
 auto WaylandWindow::swap_buffer() -> void {
-    if(eglSwapBuffers(egldisplay, eglsurface) == EGL_FALSE) {
-        throw std::runtime_error("eglSwapBuffers");
-    }
+    ASSERT(eglSwapBuffers(egldisplay, eglsurface) != EGL_FALSE, "eglSwapBuffers() failed")
 }
 auto WaylandWindow::choose_surface() -> void {
     if(current_eglsurface == eglsurface) {
         return;
     }
-    if(eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext) == EGL_FALSE) {
-        throw std::runtime_error("eglMakeCurrent");
-    }
+    ASSERT(eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext) != EGL_FALSE, "eglMakeCurrent() failed")
     current_eglsurface = surface;
 }
 auto WaylandWindow::wait_for_key_repeater_exit() -> void {
@@ -179,10 +161,8 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
             registry.bind(name, output, version);
     };
     display.roundtrip();
-    if(!xdg_wm_base) {
-        throw std::runtime_error("xdg_wm_base not supported.");
-    }
-    output.on_scale() = [&](int32_t s) {
+    ASSERT(xdg_wm_base, "xdg_wm_base not supported")
+    output.on_scale() = [&](const int32_t s) {
         resize_buffer(-1, -1, s);
     };
     seat.on_capabilities() = [&](const wayland::seat_capability& capability) {
@@ -192,9 +172,9 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
 
     // create a surface
     surface                    = compositor.create_surface();
-    xdg_wm_base.on_ping()      = [&](uint32_t serial) { xdg_wm_base.pong(serial); };
+    xdg_wm_base.on_ping()      = [&](const uint32_t serial) { xdg_wm_base.pong(serial); };
     xdg_surface                = xdg_wm_base.get_xdg_surface(surface);
-    xdg_surface.on_configure() = [&](uint32_t serial) { xdg_surface.ack_configure(serial); };
+    xdg_surface.on_configure() = [&](const uint32_t serial) { xdg_surface.ack_configure(serial); };
     xdg_toplevel               = xdg_surface.get_toplevel();
     xdg_toplevel.set_title("Window");
     xdg_toplevel.on_close() = [&]() { close_request_callback(); };
@@ -206,15 +186,13 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
     display.roundtrip();
 
     // Get input devices
-    if(!has_keyboard)
-        throw std::runtime_error("No keyboard found.");
-    if(!has_pointer)
-        throw std::runtime_error("No pointer found.");
+    ASSERT(has_keyboard, "no keyboard found")
+    ASSERT(has_pointer, "no pointer found")
     pointer  = seat.get_pointer();
     keyboard = seat.get_keyboard();
 
     // draw cursor
-    pointer.on_enter() = [&](uint32_t serial, const wayland::surface_t& /*unused*/, int32_t /*unused*/, int32_t /*unused*/) {
+    pointer.on_enter() = [&](const uint32_t serial, const wayland::surface_t& /*unused*/, const int32_t /*unused*/, const int32_t /*unused*/) {
         cursor_surface.attach(cursor_buffer, 0, 0);
         cursor_surface.damage(0, 0, cursor_image.width() * buffer_scale, cursor_image.height() * buffer_scale);
         cursor_surface.commit();
@@ -226,13 +204,15 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
     init_egl();
 
     // other configuration
-    xdg_toplevel.on_configure() = [&](int32_t w, int32_t h, wayland::array_t /*s*/) {
+    xdg_toplevel.on_configure() = [&](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
         resize_buffer(w, h, -1);
     };
-    keyboard.on_key()         = [this](uint32_t /*unused*/, uint32_t /*unused*/, uint32_t key, wayland::keyboard_key_state state) {
-        gawl::ButtonState s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
+    keyboard.on_key()         = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
+        const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
         keyboard_callback(key, s);
-        if(!is_repeat_info_valid) return;
+        if(!is_repeat_info_valid) {
+            return;
+        }
         if(s == gawl::ButtonState::press) {
             wait_for_key_repeater_exit();
             last_pressed_key.store(key);
@@ -247,24 +227,24 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
         } else if(last_pressed_key.load() == key){
             wait_for_key_repeater_exit();
         } };
-    keyboard.on_repeat_info() = [&](uint32_t repeat_per_sec, uint32_t delay_in_milisec) {
+    keyboard.on_repeat_info() = [&](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
         this->repeat_interval  = 1000 / repeat_per_sec;
         this->delay_in_milisec = delay_in_milisec;
         is_repeat_info_valid   = true;
     };
-    keyboard.on_leave() = [this](uint32_t /* serial */, wayland::surface_t /* surface */) {
+    keyboard.on_leave() = [this](const uint32_t /* serial */, const wayland::surface_t /* surface */) {
         wait_for_key_repeater_exit();
         keyboard_callback(-1, ButtonState::leave);
     };
-    pointer.on_button() = [&](uint32_t /*serial*/, uint32_t /*time*/, uint32_t button, wayland::pointer_button_state state) {
-        gawl::ButtonState s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
+    pointer.on_button() = [&](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
+        const auto s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
         click_callback(button, s);
     };
-    pointer.on_motion() = [&](uint32_t, double x, double y) {
+    pointer.on_motion() = [&](const uint32_t, const double x, const double y) {
         pointermove_callback(x, y);
     };
-    pointer.on_axis() = [&](uint32_t, wayland::pointer_axis axis, double value) {
-        gawl::WheelAxis w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::horizontal : gawl::WheelAxis::vertical;
+    pointer.on_axis() = [&](const uint32_t, const wayland::pointer_axis axis, const double value) {
+        const auto w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::horizontal : gawl::WheelAxis::vertical;
         scroll_callback(w, value);
     };
     main_thread_id = std::this_thread::get_id();
@@ -275,17 +255,10 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
 WaylandWindow::~WaylandWindow() {
     wait_for_key_repeater_exit();
     // finialize EGL.
-    if(eglDestroySurface(egldisplay, eglsurface) == EGL_FALSE) {
-        std::cerr << "eglDestroyContext failed." << std::endl;
-    }
+    ASSERT(eglDestroySurface(egldisplay, eglsurface) != EGL_FALSE, "eglDestroyContext() failed")
     if(egl_count == 1) {
-        if(eglDestroyContext(egldisplay, eglcontext) == EGL_FALSE) {
-            std::cerr << "eglDestroyContext failed." << std::endl;
-        }
-
-        if(eglTerminate(egldisplay) == EGL_FALSE) {
-            std::cerr << "eglTerminate failed." << std::endl;
-        }
+        ASSERT(eglDestroyContext(egldisplay, eglcontext) != EGL_FALSE, "eglDestroyContext() failed")
+        ASSERT(eglTerminate(egldisplay) != EGL_FALSE, "eglTerminate() failed")
     }
     egl_count -= 1;
 }

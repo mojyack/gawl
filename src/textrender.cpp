@@ -7,6 +7,7 @@
 #include "misc.hpp"
 #include "textrender.hpp"
 #include "type.hpp"
+#include "error.hpp"
 
 namespace gawl {
 namespace {
@@ -117,9 +118,7 @@ struct CharacterCache {
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
             auto face = FT_Face();
-            if(auto err = FT_New_Face(global->freetype, path.data(), 0, &(face)); err != 0) {
-                throw std::runtime_error("failed to open font.");
-            }
+            ASSERT(FT_New_Face(global->freetype, path.data(), 0, &(face)) == 0, "failed to open font")
             FT_Set_Pixel_Sizes(face, 0, size);
             faces.emplace_back(face);
         }
@@ -173,9 +172,7 @@ auto TextRender::draw(FrameBufferInfo info, const double x, const double y, Colo
     return draw(info, x, y, color, uni.data(), func);
 }
 auto TextRender::draw(FrameBufferInfo info, const double x, const double y, Color const& color, const char32_t* const text, const DrawFunc func) -> Area {
-    if(!data) {
-        throw ::std::runtime_error("unititialized font.");
-    }
+    ASSERT(data, "font not initialized")
     const auto prep = [&]() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -234,9 +231,7 @@ auto TextRender::get_rect(FrameBufferInfo info, Area& rect, const char* const te
     get_rect(info, rect, uni.data());
 }
 auto TextRender::get_rect(FrameBufferInfo info, Area& rect, const char32_t* const text) -> void {
-    if(!data) {
-        throw ::std::runtime_error("unititialized font.");
-    }
+    ASSERT(data, "font not initialized")
     rect[2]        = rect[0];
     rect[3]        = rect[1];
     auto       rx1 = 0.0, ry1 = 0.0, rx2 = 0.0, ry2 = 0.0;
@@ -266,9 +261,7 @@ auto TextRender::get_rect(FrameBufferInfo info, Area& rect, const char32_t* cons
     rect[3] += ry2 / scale;
 }
 auto TextRender::draw_wrapped(FrameBufferInfo info, Area& rect, const int line_spacing, const Color& color, const char* const text, const Align alignx, const Align aligny) -> void {
-    if(!data) {
-        throw ::std::runtime_error("unititialized font.");
-    }
+    ASSERT(data, "font not initialized")
 
     const auto str   = convert_utf8_to_unicode32(text);
     auto       lines = std::vector<std::u32string>(1);

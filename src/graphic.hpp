@@ -31,7 +31,7 @@ class PixelBuffer {
     PixelBuffer(size_t width, size_t height, const char* buffer);
     PixelBuffer(size_t width, size_t height, std::vector<uint8_t>& buffer);
     PixelBuffer(const char* file, GraphicLoader loader = GraphicLoader::IMAGEMAGICK);
-    PixelBuffer(std::vector<uint8_t>& buffer);
+    PixelBuffer(const std::vector<uint8_t>& buffer);
 };
 
 class Graphic {

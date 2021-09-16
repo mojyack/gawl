@@ -3,6 +3,7 @@
 #include <GL/glext.h>
 
 #include "empty-texture.hpp"
+#include "error.hpp"
 #include "global.hpp"
 
 namespace gawl {
@@ -34,33 +35,23 @@ EmptyTextureData::~EmptyTextureData() {
 
 // ====== EmptyTexture ====== //
 auto EmptyTexture::get_width(FrameBufferInfo info) const -> int {
-    if(!data) {
-        return 0;
-    }
+    ASSERT(data, "texture not initialized")
     return reinterpret_cast<EmptyTextureData*>(data.get())->get_width(info);
 }
 auto EmptyTexture::get_height(FrameBufferInfo info) const -> int {
-    if(!data) {
-        return 0;
-    }
+    ASSERT(data, "texture not initialized")
     return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(info);
 }
 auto EmptyTexture::draw(FrameBufferInfo info, double x, double y) -> void {
-    if(!data) {
-        return;
-    }
+    ASSERT(data, "texture not initialized")
     reinterpret_cast<EmptyTextureData*>(data.get())->draw(info, x, y);
 }
 auto EmptyTexture::draw_rect(FrameBufferInfo info, Area area) -> void {
-    if(!data) {
-        return;
-    }
+    ASSERT(data, "texture not initialized")
     data.get()->draw_rect(info, area);
 }
 auto EmptyTexture::draw_fit_rect(FrameBufferInfo info, Area area) -> void {
-    if(!data) {
-        return;
-    }
+    ASSERT(data, "texture not initialized")
     data.get()->draw_fit_rect(info, area);
 }
 auto EmptyTexture::clear() -> void {
@@ -93,4 +84,3 @@ EmptyTexture::EmptyTexture(const int width, const int height) {
     data.reset(new EmptyTextureData(width, height));
 }
 } // namespace gawl
-
