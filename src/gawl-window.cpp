@@ -73,14 +73,14 @@ auto GawlWindow::get_event_driven() const -> bool {
 auto GawlWindow::close_request_callback() -> void {
     quit_application();
 }
-auto GawlWindow::is_close_pending() const -> bool {
-    return status == Status::CLOSE;
-}
-auto GawlWindow::get_scale() const -> double {
+auto GawlWindow::get_scale() const -> int {
     return draw_scale;
 }
-auto GawlWindow::get_buffer_size() const -> const BufferSize& {
-    return buffer_size;
+auto GawlWindow::get_size() const -> std::array<std::size_t, 2> {
+    return buffer_size.size;
+}
+auto GawlWindow::is_close_pending() const -> bool {
+    return status == Status::CLOSE;
 }
 auto GawlWindow::close_window() -> void {
     app.close_window(this);

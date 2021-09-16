@@ -3,7 +3,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#include "frame-buffer-info.hpp"
+#include "screen.hpp"
 #include "type.hpp"
 
 namespace gawl {
@@ -36,11 +36,11 @@ class GraphicBase {
     auto    get_texture() const -> GLuint;
 
   public:
-    virtual auto get_width(FrameBufferInfo info) const -> int;
-    virtual auto get_height(FrameBufferInfo info) const -> int;
-    auto         draw(FrameBufferInfo infoconst, double x, double y) const -> void;
-    auto         draw_rect(FrameBufferInfo infoconst, Area area) const -> void;
-    auto         draw_fit_rect(FrameBufferInfo info, Area area) const -> void;
+    virtual auto get_width(const Screen* screen) const -> int;
+    virtual auto get_height(const Screen* screen) const -> int;
+    auto         draw(Screen* screen, double x, double y) const -> void;
+    auto         draw_rect(Screen* screen, Area area) const -> void;
+    auto         draw_fit_rect(Screen* screen, Area area) const -> void;
     GraphicBase(Shader& type_specific);
     virtual ~GraphicBase();
 };

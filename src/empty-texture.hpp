@@ -1,29 +1,34 @@
 #pragma once
 #include "graphic-base.hpp"
+#include "screen.hpp"
 
 namespace gawl {
 class EmptyTextureData : public GraphicBase {
   private:
-    GLuint frame_buffer;
-    std::array<int, 2> size;
+    GLuint                frame_buffer;
+    std::array<size_t, 2> size;
 
   public:
-    auto get_size() const -> const std::array<int, 2>&;
-    auto get_frame_buffer_name() const -> GLuint ;
-    EmptyTextureData(int width, int height);
+    auto get_size() const -> const std::array<size_t, 2>&;
+    auto get_frame_buffer_name() const -> GLuint;
+    EmptyTextureData(size_t width, size_t height);
     ~EmptyTextureData();
 };
 
-class EmptyTexture {
+class EmptyTexture : public Screen {
   private:
     std::shared_ptr<EmptyTextureData> data;
 
   public:
-    auto get_width(FrameBufferInfo info) const -> int;
-    auto get_height(FrameBufferInfo info) const -> int;
-    auto draw(FrameBufferInfo info, double x, double y) -> void;
-    auto draw_rect(FrameBufferInfo info, Area area) -> void;
-    auto draw_fit_rect(FrameBufferInfo info, Area area) -> void;
+    auto get_scale() const -> int override;
+    auto get_size() const -> std::array<std::size_t, 2> override;
+    auto prepare() -> void override;
+
+    auto get_width(const Screen* screen) const -> int;
+    auto get_height(const Screen* screen) const -> int;
+    auto draw(Screen* screen, double x, double y) -> void;
+    auto draw_rect(Screen* screen, Area area) -> void;
+    auto draw_fit_rect(Screen* screen, Area area) -> void;
     auto clear() -> void;
          operator EmptyTextureData*() const;
          operator GraphicBase*() const;

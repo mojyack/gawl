@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 
-#include "frame-buffer-info.hpp"
+#include "screen.hpp"
 #include "type.hpp"
 
 namespace gawl {
@@ -39,11 +39,11 @@ class Graphic {
     std::shared_ptr<GraphicData> graphic_data;
 
   public:
-    auto get_width(FrameBufferInfo info) const -> int;
-    auto get_height(FrameBufferInfo info) const -> int;
-    auto draw(FrameBufferInfo info, double x, double y) -> void;
-    auto draw_rect(FrameBufferInfo info, Area area) -> void;
-    auto draw_fit_rect(FrameBufferInfo info, Area area) -> void;
+    auto get_width(const Screen* screen) const -> int;
+    auto get_height(const Screen* screen) const -> int;
+    auto draw(Screen* screen, double x, double y) -> void;
+    auto draw_rect(Screen* screen, Area area) -> void;
+    auto draw_fit_rect(Screen* screen, Area area) -> void;
     auto clear() -> void;
          operator GraphicBase*() const;
          operator bool() const;

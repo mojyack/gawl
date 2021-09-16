@@ -71,6 +71,8 @@ class WaylandWindow : public GawlWindow {
     auto wait_for_key_repeater_exit() -> void;
 
   public:
+    auto prepare() -> void override;
+
     auto refresh() -> void final;
 
     WaylandWindow(GawlApplication& app, WindowCreateHint hint);

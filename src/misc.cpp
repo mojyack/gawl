@@ -10,8 +10,8 @@
 namespace gawl {
 extern GlobalVar* global;
 
-auto convert_screen_to_viewport(FrameBufferInfo info, Area& area) -> void {
-    auto s  = info.get_size();
+auto convert_screen_to_viewport(const Screen* screen, Area& area) -> void {
+    const auto s  = screen->get_size();
     area[0] = (area[0] - s[0] * (s[0] - area[0]) / s[0]) / static_cast<int>(s[0]);
     area[1] = (area[1] - s[1] * (s[1] - area[1]) / s[1]) / -static_cast<int>(s[1]);
     area[2] = (area[2] - s[0] * (s[0] - area[2]) / s[0]) / static_cast<int>(s[0]);
@@ -39,11 +39,11 @@ auto clear_screen(const Color& color) -> void {
     glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
 }
-auto draw_rect(FrameBufferInfo info, Area area, const Color& color) -> void {
-    area.magnify(info.get_scale());
-    gawl::convert_screen_to_viewport(info, area);
+auto draw_rect(Screen* screen, Area area, const Color& color) -> void {
+    area.magnify(screen->get_scale());
+    gawl::convert_screen_to_viewport(screen, area);
     glUseProgram(0);
-    info.prepare();
+    screen->prepare();
     glColor4f(color[0], color[1], color[2], color[3]);
     glRectf(area[0], area[1], area[2], area[3]);
 }

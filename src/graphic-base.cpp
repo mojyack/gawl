@@ -1,11 +1,11 @@
 #include <IL/il.h>
 
+#include "error.hpp"
 #include "gawl-window.hpp"
 #include "global.hpp"
 #include "graphic-base.hpp"
 #include "misc.hpp"
 #include "type.hpp"
-#include "error.hpp"
 
 namespace gawl {
 extern GlobalVar* global;
@@ -14,8 +14,8 @@ GLuint  ebo;
 GLuint  vbo;
 GLfloat vertices[4][4];
 
-auto move_vertices(FrameBufferInfo info, Area area, bool invert) -> void {
-    gawl::convert_screen_to_viewport(info, area);
+auto move_vertices(const Screen* screen, Area area, bool invert) -> void {
+    gawl::convert_screen_to_viewport(screen, area);
     vertices[0][0] = area[0];
     vertices[0][1] = area[1 + invert * 2];
     vertices[1][0] = area[2];
@@ -109,26 +109,26 @@ Shader::~Shader() {
 auto GraphicBase::get_texture() const -> GLuint {
     return texture;
 }
-auto GraphicBase::get_width(FrameBufferInfo info) const -> int {
-    return width / info.get_scale();
+auto GraphicBase::get_width(const Screen* screen) const -> int {
+    return width / screen->get_scale();
 }
-auto GraphicBase::get_height(FrameBufferInfo info) const -> int {
-    return height / info.get_scale();
+auto GraphicBase::get_height(const Screen* screen) const -> int {
+    return height / screen->get_scale();
 }
-auto GraphicBase::draw(FrameBufferInfo info, const double x, const double y) const -> void {
-    draw_rect(info, {x, y, x + width, y + height});
+auto GraphicBase::draw(Screen* screen, const double x, const double y) const -> void {
+    draw_rect(screen, {x, y, x + width, y + height});
 }
-auto GraphicBase::draw_rect(FrameBufferInfo info, Area area) const -> void {
-    area.magnify(info.get_scale());
-    move_vertices(info, area, invert_top_bottom);
+auto GraphicBase::draw_rect(Screen* screen, Area area) const -> void {
+    area.magnify(screen->get_scale());
+    move_vertices(screen, area, invert_top_bottom);
     type_specific.bind_vao();
-    info.prepare();
+    screen->prepare();
     glUseProgram(type_specific.get_shader());
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-auto GraphicBase::draw_fit_rect(FrameBufferInfo info, Area area) const -> void {
-    draw_rect(info, calc_fit_rect(area, width, height));
+auto GraphicBase::draw_fit_rect(Screen* screen, Area area) const -> void {
+    draw_rect(screen, calc_fit_rect(area, width, height));
 }
 GraphicBase::GraphicBase(Shader& type_specific) : type_specific(type_specific) {
     glGenTextures(1, &texture);

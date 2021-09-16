@@ -93,6 +93,11 @@ auto WaylandWindow::handle_event() -> void {
         refresh();
     }
 }
+auto WaylandWindow::prepare() -> void {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    const auto size = get_size();
+    glViewport(0, 0, size[0], size[1]);
+}
 auto WaylandWindow::refresh() -> void {
     if(!is_running()) {
         return;

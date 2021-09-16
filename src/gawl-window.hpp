@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 
+#include "screen.hpp"
 #include "type.hpp"
 
 namespace gawl {
@@ -11,7 +12,7 @@ struct BufferSize {
 
 class GawlApplication;
 
-class GawlWindow {
+class GawlWindow : public Screen {
     friend class GawlApplication;
 
   private:
@@ -53,10 +54,11 @@ class GawlWindow {
     virtual auto close_request_callback() -> void;
 
   public:
+    auto get_scale() const -> int override;
+    auto get_size() const -> std::array<std::size_t, 2> override;
+
     virtual auto refresh() -> void = 0;
     auto         is_close_pending() const -> bool;
-    auto         get_scale() const -> double;
-    auto         get_buffer_size() const -> const BufferSize&;
     auto         close_window() -> void;
     auto         quit_application() -> void;
 

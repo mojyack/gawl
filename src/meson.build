@@ -18,12 +18,12 @@ gawl_inc = [freetype_inc, magick_inc]
 gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep, devil_dep]
 gawl_files = files(
     'empty-texture.cpp',
-    'frame-buffer-info.cpp',
     'gawl-application.cpp',
     'gawl-window.cpp',
     'graphic-base.cpp',
     'graphic.cpp',
     'misc.cpp',
+    'screen.cpp',
     'textrender.cpp',
     'wayland-application.cpp',
     'wayland-window.cpp',
@@ -31,7 +31,6 @@ gawl_files = files(
 
 gawl_headers = files(
     'empty-texture.hpp',
-    'frame-buffer-info.hpp',
     'gawl-application.hpp',
     'gawl-window.hpp',
     'gawl.hpp',
@@ -39,6 +38,7 @@ gawl_headers = files(
     'graphic-base.hpp',
     'graphic.hpp',
     'misc.hpp',
+    'screen.hpp',
     'shader-source.hpp',
     'textrender.hpp',
     'type.hpp',

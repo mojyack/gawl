@@ -9,13 +9,13 @@
 namespace gawl {
 extern GlobalVar* global;
 // ====== EmptyTextureData ====== //
-auto EmptyTextureData::get_size() const -> const std::array<int, 2>& {
+auto EmptyTextureData::get_size() const -> const std::array<size_t, 2>& {
     return size;
 }
 auto EmptyTextureData::get_frame_buffer_name() const -> GLuint {
     return frame_buffer;
 }
-EmptyTextureData::EmptyTextureData(const int width, const int height) : GraphicBase(*global->graphic_shader), size{width, height} {
+EmptyTextureData::EmptyTextureData(const size_t width, const size_t height) : GraphicBase(*global->graphic_shader), size{width, height} {
     this->width             = width;
     this->height            = height;
     this->invert_top_bottom = true;
@@ -34,25 +34,39 @@ EmptyTextureData::~EmptyTextureData() {
 }
 
 // ====== EmptyTexture ====== //
-auto EmptyTexture::get_width(FrameBufferInfo info) const -> int {
+auto EmptyTexture::get_scale() const -> int {
     ASSERT(data, "texture not initialized")
-    return reinterpret_cast<EmptyTextureData*>(data.get())->get_width(info);
+    return 1;
 }
-auto EmptyTexture::get_height(FrameBufferInfo info) const -> int {
+auto EmptyTexture::get_size() const -> std::array<std::size_t, 2> {
     ASSERT(data, "texture not initialized")
-    return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(info);
+    return data->get_size();
 }
-auto EmptyTexture::draw(FrameBufferInfo info, double x, double y) -> void {
+auto EmptyTexture::prepare() -> void {
     ASSERT(data, "texture not initialized")
-    reinterpret_cast<EmptyTextureData*>(data.get())->draw(info, x, y);
+    glBindFramebuffer(GL_FRAMEBUFFER, data->get_frame_buffer_name());
+    const auto size = get_size();
+    glViewport(0, 0, size[0], size[1]);
 }
-auto EmptyTexture::draw_rect(FrameBufferInfo info, Area area) -> void {
+auto EmptyTexture::get_width(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")
-    data.get()->draw_rect(info, area);
+    return reinterpret_cast<EmptyTextureData*>(data.get())->get_width(screen);
 }
-auto EmptyTexture::draw_fit_rect(FrameBufferInfo info, Area area) -> void {
+auto EmptyTexture::get_height(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")
-    data.get()->draw_fit_rect(info, area);
+    return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(screen);
+}
+auto EmptyTexture::draw(Screen* screen, double x, double y) -> void {
+    ASSERT(data, "texture not initialized")
+    reinterpret_cast<EmptyTextureData*>(data.get())->draw(screen, x, y);
+}
+auto EmptyTexture::draw_rect(Screen* screen, Area area) -> void {
+    ASSERT(data, "texture not initialized")
+    data.get()->draw_rect(screen, area);
+}
+auto EmptyTexture::draw_fit_rect(Screen* screen, Area area) -> void {
+    ASSERT(data, "texture not initialized")
+    data.get()->draw_fit_rect(screen, area);
 }
 auto EmptyTexture::clear() -> void {
     *this = EmptyTexture();
