@@ -144,7 +144,7 @@ auto WaylandWindow::wait_for_key_repeater_exit() -> void {
         key_repeater.join();
     }
 }
-WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int initial_window_height)
+WaylandWindow::WaylandWindow(GawlApplication& app, WindowCreateHint hint)
     : GawlWindow(app), display(dynamic_cast<WaylandApplication*>(&app)->get_display()) {
     // retrieve global objects
     registry             = display.get_registry();
@@ -176,7 +176,7 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
     xdg_surface                = xdg_wm_base.get_xdg_surface(surface);
     xdg_surface.on_configure() = [&](const uint32_t serial) { xdg_surface.ack_configure(serial); };
     xdg_toplevel               = xdg_surface.get_toplevel();
-    xdg_toplevel.set_title("Window");
+    xdg_toplevel.set_title(hint.title);
     xdg_toplevel.on_close() = [&]() { close_request_callback(); };
 
     // create cursor surface
@@ -200,7 +200,7 @@ WaylandWindow::WaylandWindow(GawlApplication& app, int initial_window_width, int
     };
 
     // intitialize egl
-    egl_window = wayland::egl_window_t(surface, initial_window_width, initial_window_height);
+    egl_window = wayland::egl_window_t(surface, hint.width, hint.height);
     init_egl();
 
     // other configuration

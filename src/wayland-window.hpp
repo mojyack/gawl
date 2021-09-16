@@ -11,6 +11,12 @@
 #include "gawl-window.hpp"
 
 namespace gawl {
+struct WindowCreateHint {
+    size_t width = 800;
+    size_t height = 600;
+    const char* title = "Window";
+};
+
 class WaylandWindow : public GawlWindow {
     friend class WaylandApplication;
 
@@ -67,7 +73,7 @@ class WaylandWindow : public GawlWindow {
   public:
     auto refresh() -> void final;
 
-    WaylandWindow(GawlApplication& app, int initial_window_width = 800, int initial_window_height = 600);
+    WaylandWindow(GawlApplication& app, WindowCreateHint hint);
     virtual ~WaylandWindow();
 };
 } // namespace gawl
