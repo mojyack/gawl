@@ -18,12 +18,11 @@ class WaylandApplication : public GawlApplication {
     SafeVar<std::vector<WaylandWindow*>> to_handle;
 
   public:
-    wayland::display_t& get_display() noexcept;
-
-    void tell_event(GawlWindow* window) final;
-    void run() final;
-    void quit() final;
-    bool is_running() const final;
+    auto get_display() -> wayland::display_t&;
+    auto tell_event(GawlWindow* window) -> void final;
+    auto run() -> void final;
+    auto quit() -> void final;
+    auto is_running() const -> bool final;
 
     WaylandApplication();
     virtual ~WaylandApplication(){};

@@ -5,10 +5,10 @@
 #include "wayland-window.hpp"
 
 namespace gawl {
-wayland::display_t& WaylandApplication::get_display() noexcept {
+auto WaylandApplication::get_display() -> wayland::display_t& {
     return display;
 }
-void WaylandApplication::tell_event(GawlWindow* window) {
+auto WaylandApplication::tell_event(GawlWindow* window) -> void {
     {
         std::lock_guard<std::mutex> lock(to_handle.mutex);
         to_handle.data.emplace_back(dynamic_cast<WaylandWindow*>(window));
@@ -16,7 +16,7 @@ void WaylandApplication::tell_event(GawlWindow* window) {
     const static size_t count = 1;
     write(fds[0].fd, &count, sizeof(count));
 }
-void WaylandApplication::run() {
+auto WaylandApplication::run() -> void {
     running = true;
     if(!quitted) {
         for(auto& w : get_windows()) {
@@ -64,12 +64,12 @@ void WaylandApplication::run() {
     running = false;
     close_all_windows();
 }
-void WaylandApplication::quit() {
+auto WaylandApplication::quit() -> void {
     quitted                   = true;
     const static size_t count = 1;
     write(fds[2].fd, &count, sizeof(count));
 }
-bool WaylandApplication::is_running() const {
+auto WaylandApplication::is_running() const -> bool {
     return running;
 }
 WaylandApplication::WaylandApplication() {

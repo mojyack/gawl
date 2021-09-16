@@ -8,9 +8,9 @@ class EmptyTextureData : public GraphicBase {
     std::array<int, 2> size;
 
   public:
-    const std::array<int, 2>& get_size() const;
-    GLuint get_frame_buffer_name() const;
-    EmptyTextureData(const int width, const int height);
+    auto get_size() const -> const std::array<int, 2>&;
+    auto get_frame_buffer_name() const -> GLuint ;
+    EmptyTextureData(int width, int height);
     ~EmptyTextureData();
 };
 
@@ -19,12 +19,12 @@ class EmptyTexture {
     std::shared_ptr<EmptyTextureData> data;
 
   public:
-    int  get_width(FrameBufferInfo info) const;
-    int  get_height(FrameBufferInfo info) const;
-    void draw(FrameBufferInfo info, double x, double y);
-    void draw_rect(FrameBufferInfo info, Area area);
-    void draw_fit_rect(FrameBufferInfo info, Area area);
-    void clear();
+    auto get_width(FrameBufferInfo info) const -> int;
+    auto get_height(FrameBufferInfo info) const -> int;
+    auto draw(FrameBufferInfo info, double x, double y) -> void;
+    auto draw_rect(FrameBufferInfo info, Area area) -> void;
+    auto draw_fit_rect(FrameBufferInfo info, Area area) -> void;
+    auto clear() -> void;
          operator EmptyTextureData*() const;
          operator GraphicBase*() const;
          operator bool() const;
@@ -33,7 +33,7 @@ class EmptyTexture {
     EmptyTexture& operator=(const EmptyTexture&);
     EmptyTexture& operator=(EmptyTexture&&);
     EmptyTexture(){};
-    EmptyTexture(const int width, const int height);
+    EmptyTexture(int width, int height);
 };
 
 } // namespace gawl

@@ -10,12 +10,12 @@
 
 namespace gawl {
 namespace {
-std::u32string convert_utf8_to_unicode32(const char* str) {
-    std::string    utf8 = str;
-    std::u32string uni32;
+auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
+    auto utf8  = std::string(str);
+    auto uni32 = std::u32string();
 
     for(size_t i = 0; i < utf8.size(); i++) {
-        uint32_t c = (uint32_t)utf8[i];
+        auto c = (uint32_t)utf8[i];
 
         if((0x80 & c) == 0) {
             uni32.push_back(c);
@@ -66,10 +66,10 @@ class Character : public GraphicBase {
 };
 
 Character::Character(char32_t code, Faces const& faces) : GraphicBase(*global->textrender_shader) {
-    FT_Face face        = nullptr;
-    int     glyph_index = -1;
+    auto face        = FT_Face(nullptr);
+    auto glyph_index = int(-1);
     for(auto f : faces) {
-        auto i = FT_Get_Char_Index(f, code);
+        const auto i = FT_Get_Char_Index(f, code);
         if(i != 0) {
             face        = f;
             glyph_index = i;
@@ -103,20 +103,20 @@ Character::Character(char32_t code, Faces const& faces) : GraphicBase(*global->t
 
 struct CharacterCache {
     using Map = std::unordered_map<char32_t, Character*>;
-    Faces      faces;
-    Map        cache;
-    Character* get_character(char32_t c) {
-        if(auto f = cache.find(c); f != cache.end()) {
+    Faces faces;
+    Map   cache;
+    auto  get_character(const char32_t c) -> Character* {
+        if(const auto f = cache.find(c); f != cache.end()) {
             return f->second;
         } else {
-            auto chara = new Character(c, faces);
+            const auto chara = new Character(c, faces);
             cache.insert(std::make_pair(c, chara));
             return chara;
         }
     }
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
-            FT_Face face;
+            auto face = FT_Face();
             if(auto err = FT_New_Face(global->freetype, path.data(), 0, &(face)); err != 0) {
                 throw std::runtime_error("failed to open font.");
             }
@@ -133,13 +133,13 @@ struct CharacterCache {
 
 class TextRenderPrivate {
   private:
-    std::map<int, std::shared_ptr<CharacterCache>> caches;
+    std::unordered_map<int, std::shared_ptr<CharacterCache>> caches;
 
     const std::vector<std::string> font_names;
     const int                      size;
 
   public:
-    void clear() {
+    auto clear() -> void {
         for(auto& s : caches) {
             for(auto& c : s.second->cache) {
                 delete c.second;
@@ -147,10 +147,10 @@ class TextRenderPrivate {
         }
         caches.clear();
     }
-    int get_size() const noexcept {
+    auto get_size() const -> int {
         return size;
     }
-    CharacterCache& operator[](int size) {
+    auto operator[](const int size) -> CharacterCache& {
         if(!caches.contains(size)) {
             caches.insert(std::make_pair(size, new CharacterCache(font_names, size)));
         }
@@ -162,42 +162,42 @@ class TextRenderPrivate {
     }
 };
 
-Character* TextRender::get_chara_graphic(int size, char32_t c) {
+auto TextRender::get_chara_graphic(const int size, const char32_t c) -> Character* {
     return (*data)[size].get_character(c);
 }
-void TextRender::set_char_color(Color const& color) {
+auto TextRender::set_char_color(Color const& color) -> void {
     glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "textColor"), color[0], color[1], color[2], color[3]);
 }
-Area TextRender::draw(FrameBufferInfo info, double x, double y, Color const& color, const char* text, DrawFunc func) {
-    auto uni = convert_utf8_to_unicode32(text);
+auto TextRender::draw(FrameBufferInfo info, const double x, const double y, Color const& color, const char* const text, const DrawFunc func) -> Area {
+    const auto uni = convert_utf8_to_unicode32(text);
     return draw(info, x, y, color, uni.data(), func);
 }
-Area TextRender::draw(FrameBufferInfo info, double x, double y, Color const& color, const char32_t* text, DrawFunc func) {
+auto TextRender::draw(FrameBufferInfo info, const double x, const double y, Color const& color, const char32_t* const text, const DrawFunc func) -> Area {
     if(!data) {
         throw ::std::runtime_error("unititialized font.");
     }
-    auto prep = [&]() {
+    const auto prep = [&]() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUseProgram(global->textrender_shader->get_shader());
         set_char_color(color);
     };
-    double xpos        = x;
-    Area   drawed_area = {x, y, x, y};
+    const auto scale       = info.get_scale();
+    auto       xpos        = double(x);
+    auto       drawed_area = Area{x, y, x, y};
     prep();
-    const auto scale = info.get_scale();
 
-    const char32_t* c = text;
+    auto c = text;
     while(*c != '\0') {
-        auto   chara   = get_chara_graphic(data->get_size() * scale, *c);
-        double p[2]    = {xpos + 1. * chara->offset[0] / scale, y - 1. * chara->offset[1] / scale};
-        Area   area    = {p[0], p[1], p[0] + chara->get_width(info), p[1] + chara->get_height(info)};
-        drawed_area[0] = drawed_area[0] < area[0] ? drawed_area[0] : area[0];
-        drawed_area[1] = drawed_area[1] < area[1] ? drawed_area[1] : area[1];
-        drawed_area[2] = drawed_area[2] > area[2] ? drawed_area[2] : area[2];
-        drawed_area[3] = drawed_area[3] > area[3] ? drawed_area[3] : area[3];
+        const auto chara = get_chara_graphic(data->get_size() * scale, *c);
+        const auto p     = std::array{xpos + 1. * chara->offset[0] / scale, y - 1. * chara->offset[1] / scale};
+        const auto area  = Area{p[0], p[1], p[0] + chara->get_width(info), p[1] + chara->get_height(info)};
+        drawed_area[0]   = drawed_area[0] < area[0] ? drawed_area[0] : area[0];
+        drawed_area[1]   = drawed_area[1] < area[1] ? drawed_area[1] : area[1];
+        drawed_area[2]   = drawed_area[2] > area[2] ? drawed_area[2] : area[2];
+        drawed_area[3]   = drawed_area[3] > area[3] ? drawed_area[3] : area[3];
         if(func) {
-            auto result = func(c - text, area, *chara);
+            const auto result = func(c - text, area, *chara);
             if(result) {
                 prep();
             } else {
@@ -210,47 +210,46 @@ Area TextRender::draw(FrameBufferInfo info, double x, double y, Color const& col
         c += 1;
     }
     return drawed_area;
-
 }
-Area TextRender::draw_fit_rect(FrameBufferInfo info, Area rect, Color const& color, const char* text, Align alignx, Align aligny, DrawFunc func) {
+auto TextRender::draw_fit_rect(FrameBufferInfo info, Area rect, Color const& color, const char* const text, const Align alignx, const Align aligny, const DrawFunc func) -> Area {
     const auto scale = info.get_scale();
     rect.magnify(scale);
-    Area font_area = {0, 0};
+    auto font_area = Area{0, 0};
     get_rect(info, font_area, text);
     font_area.magnify(scale);
-    double sw = font_area[2] - font_area[0], sh = font_area[3] - font_area[1];
-    double dw = rect[2] - rect[0], dh = rect[3] - rect[1];
-    double pad[2] = {dw - sw, dh - sh};
-    double x      = alignx == Align::left ? rect[0] - font_area[0] : alignx == Align::center ? rect[0] - font_area[0] + pad[0] / 2
-                                                                                             : rect[2] - sw;
-    double y      = aligny == Align::left ? rect[1] - font_area[1] : aligny == Align::center ? rect[1] - font_area[1] + pad[1] / 2
-                                                                                             : rect[3] - sh;
+    const auto sw = double(font_area[2] - font_area[0]), sh = double(font_area[3] - font_area[1]);
+    const auto dw = double(rect[2] - rect[0]), dh = double(rect[3] - rect[1]);
+    const auto pad = std::array{dw - sw, dh - sh};
+
+    auto x = alignx == Align::left ? rect[0] - font_area[0] : alignx == Align::center ? rect[0] - font_area[0] + pad[0] / 2
+                                                                                      : rect[2] - sw;
+    auto y = aligny == Align::left ? rect[1] - font_area[1] : aligny == Align::center ? rect[1] - font_area[1] + pad[1] / 2
+                                                                                      : rect[3] - sh;
     x /= scale;
     y /= scale;
     return draw(info, x, y, color, text, func);
 }
-void TextRender::get_rect(FrameBufferInfo info, Area& rect, const char* text) {
-    auto       uni        = convert_utf8_to_unicode32(text);
+auto TextRender::get_rect(FrameBufferInfo info, Area& rect, const char* const text) -> void {
+    const auto uni = convert_utf8_to_unicode32(text);
     get_rect(info, rect, uni.data());
 }
-void TextRender::get_rect(FrameBufferInfo info, Area& rect, const char32_t* text) {
+auto TextRender::get_rect(FrameBufferInfo info, Area& rect, const char32_t* const text) -> void {
     if(!data) {
         throw ::std::runtime_error("unititialized font.");
     }
-    rect[2] = rect[0];
-    rect[3] = rect[1];
-    double rx1, ry1, rx2, ry2;
-    rx1 = ry1 = rx2 = ry2 = 0;
-    const auto scale      = info.get_scale();
-    auto c = text;
+    rect[2]        = rect[0];
+    rect[3]        = rect[1];
+    auto       rx1 = 0.0, ry1 = 0.0, rx2 = 0.0, ry2 = 0.0;
+    const auto scale = info.get_scale();
+    auto       c     = text;
     while(*c != '\0') {
-        auto   chara   = get_chara_graphic(data->get_size() * scale, *c);
-        double xpos[2] = {static_cast<double>(rx1 + chara->offset[0]), static_cast<double>(rx1 + chara->offset[0] + chara->get_width(info) * scale)};
+        auto       chara = get_chara_graphic(data->get_size() * scale, *c);
+        const auto xpos  = std::array{static_cast<double>(rx1 + chara->offset[0]), static_cast<double>(rx1 + chara->offset[0] + chara->get_width(info) * scale)};
 
         rx1 = rx1 > xpos[0] ? xpos[0] : rx1;
         rx2 = rx2 < xpos[1] ? xpos[1] : rx2;
 
-        double ypos[2] = {static_cast<double>(-chara->offset[1]), static_cast<double>(-chara->offset[1] + chara->get_height(info) * scale)};
+        const auto ypos = std::array{static_cast<double>(-chara->offset[1]), static_cast<double>(-chara->offset[1] + chara->get_height(info) * scale)};
 
         ry1 = ry1 > ypos[0] ? ypos[0] : ry1;
         ry2 = ry2 < ypos[1] ? ypos[1] : ry2;
@@ -266,20 +265,20 @@ void TextRender::get_rect(FrameBufferInfo info, Area& rect, const char32_t* text
     rect[2] += rx2 / scale;
     rect[3] += ry2 / scale;
 }
-void TextRender::draw_wrapped(FrameBufferInfo info, Area& rect, int line_spacing, Color const& color, const char* text, Align alignx, Align aligny) {
+auto TextRender::draw_wrapped(FrameBufferInfo info, Area& rect, const int line_spacing, const Color& color, const char* const text, const Align alignx, const Align aligny) -> void {
     if(!data) {
         throw ::std::runtime_error("unititialized font.");
     }
 
-    const auto                  str = convert_utf8_to_unicode32(text);
-    std::vector<std::u32string> lines(1);
+    const auto str   = convert_utf8_to_unicode32(text);
+    auto       lines = std::vector<std::u32string>(1);
 
     const auto max_width  = rect.width();
     const auto max_height = rect.height();
     const auto len        = str.size();
     for(size_t i = 0; i < len; ++i) {
-        const bool last  = i + 1 == len;
-        char32_t   chara = str[i];
+        const auto last  = i + 1 == len;
+        auto       chara = str[i];
         if(str[i] == U'\\' && !last) {
             i += 1;
             const auto following = str[i];
@@ -298,7 +297,7 @@ void TextRender::draw_wrapped(FrameBufferInfo info, Area& rect, int line_spacing
             }
         }
         lines.back() += chara;
-        Area area = {0, 0};
+        auto area = Area{0, 0};
         get_rect(info, area, lines.back().data());
         if(area.width() > max_width) {
             lines.back().pop_back();
@@ -317,23 +316,23 @@ void TextRender::draw_wrapped(FrameBufferInfo info, Area& rect, int line_spacing
     }
 
 draw:
-    const size_t total_height = lines.size() * line_spacing;
-    const double y_offset     = aligny == Align::left ? 0 : aligny == Align::right ? max_height - total_height
+    const auto total_height = size_t(lines.size() * line_spacing);
+    const auto y_offset     = aligny == Align::left ? 0.0 : aligny == Align::right ? max_height - total_height
                                                                                    : (max_height - total_height) / 2.0;
     for(size_t i = 0; i < lines.size(); ++i) {
         const auto& line = lines[i];
-        Area area = {0, 0};
+        auto        area = Area{0, 0};
         get_rect(info, area, line.data());
         const auto total_width = area.width();
-        const double x_offset = alignx == Align::left ? 0 : alignx == Align::right ? max_width - total_width 
-                                                                                         : (max_width - total_width) / 2.0;
+        const auto x_offset    = alignx == Align::left ? 0.0 : alignx == Align::right ? max_width - total_width
+                                                                                      : (max_width - total_width) / 2.0;
         draw(info, rect[0] + x_offset, rect[1] + y_offset + i * line_spacing - area[1], color, line.data());
     }
 }
 TextRender::operator bool() const {
     return data.get() != nullptr;
 }
-TextRender::TextRender(const std::vector<const char*>&& font_names, int size) {
+TextRender::TextRender(const std::vector<const char*>&& font_names, const int size) {
     std::vector<std::string> fonts;
     for(auto path : font_names) {
         fonts.emplace_back(path);

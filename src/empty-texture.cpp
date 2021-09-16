@@ -8,15 +8,15 @@
 namespace gawl {
 extern GlobalVar* global;
 // ====== EmptyTextureData ====== //
-const std::array<int, 2>& EmptyTextureData::get_size() const {
+auto EmptyTextureData::get_size() const -> const std::array<int, 2>& {
     return size;
 }
-GLuint EmptyTextureData::get_frame_buffer_name() const {
+auto EmptyTextureData::get_frame_buffer_name() const -> GLuint {
     return frame_buffer;
 }
 EmptyTextureData::EmptyTextureData(const int width, const int height) : GraphicBase(*global->graphic_shader), size{width, height} {
-    this->width = width;
-    this->height = height;
+    this->width             = width;
+    this->height            = height;
     this->invert_top_bottom = true;
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -33,37 +33,37 @@ EmptyTextureData::~EmptyTextureData() {
 }
 
 // ====== EmptyTexture ====== //
-int EmptyTexture::get_width(FrameBufferInfo info) const {
+auto EmptyTexture::get_width(FrameBufferInfo info) const -> int {
     if(!data) {
         return 0;
     }
     return reinterpret_cast<EmptyTextureData*>(data.get())->get_width(info);
 }
-int EmptyTexture::get_height(FrameBufferInfo info) const {
+auto EmptyTexture::get_height(FrameBufferInfo info) const -> int {
     if(!data) {
         return 0;
     }
     return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(info);
 }
-void EmptyTexture::draw(FrameBufferInfo info, double x, double y) {
+auto EmptyTexture::draw(FrameBufferInfo info, double x, double y) -> void {
     if(!data) {
         return;
     }
     reinterpret_cast<EmptyTextureData*>(data.get())->draw(info, x, y);
 }
-void EmptyTexture::draw_rect(FrameBufferInfo info, Area area) {
+auto EmptyTexture::draw_rect(FrameBufferInfo info, Area area) -> void {
     if(!data) {
         return;
     }
     data.get()->draw_rect(info, area);
 }
-void EmptyTexture::draw_fit_rect(FrameBufferInfo info, Area area) {
+auto EmptyTexture::draw_fit_rect(FrameBufferInfo info, Area area) -> void {
     if(!data) {
         return;
     }
     data.get()->draw_fit_rect(info, area);
 }
-void EmptyTexture::clear() {
+auto EmptyTexture::clear() -> void {
     *this = EmptyTexture();
 }
 EmptyTexture::operator EmptyTextureData*() const {

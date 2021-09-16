@@ -1,6 +1,6 @@
 #pragma once
 namespace gawl {
-inline const static char* graphic_vertex_shader_source   = R"glsl(
+constexpr const char* graphic_vertex_shader_source      = R"glsl(
             #version 330 core
             in vec2 position;
             in vec2 texcoord;
@@ -10,7 +10,7 @@ inline const static char* graphic_vertex_shader_source   = R"glsl(
                 Texcoord = texcoord;
             }
         )glsl";
-inline const static char* graphic_fragment_shader_source = R"glsl(
+constexpr const char* graphic_fragment_shader_source    = R"glsl(
             #version 330 core
             in vec2 Texcoord;
             uniform sampler2D tex;
@@ -19,7 +19,7 @@ inline const static char* graphic_fragment_shader_source = R"glsl(
                 outColor = texture(tex, Texcoord);
             }
         )glsl";
-inline const static char* textrender_vertex_shader_source = R"glsl(
+constexpr const char* textrender_vertex_shader_source   = R"glsl(
             #version 330 core
             in vec2 position;
             in vec2 texcoord;
@@ -29,8 +29,7 @@ inline const static char* textrender_vertex_shader_source = R"glsl(
                 Texcoord = texcoord;
             }  
         )glsl";
-
-inline const static char* textrender_fragment_shader_source = R"glsl(
+constexpr const char* textrender_fragment_shader_source = R"glsl(
             #version 330 core
             in vec2  Texcoord;
             out vec4 outColor;
