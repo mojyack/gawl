@@ -121,7 +121,7 @@ auto WaylandWindow::refresh() -> void {
         frame_ready  = true;
         auto current = bool();
         {
-            std::lock_guard<std::mutex> lock(current_frame.mutex);
+            const auto lock    = current_frame.get_lock();
             current            = current_frame.data;
             current_frame.data = true;
         }

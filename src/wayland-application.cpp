@@ -10,7 +10,7 @@ auto WaylandApplication::get_display() -> wayland::display_t& {
 }
 auto WaylandApplication::tell_event(GawlWindow* window) -> void {
     {
-        std::lock_guard<std::mutex> lock(to_handle.mutex);
+        const auto lock = to_handle.get_lock();
         to_handle.data.emplace_back(dynamic_cast<WaylandWindow*>(window));
     }
     const static size_t count = 1;
@@ -32,8 +32,8 @@ auto WaylandApplication::run() -> void {
             read(fds[0].fd, &count, sizeof(count));
             std::vector<WaylandWindow*> handle_copy;
             {
-                std::lock_guard<std::mutex> lock(to_handle.mutex);
-                handle_copy = std::move(to_handle.data);
+                const auto lock = to_handle.get_lock();
+                handle_copy     = std::move(to_handle.data);
             }
             for(auto w : handle_copy) {
                 if(w != nullptr) {

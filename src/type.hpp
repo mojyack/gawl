@@ -34,53 +34,62 @@ enum class ButtonState {
     repeat,
     leave,
 };
+
 enum class WheelAxis {
     vertical,
     horizontal,
 };
+
 enum class Align {
     left,
     center,
     right,
 };
+
 template <typename T>
 struct SafeVar {
     mutable std::mutex mutex;
     T                  data;
 
+    auto get_lock() const -> std::lock_guard<std::mutex> {
+        return std::lock_guard<std::mutex>(mutex);
+    }
     auto store(T src) -> void {
-        std::lock_guard<std::mutex> lock(mutex);
-        data = src;
+        auto lock = get_lock();
+        data      = src;
     }
     auto load() const -> T {
-        std::lock_guard<std::mutex> lock(mutex);
+        auto lock = get_lock();
         return data;
     }
-    auto operator=(const SafeVar<T>& other) -> SafeVar& {
-        data = other.data;
-        return *this;
+    auto operator->() -> T* {
+        return &data;
+    }
+    auto operator*() -> T& {
+        return data;
     }
     SafeVar(T src) : data(src) {}
     SafeVar() {}
 };
+
 class ConditionalVariable {
   private:
     std::condition_variable condv;
     SafeVar<bool>           waked;
 
   public:
-    auto wait() -> void {
+    void wait() {
         waked.store(false);
-        std::unique_lock<std::mutex> lock(waked.mutex);
+        auto lock = std::unique_lock<std::mutex>(waked.mutex);
         condv.wait(lock, [this]() { return waked.data; });
     }
-    template <typename T>
-    auto wait_for(T duration) -> bool {
+    template <typename D>
+    bool wait_for(D duration) {
         waked.store(false);
-        std::unique_lock<std::mutex> lock(waked.mutex);
+        auto lock = std::unique_lock<std::mutex>(waked.mutex);
         return condv.wait_for(lock, duration, [this]() { return waked.data; });
     }
-    auto wakeup() -> void {
+    void wakeup() {
         waked.store(true);
         condv.notify_all();
     }
