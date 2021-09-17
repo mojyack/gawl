@@ -3,6 +3,7 @@
 
 #include "wayland-application.hpp"
 #include "wayland-window.hpp"
+#include "error.hpp"
 
 namespace gawl {
 auto WaylandApplication::get_display() -> wayland::display_t& {
@@ -14,7 +15,7 @@ auto WaylandApplication::tell_event(GawlWindow* window) -> void {
         to_handle.data.emplace_back(dynamic_cast<WaylandWindow*>(window));
     }
     const static size_t count = 1;
-    write(fds[0].fd, &count, sizeof(count));
+    ASSERT(write(fds[0].fd, &count, sizeof(count)) == sizeof(size_t), "failed to notify event")
 }
 auto WaylandApplication::run() -> void {
     running = true;
@@ -29,7 +30,7 @@ auto WaylandApplication::run() -> void {
         poll(fds, 3, -1);
         if(fds[0].revents & POLLIN) {
             static size_t count;
-            read(fds[0].fd, &count, sizeof(count));
+            ASSERT(read(fds[0].fd, &count, sizeof(count)) == sizeof(count), "failed to read()")
             std::vector<WaylandWindow*> handle_copy;
             {
                 const auto lock = to_handle.get_lock();
@@ -56,7 +57,7 @@ auto WaylandApplication::run() -> void {
         }
         if(fds[2].revents & POLLIN) {
             static size_t count;
-            read(fds[2].fd, &count, sizeof(count));
+            ASSERT(read(fds[2].fd, &count, sizeof(count)) == sizeof(count), "failed to read()")
             break;
         }
         display.dispatch_pending();
@@ -67,7 +68,7 @@ auto WaylandApplication::run() -> void {
 auto WaylandApplication::quit() -> void {
     quitted                   = true;
     const static size_t count = 1;
-    write(fds[2].fd, &count, sizeof(count));
+    ASSERT(write(fds[2].fd, &count, sizeof(count)) == sizeof(size_t), "failed to close window")
 }
 auto WaylandApplication::is_running() const -> bool {
     return running;
