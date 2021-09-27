@@ -1,9 +1,9 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
+#include "error.hpp"
 #include "wayland-application.hpp"
 #include "wayland-window.hpp"
-#include "error.hpp"
 
 namespace gawl {
 auto WaylandApplication::get_display() -> wayland::display_t& {
@@ -14,8 +14,7 @@ auto WaylandApplication::tell_event(GawlWindow* window) -> void {
         const auto lock = to_handle.get_lock();
         to_handle.data.emplace_back(dynamic_cast<WaylandWindow*>(window));
     }
-    const static size_t count = 1;
-    ASSERT(write(fds[0].fd, &count, sizeof(count)) == sizeof(size_t), "failed to notify event")
+    window_event.notify();
 }
 auto WaylandApplication::run() -> void {
     running = true;
@@ -24,14 +23,17 @@ auto WaylandApplication::run() -> void {
             w->refresh();
         }
     }
+    auto  fds                   = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}, pollfd{wl_display_event, POLLIN, 0}};
+    auto& window_event_poll     = fds[0];
+    auto& quit_event_poll       = fds[1];
+    auto& wl_display_event_poll = fds[2];
     while(!quitted) {
         auto read_intent = display.obtain_read_intent();
         display.flush();
-        poll(fds, 3, -1);
-        if(fds[0].revents & POLLIN) {
-            static size_t count;
-            ASSERT(read(fds[0].fd, &count, sizeof(count)) == sizeof(count), "failed to read()")
-            std::vector<WaylandWindow*> handle_copy;
+        poll(fds.data(), fds.size(), -1);
+        if(window_event_poll.revents & POLLIN) {
+            window_event.consume();
+            auto handle_copy = std::vector<WaylandWindow*>();
             {
                 const auto lock = to_handle.get_lock();
                 handle_copy     = std::move(to_handle.data);
@@ -39,26 +41,24 @@ auto WaylandApplication::run() -> void {
             for(auto w : handle_copy) {
                 if(w != nullptr) {
                     w->handle_event();
-                } else {
-                    auto windows = get_windows();
-                    for(auto w = windows.begin(); w != windows.end(); w += 1) {
-                        (*w)->is_close_pending();
-                        if((*w)->is_close_pending()) {
-                            unregister_window(*w);
-                            delete *w;
-                            break;
-                        }
+                    continue;
+                }
+                auto windows = get_windows();
+                for(auto w = windows.begin(); w != windows.end(); w += 1) {
+                    if((*w)->is_close_pending()) {
+                        unregister_window(*w);
+                        delete *w;
+                        break;
                     }
                 }
             }
         }
-        if(fds[1].revents & POLLIN) {
-            read_intent.read();
-        }
-        if(fds[2].revents & POLLIN) {
-            static size_t count;
-            ASSERT(read(fds[2].fd, &count, sizeof(count)) == sizeof(count), "failed to read()")
+        if(quit_event_poll.revents & POLLIN) {
+            quit_event.consume();
             break;
+        }
+        if(wl_display_event_poll.revents & POLLIN) {
+            read_intent.read();
         }
         display.dispatch_pending();
     }
@@ -66,16 +66,16 @@ auto WaylandApplication::run() -> void {
     close_all_windows();
 }
 auto WaylandApplication::quit() -> void {
-    quitted                   = true;
-    const static size_t count = 1;
-    ASSERT(write(fds[2].fd, &count, sizeof(count)) == sizeof(size_t), "failed to close window")
+    quitted = true;
+    quit_event.notify();
 }
 auto WaylandApplication::is_running() const -> bool {
     return running;
 }
 WaylandApplication::WaylandApplication() {
-    fds[0] = pollfd{eventfd(0, 0), POLLIN, 0};
-    fds[1] = pollfd{display.get_fd(), POLLIN, 0};
-    fds[2] = pollfd{eventfd(0, 0), POLLIN, 0};
+    wl_display_event = display.get_fd();
+}
+WaylandApplication::~WaylandApplication() {
+    wl_display_event.forget();
 }
 } // namespace gawl

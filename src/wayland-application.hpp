@@ -2,6 +2,7 @@
 #include <poll.h>
 #include <wayland-client.hpp>
 
+#include "fd.hpp"
 #include "gawl-application.hpp"
 #include "type.hpp"
 
@@ -10,10 +11,12 @@ class WaylandWindow;
 
 class WaylandApplication : public GawlApplication {
   private:
-    wayland::display_t display;
-    pollfd             fds[3];
-    bool               quitted = false;
-    bool               running = false;
+    wayland::display_t  display;
+    EventFileDescriptor window_event;
+    EventFileDescriptor quit_event;
+    FileDescriptor      wl_display_event;
+    bool                quitted = false;
+    bool                running = false;
 
     SafeVar<std::vector<WaylandWindow*>> to_handle;
 
@@ -25,6 +28,6 @@ class WaylandApplication : public GawlApplication {
     auto is_running() const -> bool final;
 
     WaylandApplication();
-    virtual ~WaylandApplication(){};
+    virtual ~WaylandApplication();
 };
 } // namespace gawl

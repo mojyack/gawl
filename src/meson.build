@@ -31,6 +31,7 @@ gawl_files = files(
 
 gawl_headers = files(
     'empty-texture.hpp',
+    'fd.hpp',
     'gawl-application.hpp',
     'gawl-window.hpp',
     'gawl.hpp',
