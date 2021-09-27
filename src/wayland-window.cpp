@@ -10,20 +10,17 @@
 
 namespace gawl {
 namespace {
-int        egl_count          = 0;
-EGLSurface current_eglsurface = nullptr;
-EGLDisplay egldisplay         = nullptr;
-EGLConfig  eglconfig          = nullptr;
-EGLContext eglcontext         = nullptr;
-} // namespace
-auto WaylandWindow::init_egl() -> void {
-    if(egl_count == 0) {
-        egldisplay = eglGetDisplay(display);
-        ASSERT(egldisplay != EGL_NO_DISPLAY, "eglGetDisplay() failed")
+struct EGLGlobal {
+    EGLDisplay display = nullptr;
+    EGLConfig  config  = nullptr;
+    EGLContext context = nullptr;
+    EGLGlobal(const wayland::display_t& wl_display) {
+        display = eglGetDisplay(wl_display);
+        ASSERT(display != EGL_NO_DISPLAY, "eglGetDisplay() failed")
 
         auto major = EGLint(0);
         auto minor = EGLint(0);
-        ASSERT(eglInitialize(egldisplay, &major, &minor) != EGL_FALSE, "eglInitialize() failed")
+        ASSERT(eglInitialize(display, &major, &minor) != EGL_FALSE, "eglInitialize() failed")
         ASSERT((major == 1 && minor >= 4) || major >= 2, "EGL version too old")
         ASSERT(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE, "eglBindAPI() failed")
 
@@ -36,18 +33,30 @@ auto WaylandWindow::init_egl() -> void {
                                                                EGL_NONE};
 
         auto num = EGLint(0);
-        ASSERT(eglChooseConfig(egldisplay, config_attribs.data(), &eglconfig, 1, &num) != EGL_FALSE && num != 0, "eglChooseConfig() failed")
+        ASSERT(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0, "eglChooseConfig() failed")
 
         constexpr auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2,
                                                                EGL_NONE};
 
-        eglcontext = eglCreateContext(egldisplay, eglconfig, EGL_NO_CONTEXT, context_attribs.data());
-        ASSERT(eglcontext != EGL_NO_CONTEXT, "eglCreateContext() failed")
+        context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
+        ASSERT(context != EGL_NO_CONTEXT, "eglCreateContext() failed")
     }
-    eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, egl_window, nullptr);
+    ~EGLGlobal() {
+        ASSERT(eglDestroyContext(display, context) != EGL_FALSE, "eglDestroyContext() failed")
+        ASSERT(eglTerminate(display) != EGL_FALSE, "eglTerminate() failed")
+    }
+};
+auto egl_global_count = size_t(0);
+auto egl_global       = std::optional<EGLGlobal>();
+} // namespace
+auto WaylandWindow::init_egl() -> void {
+    if(egl_global_count == 0) {
+        egl_global.emplace(display);
+    }
+    eglsurface = eglCreateWindowSurface(egl_global->display, egl_global->config, egl_window, nullptr);
     ASSERT(eglsurface != EGL_NO_SURFACE, "eglCreateWindowSurface() failed")
     choose_surface();
-    egl_count += 1;
+    egl_global_count += 1;
 }
 auto WaylandWindow::resize_buffer(int width, int height, int scale) -> void {
     if((width != -1 && height != -1 && width == window_size[0] && height == window_size[1]) || (scale != -1 && scale == buffer_scale)) {
@@ -133,14 +142,15 @@ auto WaylandWindow::refresh() -> void {
     app.tell_event(this);
 }
 auto WaylandWindow::swap_buffer() -> void {
-    ASSERT(eglSwapBuffers(egldisplay, eglsurface) != EGL_FALSE, "eglSwapBuffers() failed")
+    ASSERT(eglSwapBuffers(egl_global->display, eglsurface) != EGL_FALSE, "eglSwapBuffers() failed")
 }
 auto WaylandWindow::choose_surface() -> void {
-    if(current_eglsurface == eglsurface) {
+    static auto current_surface = EGLSurface(nullptr);
+    if(current_surface == eglsurface) {
         return;
     }
-    ASSERT(eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext) != EGL_FALSE, "eglMakeCurrent() failed")
-    current_eglsurface = surface;
+    ASSERT(eglMakeCurrent(egl_global->display, eglsurface, eglsurface, egl_global->context) != EGL_FALSE, "eglMakeCurrent() failed")
+    current_surface = eglsurface;
 }
 auto WaylandWindow::wait_for_key_repeater_exit() -> void {
     last_pressed_key.store(-1);
@@ -260,11 +270,10 @@ WaylandWindow::WaylandWindow(GawlApplication& app, WindowCreateHint hint)
 WaylandWindow::~WaylandWindow() {
     wait_for_key_repeater_exit();
     // finialize EGL.
-    ASSERT(eglDestroySurface(egldisplay, eglsurface) != EGL_FALSE, "eglDestroyContext() failed")
-    if(egl_count == 1) {
-        ASSERT(eglDestroyContext(egldisplay, eglcontext) != EGL_FALSE, "eglDestroyContext() failed")
-        ASSERT(eglTerminate(egldisplay) != EGL_FALSE, "eglTerminate() failed")
+    ASSERT(eglDestroySurface(egl_global->display, eglsurface) != EGL_FALSE, "eglDestroyContext() failed")
+    if(egl_global_count == 1) {
+        egl_global.reset();
     }
-    egl_count -= 1;
+    egl_global_count -= 1;
 }
 } // namespace gawl
