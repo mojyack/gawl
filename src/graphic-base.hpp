@@ -24,7 +24,6 @@ class Shader {
     ~Shader();
 };
 
-class GawlWindow;
 class GraphicBase {
   private:
     GLuint texture;
