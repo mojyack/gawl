@@ -12,10 +12,9 @@
 namespace gawl {
 namespace {
 auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
-    image.depth(8);
-    auto blob = Magick::Blob();
-    image.write(&blob, "RGBA");
-    return PixelBuffer(image.columns(), image.rows(), static_cast<const char*>(blob.data()));
+    auto buffer = std::vector<uint8_t>(image.columns() * image.rows() * 4);
+    image.write(0, 0, image.columns(), image.rows(), "RGBA", Magick::CharPixel, buffer.data());
+    return PixelBuffer(image.columns(), image.rows(), buffer);
 }
 auto load_texture_devil(const char* const file) -> PixelBuffer {
     auto       buffer = std::vector<uint8_t>();
