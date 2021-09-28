@@ -1,7 +1,6 @@
 #include <cstring>
 #include <iostream>
 
-#include <IL/il.h>
 #include <ImageMagick-7/Magick++.h>
 
 #include "error.hpp"
@@ -15,22 +14,6 @@ auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
     auto buffer = std::vector<uint8_t>(image.columns() * image.rows() * 4);
     image.write(0, 0, image.columns(), image.rows(), "RGBA", Magick::CharPixel, buffer.data());
     return PixelBuffer(image.columns(), image.rows(), buffer);
-}
-auto load_texture_devil(const char* const file) -> PixelBuffer {
-    auto       buffer = std::vector<uint8_t>();
-    const auto image  = ilGenImage();
-    ilBindImage(image);
-    ilLoadImage(file);
-    if(const auto err = ilGetError(); err != IL_NO_ERROR) {
-        ilDeleteImage(image);
-        return PixelBuffer();
-    }
-    const auto width  = ilGetInteger(IL_IMAGE_WIDTH);
-    const auto height = ilGetInteger(IL_IMAGE_HEIGHT);
-    buffer.resize(width * height * 4);
-    ilCopyPixels(0, 0, 0, width, height, 1, IL_RGBA, IL_UNSIGNED_BYTE, buffer.data());
-    ilDeleteImage(image);
-    return PixelBuffer(width, height, buffer);
 }
 } // namespace
 extern GlobalVar* global;
@@ -60,18 +43,8 @@ PixelBuffer::PixelBuffer(const size_t width, const size_t height, const char* co
 PixelBuffer::PixelBuffer(const size_t width, const size_t height, std::vector<uint8_t>& buffer) : size({width, height}) {
     data = std::move(buffer);
 }
-PixelBuffer::PixelBuffer(const char* file, const GraphicLoader loader) {
-    auto magick = loader == GraphicLoader::IMAGEMAGICK;
-    auto buf    = PixelBuffer();
-    if(!magick) {
-        buf = load_texture_devil(file);
-        if(buf.empty()) {
-            magick = true; // fallback to imagemagick.
-        }
-    }
-    if(magick) {
-        buf = load_texture_imagemagick(Magick::Image(file));
-    }
+PixelBuffer::PixelBuffer(const char* file) {
+    auto buf = load_texture_imagemagick(Magick::Image(file));
     if(!buf.empty()) {
         *this = std::move(buf);
     }
@@ -164,9 +137,9 @@ Graphic& Graphic::operator=(Graphic&& src) {
     this->graphic_data = src.graphic_data;
     return *this;
 }
-Graphic::Graphic(const char* file, GraphicLoader loader, std::optional<std::array<int, 4>> crop) {
+Graphic::Graphic(const char* file, std::optional<std::array<int, 4>> crop) {
     try {
-        const auto data = new GraphicData(PixelBuffer(file, loader), crop);
+        const auto data = new GraphicData(PixelBuffer(file), crop);
         graphic_data.reset(data);
     } catch(const std::exception&) {
         std::cerr << file << " is not a valid image file." << std::endl;

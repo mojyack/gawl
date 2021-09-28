@@ -1,9 +1,7 @@
-#include <IL/il.h>
-
+#include "graphic-base.hpp"
 #include "error.hpp"
 #include "gawl-window.hpp"
 #include "global.hpp"
-#include "graphic-base.hpp"
 #include "misc.hpp"
 #include "type.hpp"
 
@@ -29,7 +27,6 @@ auto move_vertices(const Screen* screen, Area area, bool invert) -> void {
 }
 } // namespace
 auto init_graphics() -> void {
-    ilInit();
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), NULL, GL_DYNAMIC_DRAW);
@@ -61,7 +58,7 @@ auto Shader::get_shader() -> GLuint {
     return shader_program;
 }
 Shader::Shader(const char* const vertex_shader_source, const char* const fragment_shader_source) {
-    GLint status;
+    auto status = GLint();
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);

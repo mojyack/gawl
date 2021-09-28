@@ -12,10 +12,9 @@ freetype_dep = dependency('freetype2')
 thread_dep = dependency('threads')
 magick_inc = include_directories('/usr/include/ImageMagick-7')
 magick_dep = dependency('Magick++')
-devil_dep = dependency('IL')
 
 gawl_inc = [freetype_inc, magick_inc]
-gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep, devil_dep]
+gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep]
 gawl_files = files(
     'empty-texture.cpp',
     'gawl-application.cpp',

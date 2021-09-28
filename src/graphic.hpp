@@ -7,11 +7,6 @@
 #include "type.hpp"
 
 namespace gawl {
-enum class GraphicLoader {
-    IMAGEMAGICK,
-    DEVIL,
-};
-
 class GraphicBase;
 class GraphicData;
 class GawlWindow;
@@ -30,7 +25,7 @@ class PixelBuffer {
     PixelBuffer(){};
     PixelBuffer(size_t width, size_t height, const char* buffer);
     PixelBuffer(size_t width, size_t height, std::vector<uint8_t>& buffer);
-    PixelBuffer(const char* file, GraphicLoader loader = GraphicLoader::IMAGEMAGICK);
+    PixelBuffer(const char* file);
     PixelBuffer(const std::vector<uint8_t>& buffer);
 };
 
@@ -52,7 +47,7 @@ class Graphic {
     Graphic& operator=(const Graphic&);
     Graphic& operator=(Graphic&&);
     Graphic();
-    Graphic(const char* file, GraphicLoader loader = GraphicLoader::IMAGEMAGICK, std::optional<std::array<int, 4>> crop = std::nullopt);
+    Graphic(const char* file, std::optional<std::array<int, 4>> crop = std::nullopt);
     Graphic(std::vector<uint8_t>& buffer, std::optional<std::array<int, 4>> crop = std::nullopt);
     Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt);
     Graphic(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop = std::nullopt);
