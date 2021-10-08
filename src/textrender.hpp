@@ -26,7 +26,6 @@ class TextRender {
 
   public:
     using DrawFunc = std::function<bool(size_t, Area const&, GraphicBase&)>;
-    static auto set_char_color(Color const& color) -> void;
 
     auto draw(Screen* screen, double x, double y, Color const& color, const char* text, DrawFunc func = nullptr) -> Area;
     auto draw(Screen* screen, double x, double y, Color const& color, const char32_t* text, DrawFunc func = nullptr) -> Area;

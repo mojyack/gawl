@@ -164,9 +164,6 @@ class TextRenderPrivate {
 auto TextRender::get_chara_graphic(const int size, const char32_t c) -> Character* {
     return (*data)[size].get_character(c);
 }
-auto TextRender::set_char_color(Color const& color) -> void {
-    glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "textColor"), color[0], color[1], color[2], color[3]);
-}
 auto TextRender::draw(Screen* screen, const double x, const double y, Color const& color, const char* const text, const DrawFunc func) -> Area {
     const auto uni = convert_utf8_to_unicode32(text);
     return draw(screen, x, y, color, uni.data(), func);
@@ -177,7 +174,7 @@ auto TextRender::draw(Screen* screen, const double x, const double y, Color cons
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUseProgram(global->textrender_shader->get_shader());
-        set_char_color(color);
+        glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "textColor"), color[0], color[1], color[2], color[3]);
     };
     const auto scale       = screen->get_scale();
     auto       xpos        = double(x);
