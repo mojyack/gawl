@@ -78,7 +78,7 @@ Shader::Shader(const char* const vertex_shader_source, const char* const fragmen
     glLinkProgram(shader_program);
     glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
     ASSERT(status == GL_TRUE, "failed to link shaders")
-    glBindFragDataLocation(shader_program, 0, "outColor");
+    glBindFragDataLocation(shader_program, 0, "color");
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);

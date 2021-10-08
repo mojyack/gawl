@@ -174,7 +174,7 @@ auto TextRender::draw(Screen* screen, const double x, const double y, Color cons
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUseProgram(global->textrender_shader->get_shader());
-        glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "textColor"), color[0], color[1], color[2], color[3]);
+        glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
     };
     const auto scale       = screen->get_scale();
     auto       xpos        = double(x);
