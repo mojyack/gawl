@@ -22,6 +22,7 @@ gawl_files = files(
     'graphic-base.cpp',
     'graphic.cpp',
     'misc.cpp',
+    'polygon.cpp',
     'screen.cpp',
     'shader.cpp',
     'textrender.cpp',
@@ -38,6 +39,7 @@ gawl_headers = files(
     'graphic-base.hpp',
     'graphic.hpp',
     'misc.hpp',
+    'polygon.hpp',
     'screen.hpp',
     'shader.hpp',
     'textrender.hpp',
@@ -58,7 +60,6 @@ install_headers(gawl_headers, subdir: 'gawl')
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
     libraries: [gawl, gawl_dep],
-    subdirs: 'gawl',
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl'

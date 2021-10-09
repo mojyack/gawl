@@ -3,6 +3,7 @@
 #include "screen.hpp"
 
 namespace gawl {
+namespace internal {
 class EmptyTextureData : public GraphicBase {
   private:
     GLuint                frame_buffer;
@@ -14,13 +15,14 @@ class EmptyTextureData : public GraphicBase {
     EmptyTextureData(size_t width, size_t height);
     ~EmptyTextureData();
 };
+} // namespace internal
 
 class EmptyTexture : public Screen {
   private:
-    std::shared_ptr<EmptyTextureData> data;
+    std::shared_ptr<internal::EmptyTextureData> data;
 
   public:
-    auto get_scale() const -> int override;
+    auto get_scale() const -> double override;
     auto get_size() const -> std::array<std::size_t, 2> override;
     auto prepare() -> void override;
 
@@ -30,7 +32,7 @@ class EmptyTexture : public Screen {
     auto draw_rect(Screen* screen, const Rectangle& rect) -> void;
     auto draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
     auto clear() -> void;
-         operator EmptyTextureData*() const;
+         operator internal::EmptyTextureData*() const;
          operator GraphicBase*() const;
          operator bool() const;
     EmptyTexture(const EmptyTexture&);

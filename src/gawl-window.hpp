@@ -5,10 +5,12 @@
 #include "type.hpp"
 
 namespace gawl {
+namespace internal {
 struct BufferSize {
     std::array<size_t, 2> size  = {800, 600};
     size_t                scale = 1.0;
 };
+} // namespace internal
 
 class GawlApplication;
 
@@ -21,13 +23,13 @@ class GawlWindow : public Screen {
         READY,
         CLOSE,
     };
-    Status             status              = Status::PREPARE;
-    bool               follow_buffer_scale = true;
-    double             specified_scale     = 0;
-    double             draw_scale          = 1.0;
-    bool               event_driven        = false;
-    BufferSize         buffer_size;
-    std::array<int, 2> window_size;
+    Status               status              = Status::PREPARE;
+    bool                 follow_buffer_scale = true;
+    double               specified_scale     = 0;
+    double               draw_scale          = 1.0;
+    bool                 event_driven        = false;
+    internal::BufferSize buffer_size;
+    std::array<int, 2>   window_size;
 
   protected:
     GawlApplication& app;
@@ -54,7 +56,7 @@ class GawlWindow : public Screen {
     virtual auto close_request_callback() -> void;
 
   public:
-    auto get_scale() const -> int override;
+    auto get_scale() const -> double override;
     auto get_size() const -> std::array<std::size_t, 2> override;
 
     virtual auto refresh() -> void = 0;

@@ -2,10 +2,25 @@
 #include "gawl-application.hpp"
 #include "global.hpp"
 #include "graphic-base.hpp"
+#include "polygon.hpp"
 #include "shader-source.hpp"
 
 namespace gawl {
-GlobalVar*              global;
+namespace internal {
+GlobalVar::GlobalVar(const std::pair<GLuint, GLuint>& buffer, const std::pair<GLuint, GLuint>& polygon_buffer) {
+    FT_Init_FreeType(&freetype);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    graphic_shader    = new Shader(graphic_vertex_shader_source, graphic_fragment_shader_source, buffer.first, buffer.second, true);
+    textrender_shader = new Shader(textrender_vertex_shader_source, textrender_fragment_shader_source, buffer.first, buffer.second, true);
+    polygon_shader    = new Shader(polygon_vertex_shader_source, polygon_fragment_shader_source, polygon_buffer.first, polygon_buffer.second, false);
+}
+GlobalVar::~GlobalVar() {
+    delete graphic_shader;
+    delete textrender_shader;
+}
+GlobalVar* global;
+} // namespace internal
 static int              global_count = 0;
 static constexpr double MIN_SCALE    = 0.01;
 
@@ -28,8 +43,9 @@ auto GawlWindow::is_running() const -> bool {
 }
 auto GawlWindow::init_global() -> void {
     if(global_count == 0) {
-        const auto b = init_graphics();
-        global       = new GlobalVar(b);
+        const auto b     = internal::init_graphics();
+        const auto b2    = internal::init_polygon();
+        internal::global = new internal::GlobalVar(b, b2);
     }
     global_count += 1;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -73,7 +89,7 @@ auto GawlWindow::get_event_driven() const -> bool {
 auto GawlWindow::close_request_callback() -> void {
     quit_application();
 }
-auto GawlWindow::get_scale() const -> int {
+auto GawlWindow::get_scale() const -> double {
     return draw_scale;
 }
 auto GawlWindow::get_size() const -> std::array<std::size_t, 2> {
@@ -91,18 +107,10 @@ auto GawlWindow::quit_application() -> void {
 GawlWindow::GawlWindow(GawlApplication& app) : app(app) {}
 GawlWindow::~GawlWindow() {
     if(global_count == 1) {
-        delete global;
-        finish_graphics();
+        delete internal::global;
+        internal::finish_graphics();
+        internal::finish_polygon();
     }
     global_count -= 1;
-}
-GlobalVar::GlobalVar(const std::pair<GLuint, GLuint>& buffer) {
-    FT_Init_FreeType(&freetype);
-    graphic_shader    = new Shader(graphic_vertex_shader_source, graphic_fragment_shader_source, buffer.first, buffer.second, true);
-    textrender_shader = new Shader(textrender_vertex_shader_source, textrender_fragment_shader_source, buffer.first, buffer.second, true);
-}
-GlobalVar::~GlobalVar() {
-    delete graphic_shader;
-    delete textrender_shader;
 }
 } // namespace gawl

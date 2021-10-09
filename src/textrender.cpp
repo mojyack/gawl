@@ -1,13 +1,17 @@
 #include <iterator>
-#include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include "error.hpp"
-#include "gawl-window.hpp"
 #include "global.hpp"
-#include "misc.hpp"
 #include "textrender.hpp"
-#include "type.hpp"
 
 namespace gawl {
 namespace {
@@ -57,6 +61,7 @@ auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
 using Faces = std::vector<FT_Face>;
 } // namespace
 
+namespace internal {
 extern GlobalVar* global;
 
 class Character : public GraphicBase {
@@ -160,8 +165,9 @@ class TextRenderPrivate {
         clear();
     }
 };
+} // namespace internal
 
-auto TextRender::get_chara_graphic(const int size, const char32_t c) -> Character* {
+auto TextRender::get_chara_graphic(const int size, const char32_t c) -> internal::Character* {
     return (*data)[size].get_character(c);
 }
 auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char* const text, const DrawFunc func) -> Rectangle {
@@ -171,10 +177,9 @@ auto TextRender::draw(Screen* const screen, const Point& point, Color const& col
 auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char32_t* const text, const DrawFunc func) -> Rectangle {
     ASSERT(data, "font not initialized")
     const auto prep = [&]() {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glUseProgram(global->textrender_shader->get_shader());
-        glUniform4f(glGetUniformLocation(global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
+        glUseProgram(internal::global->textrender_shader->get_shader());
+        glUniform4f(glGetUniformLocation(internal::global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
+        set_char_color(color);
     };
     const auto scale       = screen->get_scale();
     auto       xpos        = point.x;
@@ -213,13 +218,16 @@ auto TextRender::draw_fit_rect(Screen* const screen, const Rectangle& rect, Colo
     font_area.magnify(scale);
     const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
-    auto x = alignx == Align::left ? rect.a.x - font_area.a.x : alignx == Align::center ? rect.a.x - font_area.a.x + pad[0] / 2
-                                                                                        : rect.b.x - font_area.width();
-    auto y = aligny == Align::left ? rect.a.y - rect.a.y : aligny == Align::center ? rect.a.y - font_area.a.y + pad[1] / 2
-                                                                                   : rect.b.y - font_area.height();
+    auto x = alignx == Align::left ? r.a.x - font_area.a.x : alignx == Align::center ? r.a.x - font_area.a.x + pad[0] / 2
+                                                                                        : r.b.x - font_area.width();
+    auto y = aligny == Align::left ? r.a.y - r.a.y : aligny == Align::center ? r.a.y - font_area.a.y + pad[1] / 2
+                                                                                   : r.b.y - font_area.height();
     x /= scale;
     y /= scale;
     return draw(screen, {x, y}, color, text, func);
+}
+auto TextRender::set_char_color(const Color& color) -> void {
+    glUniform4f(glGetUniformLocation(internal::global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
 }
 auto TextRender::get_rect(const Screen* screen, const Point& point, const char* const text) -> Rectangle {
     const auto uni = convert_utf8_to_unicode32(text);
@@ -253,6 +261,7 @@ auto TextRender::get_rect(const Screen* screen, const Point& point, const char32
     r.a.y += ry1 / scale;
     r.b.x += rx2 / scale;
     r.b.y += ry2 / scale;
+    return r;
 }
 auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const int line_spacing, const Color& color, const char* const text, const Align alignx, const Align aligny) -> void {
     ASSERT(data, "font not initialized")
@@ -322,7 +331,7 @@ TextRender::TextRender(const std::vector<const char*>& font_names, const int siz
     for(auto path : font_names) {
         fonts.emplace_back(path);
     }
-    data.reset(new TextRenderPrivate(std::move(fonts), size));
+    data.reset(new internal::TextRenderPrivate(std::move(fonts), size));
 }
 TextRender::TextRender() {}
 TextRender::~TextRender() {}

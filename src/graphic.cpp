@@ -5,7 +5,6 @@
 
 #include "error.hpp"
 #include "global.hpp"
-#include "graphic-base.hpp"
 #include "graphic.hpp"
 
 namespace gawl {
@@ -16,7 +15,10 @@ auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
     return PixelBuffer(image.columns(), image.rows(), buffer);
 }
 } // namespace
+
+namespace internal {
 extern GlobalVar* global;
+}
 
 // ====== PixelBuffer ====== //
 auto PixelBuffer::empty() const -> bool {
@@ -63,7 +65,7 @@ class GraphicData : public GraphicBase {
 };
 
 GraphicData::GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicData(std::move(buffer), crop) {}
-GraphicData::GraphicData(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase(*global->graphic_shader) {
+GraphicData::GraphicData(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase(*internal::global->graphic_shader) {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     if(crop) {
         if((*crop)[0] < 0) {

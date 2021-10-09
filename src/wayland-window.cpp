@@ -24,11 +24,12 @@ struct EGLGlobal {
         ASSERT((major == 1 && minor >= 4) || major >= 2, "EGL version too old")
         ASSERT(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE, "eglBindAPI() failed")
 
-        constexpr auto config_attribs = std::array<EGLint, 13>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        constexpr auto config_attribs = std::array<EGLint, 15>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                                                                EGL_RED_SIZE, 8,
                                                                EGL_GREEN_SIZE, 8,
                                                                EGL_BLUE_SIZE, 8,
                                                                EGL_ALPHA_SIZE, 8,
+                                                               EGL_SAMPLES, 4,
                                                                EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
                                                                EGL_NONE};
 

@@ -1,7 +1,7 @@
 #include "shader.hpp"
 #include "error.hpp"
 
-namespace gawl {
+namespace gawl::internal {
 auto Shader::bind_vao() -> void {
     glBindVertexArray(vao);
 }

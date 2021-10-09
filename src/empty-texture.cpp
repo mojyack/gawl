@@ -7,6 +7,7 @@
 #include "global.hpp"
 
 namespace gawl {
+namespace internal {
 extern GlobalVar* global;
 // ====== EmptyTextureData ====== //
 auto EmptyTextureData::get_size() const -> const std::array<size_t, 2>& {
@@ -32,11 +33,12 @@ EmptyTextureData::EmptyTextureData(const size_t width, const size_t height) : Gr
 EmptyTextureData::~EmptyTextureData() {
     glDeleteFramebuffers(1, &frame_buffer);
 }
+} // namespace internal
 
 // ====== EmptyTexture ====== //
-auto EmptyTexture::get_scale() const -> int {
+auto EmptyTexture::get_scale() const -> double {
     ASSERT(data, "texture not initialized")
-    return 1;
+    return 1.0;
 }
 auto EmptyTexture::get_size() const -> std::array<std::size_t, 2> {
     ASSERT(data, "texture not initialized")
@@ -50,15 +52,15 @@ auto EmptyTexture::prepare() -> void {
 }
 auto EmptyTexture::get_width(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")
-    return reinterpret_cast<EmptyTextureData*>(data.get())->get_width(screen);
+    return reinterpret_cast<internal::EmptyTextureData*>(data.get())->get_width(screen);
 }
 auto EmptyTexture::get_height(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")
-    return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(screen);
+    return reinterpret_cast<internal::EmptyTextureData*>(data.get())->get_height(screen);
 }
 auto EmptyTexture::draw(Screen* screen, const Point& point) -> void {
     ASSERT(data, "texture not initialized")
-    reinterpret_cast<EmptyTextureData*>(data.get())->draw(screen, point);
+    reinterpret_cast<internal::EmptyTextureData*>(data.get())->draw(screen, point);
 }
 auto EmptyTexture::draw_rect(Screen* const screen, const Rectangle& rect) -> void {
     ASSERT(data, "texture not initialized")
@@ -71,7 +73,7 @@ auto EmptyTexture::draw_fit_rect(Screen* const screen, const Rectangle& rect) ->
 auto EmptyTexture::clear() -> void {
     *this = EmptyTexture();
 }
-EmptyTexture::operator EmptyTextureData*() const {
+EmptyTexture::operator internal::EmptyTextureData*() const {
     return data.get();
 }
 EmptyTexture::operator GraphicBase*() const {
@@ -95,6 +97,6 @@ EmptyTexture& EmptyTexture::operator=(EmptyTexture&& src) {
     return *this;
 }
 EmptyTexture::EmptyTexture(const int width, const int height) {
-    data.reset(new EmptyTextureData(width, height));
+    data.reset(new internal::EmptyTextureData(width, height));
 }
 } // namespace gawl

@@ -1,13 +1,7 @@
 #include "graphic-base.hpp"
-#include "error.hpp"
-#include "gawl-window.hpp"
-#include "global.hpp"
 #include "misc.hpp"
-#include "type.hpp"
-#include "shader-source.hpp"
 
 namespace gawl {
-extern GlobalVar* global;
 namespace {
 GLuint  ebo;
 GLuint  vbo;
@@ -28,6 +22,7 @@ auto move_vertices(const Screen* const screen, const Rectangle& rect, const bool
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
 } // namespace
+namespace internal {
 auto init_graphics() -> std::pair<GLuint, GLuint> {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -54,6 +49,8 @@ auto finish_graphics() -> void {
     glDeleteBuffers(1, &ebo);
     glDeleteBuffers(1, &vbo);
 }
+} // namespace internal
+
 auto GraphicBase::get_texture() const -> GLuint {
     return texture;
 }
@@ -79,7 +76,7 @@ auto GraphicBase::draw_rect(Screen* const screen, const Rectangle& rect) const -
 auto GraphicBase::draw_fit_rect(Screen* const screen, const Rectangle& rect) const -> void {
     draw_rect(screen, calc_fit_rect(rect, width, height));
 }
-GraphicBase::GraphicBase(Shader& type_specific) : type_specific(type_specific) {
+GraphicBase::GraphicBase(internal::Shader& type_specific) : type_specific(type_specific) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
