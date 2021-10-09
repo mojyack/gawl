@@ -6,25 +6,28 @@
 #include <linux/input-event-codes.h>
 
 namespace gawl {
-struct Area {
-    std::array<double, 4> data;
+struct Point {
+    double x;
+    double y;
+    
+    auto magnify(const double scale) -> void {
+        x *= scale;
+        y *= scale;
+    }
+};
+struct Rectangle {
+    Point a;
+    Point b;
 
     auto magnify(const double scale) -> void {
-        for(auto& p : data) {
-            p *= scale;
-        }
+        a.magnify(scale);
+        b.magnify(scale);
     }
     auto width() const -> double {
-        return data[2] - data[0];
+        return b.x - a.x;
     }
     auto height() const -> double {
-        return data[3] - data[1];
-    }
-    auto operator[](size_t i) const -> double {
-        return data[i];
-    }
-    auto operator[](size_t i) -> double& {
-        return data[i];
+        return b.y - a.y;
     }
 };
 using Color = std::array<double, 4>;

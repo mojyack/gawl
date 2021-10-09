@@ -56,17 +56,17 @@ auto EmptyTexture::get_height(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")
     return reinterpret_cast<EmptyTextureData*>(data.get())->get_height(screen);
 }
-auto EmptyTexture::draw(Screen* screen, double x, double y) -> void {
+auto EmptyTexture::draw(Screen* screen, const Point& point) -> void {
     ASSERT(data, "texture not initialized")
-    reinterpret_cast<EmptyTextureData*>(data.get())->draw(screen, x, y);
+    reinterpret_cast<EmptyTextureData*>(data.get())->draw(screen, point);
 }
-auto EmptyTexture::draw_rect(Screen* screen, Area area) -> void {
+auto EmptyTexture::draw_rect(Screen* const screen, const Rectangle& rect) -> void {
     ASSERT(data, "texture not initialized")
-    data.get()->draw_rect(screen, area);
+    data.get()->draw_rect(screen, rect);
 }
-auto EmptyTexture::draw_fit_rect(Screen* screen, Area area) -> void {
+auto EmptyTexture::draw_fit_rect(Screen* const screen, const Rectangle& rect) -> void {
     ASSERT(data, "texture not initialized")
-    data.get()->draw_fit_rect(screen, area);
+    data.get()->draw_fit_rect(screen, rect);
 }
 auto EmptyTexture::clear() -> void {
     *this = EmptyTexture();

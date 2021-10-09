@@ -28,8 +28,8 @@ auto GawlWindow::is_running() const -> bool {
 }
 auto GawlWindow::init_global() -> void {
     if(global_count == 0) {
-        init_graphics();
-        global = new GlobalVar();
+        const auto b = init_graphics();
+        global       = new GlobalVar(b);
     }
     global_count += 1;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -96,10 +96,10 @@ GawlWindow::~GawlWindow() {
     }
     global_count -= 1;
 }
-GlobalVar::GlobalVar() {
+GlobalVar::GlobalVar(const std::pair<GLuint, GLuint>& buffer) {
     FT_Init_FreeType(&freetype);
-    graphic_shader    = new Shader(graphic_vertex_shader_source, graphic_fragment_shader_source);
-    textrender_shader = new Shader(textrender_vertex_shader_source, textrender_fragment_shader_source);
+    graphic_shader    = new Shader(graphic_vertex_shader_source, graphic_fragment_shader_source, buffer.first, buffer.second, true);
+    textrender_shader = new Shader(textrender_vertex_shader_source, textrender_fragment_shader_source, buffer.first, buffer.second, true);
 }
 GlobalVar::~GlobalVar() {
     delete graphic_shader;

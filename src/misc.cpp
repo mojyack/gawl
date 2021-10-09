@@ -10,16 +10,16 @@
 namespace gawl {
 extern GlobalVar* global;
 
-auto convert_screen_to_viewport(const Screen* screen, Area& area) -> void {
+auto convert_screen_to_viewport(const Screen* screen, Rectangle& rect) -> void {
     const auto s  = screen->get_size();
-    area[0] = (area[0] - s[0] * (s[0] - area[0]) / s[0]) / static_cast<int>(s[0]);
-    area[1] = (area[1] - s[1] * (s[1] - area[1]) / s[1]) / -static_cast<int>(s[1]);
-    area[2] = (area[2] - s[0] * (s[0] - area[2]) / s[0]) / static_cast<int>(s[0]);
-    area[3] = (area[3] - s[1] * (s[1] - area[3]) / s[1]) / -static_cast<int>(s[1]);
+    rect.a.x = (rect.a.x - s[0] * (s[0] - rect.a.x) / s[0]) / static_cast<int>(s[0]);
+    rect.a.y = (rect.a.y - s[1] * (s[1] - rect.a.y) / s[1]) / -static_cast<int>(s[1]);
+    rect.b.x = (rect.b.x - s[0] * (s[0] - rect.b.x) / s[0]) / static_cast<int>(s[0]);
+    rect.b.y = (rect.b.y - s[1] * (s[1] - rect.b.y) / s[1]) / -static_cast<int>(s[1]);
 }
-auto calc_fit_rect(Area const& area, const double width, const double height, const Align horizontal, const Align vertical) -> Area {
+auto calc_fit_rect(const Rectangle& rect, const double width, const double height, const Align horizontal, const Align vertical) -> Rectangle {
     auto       r = double();
-    const auto w = area[2] - area[0], h = area[3] - area[1];
+    const auto w = rect.width(), h = rect.height();
     {
         const auto wr = w / width;
         const auto hr = h / height;
@@ -32,20 +32,21 @@ auto calc_fit_rect(Area const& area, const double width, const double height, co
         vertical == Align::left ? 0.0 : vertical == Align::center ? (h - dh) / 2
                                                                   : dh,
     };
-    const auto xo = area[0] + pad[0], yo = area[1] + pad[1];
-    return {xo, yo, xo + dw, yo + dh};
+    const auto xo = rect.a.x + pad[0], yo = rect.a.y + pad[1];
+    return {{xo, yo}, {xo + dw, yo + dh}};
 }
 auto clear_screen(const Color& color) -> void {
     glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
 }
-auto draw_rect(Screen* screen, Area area, const Color& color) -> void {
-    area.magnify(screen->get_scale());
-    gawl::convert_screen_to_viewport(screen, area);
+auto draw_rect(Screen* const screen, const Rectangle& rect, const Color& color) -> void {
+    auto r = rect;
+    r.magnify(screen->get_scale());
+    gawl::convert_screen_to_viewport(screen, r);
     glUseProgram(0);
     screen->prepare();
     glColor4f(color[0], color[1], color[2], color[3]);
-    glRectf(area[0], area[1], area[2], area[3]);
+    glRectf(rect.a.x, rect.a.y, rect.b.x, rect.b.y);
 }
 auto mask_alpha() -> void {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);

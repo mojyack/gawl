@@ -8,10 +8,10 @@
 
 namespace gawl {
 struct GlobalVar {
-    Shader*    graphic_shader; // dirty way
+    Shader*    graphic_shader;
     Shader*    textrender_shader;
     FT_Library freetype = nullptr;
-    GlobalVar();
+    GlobalVar(const std::pair<GLuint, GLuint>& buffer);
     ~GlobalVar();
 };
 } // namespace gawl

@@ -94,25 +94,25 @@ GraphicData::GraphicData(const PixelBuffer&& buffer, std::optional<std::array<in
 }
 
 // ====== Graphic ====== //
-auto Graphic::get_width(const Screen* screen) const -> int {
+auto Graphic::get_width(const Screen* const screen) const -> int {
     ASSERT(graphic_data, "Texture not initialized")
     return reinterpret_cast<GraphicData*>(graphic_data.get())->get_width(screen);
 }
-auto Graphic::get_height(const Screen* screen) const -> int {
+auto Graphic::get_height(const Screen* const screen) const -> int {
     ASSERT(graphic_data, "Texture not initialized")
     return reinterpret_cast<GraphicData*>(graphic_data.get())->get_height(screen);
 }
-auto Graphic::draw(Screen* screen, const double x, const double y) -> void {
+auto Graphic::draw(Screen* const screen, const Point& point) -> void {
     ASSERT(graphic_data, "Texture not initialized")
-    reinterpret_cast<GraphicData*>(graphic_data.get())->draw(screen, x, y);
+    reinterpret_cast<GraphicData*>(graphic_data.get())->draw(screen, point);
 }
-auto Graphic::draw_rect(Screen* screen, const Area area) -> void {
+auto Graphic::draw_rect(Screen* screen, const Rectangle& rect) -> void {
     ASSERT(graphic_data, "Texture not initialized")
-    graphic_data.get()->draw_rect(screen, area);
+    graphic_data.get()->draw_rect(screen, rect);
 }
-auto Graphic::draw_fit_rect(Screen* screen, const Area area) -> void {
+auto Graphic::draw_fit_rect(Screen* screen, const Rectangle& rect) -> void {
     ASSERT(graphic_data, "Texture not initialized")
-    graphic_data.get()->draw_fit_rect(screen, area);
+    graphic_data.get()->draw_fit_rect(screen, rect);
 }
 auto Graphic::clear() -> void {
     *this = Graphic();

@@ -32,4 +32,19 @@ constexpr const char* textrender_fragment_shader_source = R"glsl(
         color        = vec4(text_color) * sampled;
     }
 )glsl";
+constexpr const char* simple_vertex_shader_source = R"glsl(
+    #version 330 core
+    in vec2 position;
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+)glsl";
+constexpr const char* simple_fragment_shader_source = R"glsl(
+    #version 330 core
+    out vec4     color;
+    uniform vec4 shape_color;
+    void main() {
+        color = shape_color;
+    }
+)glsl";
 } // namespace gawl

@@ -36,9 +36,9 @@ class Graphic {
   public:
     auto get_width(const Screen* screen) const -> int;
     auto get_height(const Screen* screen) const -> int;
-    auto draw(Screen* screen, double x, double y) -> void;
-    auto draw_rect(Screen* screen, Area area) -> void;
-    auto draw_fit_rect(Screen* screen, Area area) -> void;
+    auto draw(Screen* screen, const Point& point) -> void;
+    auto draw_rect(Screen* screen, const Rectangle& rect) -> void;
+    auto draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
     auto clear() -> void;
          operator GraphicBase*() const;
          operator bool() const;

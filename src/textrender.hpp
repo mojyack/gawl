@@ -25,16 +25,16 @@ class TextRender {
     Character* get_chara_graphic(int size, char32_t c);
 
   public:
-    using DrawFunc = std::function<bool(size_t, Area const&, GraphicBase&)>;
+    using DrawFunc = std::function<bool(size_t, const Rectangle&, GraphicBase&)>;
 
-    auto draw(Screen* screen, double x, double y, Color const& color, const char* text, DrawFunc func = nullptr) -> Area;
-    auto draw(Screen* screen, double x, double y, Color const& color, const char32_t* text, DrawFunc func = nullptr) -> Area;
-    auto draw_fit_rect(Screen* screen, Area rect, Color const& color, const char* text, Align alignx = Align::center, Align aligny = Align::center, DrawFunc func = nullptr) -> Area;
-    auto get_rect(const Screen* screen, Area& rect, const char* text) -> void;
-    auto get_rect(const Screen* screen, Area& rect, const char32_t* text) -> void;
-    auto draw_wrapped(Screen* screen, Area& rect, int line_spacing, const Color& color, const char* text, Align alignx = Align::center, Align aligny = Align::center) -> void;
+    auto draw(Screen* screen, const Point& point, const Color& color, const char* text, DrawFunc func = nullptr) -> Rectangle;
+    auto draw(Screen* screen, const Point& point, const Color& color, const char32_t* text, DrawFunc func = nullptr) -> Rectangle;
+    auto draw_fit_rect(Screen* screen, const Rectangle& rect, Color const& color, const char* text, Align alignx = Align::center, Align aligny = Align::center, DrawFunc func = nullptr) -> Rectangle;
+    auto get_rect(const Screen* screen, const Point& base, const char* text) -> Rectangle;
+    auto get_rect(const Screen* screen, const Point& base, const char32_t* text) -> Rectangle;
+    auto draw_wrapped(Screen* screen, const Rectangle& rect, int line_spacing, const Color& color, const char* text, Align alignx = Align::center, Align aligny = Align::center) -> void;
          operator bool() const;
-    TextRender(const std::vector<const char*>&& font_names, int size);
+    TextRender(const std::vector<const char*>& font_names, int size);
     TextRender();
     ~TextRender();
 };
