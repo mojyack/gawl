@@ -27,7 +27,7 @@ auto WaylandApplication::run() -> void {
     auto& window_event_poll     = fds[0];
     auto& quit_event_poll       = fds[1];
     auto& wl_display_event_poll = fds[2];
-    while(!quitted) {
+    while(true) {
         auto read_intent = display.obtain_read_intent();
         display.flush();
         poll(fds.data(), fds.size(), -1);
@@ -51,19 +51,24 @@ auto WaylandApplication::run() -> void {
                         break;
                     }
                 }
+                if(quitted && get_windows().empty()) {
+                    quitted = false;
+                    goto exit;
+                }
             }
         }
         if(quit_event_poll.revents & POLLIN) {
             quit_event.consume();
-            break;
+            close_all_windows();
         }
         if(wl_display_event_poll.revents & POLLIN) {
             read_intent.read();
         }
         display.dispatch_pending();
     }
+exit:
+    display.roundtrip();
     running = false;
-    close_all_windows();
 }
 auto WaylandApplication::quit() -> void {
     quitted = true;

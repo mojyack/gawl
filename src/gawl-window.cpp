@@ -18,6 +18,8 @@ GlobalVar::GlobalVar(const std::pair<GLuint, GLuint>& buffer, const std::pair<GL
 GlobalVar::~GlobalVar() {
     delete graphic_shader;
     delete textrender_shader;
+    delete polygon_shader;
+    FT_Done_FreeType(freetype);
 }
 GlobalVar* global;
 } // namespace internal

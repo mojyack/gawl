@@ -19,10 +19,8 @@ auto GawlApplication::unregister_window(const GawlWindow* window) -> void {
 }
 auto GawlApplication::close_all_windows() -> void {
     for(auto w : windows) {
-        w->status = GawlWindow::Status::CLOSE;
-        delete w;
+        close_window(w);
     }
-    windows.clear();
 }
 auto GawlApplication::close_window(GawlWindow* window) -> void {
     if(auto w = std::find(windows.begin(), windows.end(), window); w != windows.end()) {
