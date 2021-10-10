@@ -82,18 +82,12 @@ auto draw_polygon_fan(Screen* const screen, const std::vector<Point>& vertices, 
 auto change_line_width(const GLfloat width) -> void {
     glLineWidth(width);
 }
-auto draw_lines(Screen* const screen, const std::vector<Point>& vertices, const Color& color) -> void {
-    generic_draw<GL_LINE_STRIP>(screen, vertices, color);
-}
 auto draw_lines(Screen* const screen, const std::vector<Point>& vertices, const Color& color, const GLfloat width) -> void {
-    change_line_width(width);
+    change_line_width(width * screen->get_scale());
     generic_draw<GL_LINE_STRIP>(screen, vertices, color);
-}
-auto draw_outlines(Screen* const screen, const std::vector<Point>& vertices, const Color& color) -> void {
-    generic_draw<GL_LINE_LOOP>(screen, vertices, color);
 }
 auto draw_outlines(Screen* const screen, const std::vector<Point>& vertices, const Color& color, const GLfloat width) -> void {
-    change_line_width(width);
+    change_line_width(width * screen->get_scale());
     generic_draw<GL_LINE_LOOP>(screen, vertices, color);
 }
 auto triangulate(const std::vector<std::vector<Point>>& vertices) -> std::vector<Point> {
