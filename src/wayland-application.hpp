@@ -18,7 +18,7 @@ class WaylandApplication : public GawlApplication {
     bool                quitted = false;
     bool                running = false;
 
-    SafeVar<std::vector<WaylandWindow*>> to_handle;
+    Critical<std::vector<WaylandWindow*>> to_handle;
 
   public:
     auto get_display() -> wayland::display_t&;

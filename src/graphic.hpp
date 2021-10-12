@@ -23,7 +23,7 @@ class PixelBuffer {
     auto get_buffer() const -> const uint8_t*;
     auto clear() -> void;
     PixelBuffer(){};
-    PixelBuffer(size_t width, size_t height, const char* buffer);
+    PixelBuffer(size_t width, size_t height, const uint8_t* buffer);
     PixelBuffer(size_t width, size_t height, std::vector<uint8_t>& buffer);
     PixelBuffer(const char* file);
     PixelBuffer(const std::vector<uint8_t>& buffer);
@@ -39,6 +39,7 @@ class Graphic {
     auto draw(Screen* screen, const Point& point) -> void;
     auto draw_rect(Screen* screen, const Rectangle& rect) -> void;
     auto draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
+    auto draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) const -> void;
     auto clear() -> void;
          operator GraphicBase*() const;
          operator bool() const;

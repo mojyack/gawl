@@ -21,6 +21,20 @@ auto move_vertices(const Screen* const screen, const Rectangle& rect, const bool
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
+auto move_vertices(const Screen* const screen, const std::array<Point, 4>& points, const bool invert) -> void {
+    auto v = points;
+    gawl::convert_screen_to_viewport(screen, v);
+    vertices[0][0] = v[0].x;
+    vertices[0][1] = invert ? v[3].y : v[0].y;
+    vertices[1][0] = v[1].x;
+    vertices[1][1] = invert ? v[2].y : v[1].y;
+    vertices[2][0] = v[2].x;
+    vertices[2][1] = invert ? v[1].y : v[2].y;
+    vertices[3][0] = v[3].x;
+    vertices[3][1] = invert ? v[0].y : v[3].y;
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+}
 } // namespace
 namespace internal {
 auto init_graphics() -> std::pair<GLuint, GLuint> {
@@ -51,6 +65,13 @@ auto finish_graphics() -> void {
 }
 } // namespace internal
 
+auto GraphicBase::do_draw(Screen* const screen) const -> void {
+    type_specific.bind_vao();
+    screen->prepare();
+    glUseProgram(type_specific.get_shader());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
 auto GraphicBase::get_texture() const -> GLuint {
     return texture;
 }
@@ -67,14 +88,19 @@ auto GraphicBase::draw_rect(Screen* const screen, const Rectangle& rect) const -
     auto r = rect;
     r.magnify(screen->get_scale());
     move_vertices(screen, r, invert_top_bottom);
-    type_specific.bind_vao();
-    screen->prepare();
-    glUseProgram(type_specific.get_shader());
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    do_draw(screen);
 }
 auto GraphicBase::draw_fit_rect(Screen* const screen, const Rectangle& rect) const -> void {
     draw_rect(screen, calc_fit_rect(rect, width, height));
+}
+auto GraphicBase::draw_transformed(Screen* const screen, const std::array<Point, 4>& vertices) const -> void {
+    auto       v = vertices;
+    const auto s = screen->get_scale();
+    for(auto& p : v) {
+        p.magnify(s);
+    }
+    move_vertices(screen, v, invert_top_bottom);
+    do_draw(screen);
 }
 GraphicBase::GraphicBase(internal::Shader& type_specific) : type_specific(type_specific) {
     glGenTextures(1, &texture);

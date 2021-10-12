@@ -15,6 +15,7 @@ auto finish_graphics() -> void;
 class GraphicBase {
   private:
     GLuint texture;
+    auto   do_draw(Screen* screen) const -> void;
 
   protected:
     internal::Shader& type_specific;
@@ -28,6 +29,7 @@ class GraphicBase {
     auto         draw(Screen* screen, const Point& point) const -> void;
     auto         draw_rect(Screen* screen, const Rectangle& rect) const -> void;
     auto         draw_fit_rect(Screen* screen, const Rectangle& rect) const -> void;
+    auto         draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) const -> void;
     GraphicBase(internal::Shader& type_specific);
     virtual ~GraphicBase();
 };

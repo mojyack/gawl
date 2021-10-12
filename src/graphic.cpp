@@ -37,7 +37,7 @@ auto PixelBuffer::clear() -> void {
     size = {0, 0};
     data.clear();
 }
-PixelBuffer::PixelBuffer(const size_t width, const size_t height, const char* const buffer) : size({width, height}) {
+PixelBuffer::PixelBuffer(const size_t width, const size_t height, const uint8_t* const buffer) : size({width, height}) {
     const auto len = size_t(size[0] * size[1] * 4);
     data.resize(len);
     std::memcpy(data.data(), buffer, len);
@@ -115,6 +115,10 @@ auto Graphic::draw_rect(Screen* screen, const Rectangle& rect) -> void {
 auto Graphic::draw_fit_rect(Screen* screen, const Rectangle& rect) -> void {
     ASSERT(graphic_data, "Texture not initialized")
     graphic_data.get()->draw_fit_rect(screen, rect);
+}
+auto Graphic::draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) const -> void {
+    ASSERT(graphic_data, "Texture not initialized")
+    graphic_data.get()->draw_transformed(screen, vertices);
 }
 auto Graphic::clear() -> void {
     *this = Graphic();

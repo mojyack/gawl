@@ -12,9 +12,9 @@
 
 namespace gawl {
 struct WindowCreateHint {
-    size_t width = 800;
-    size_t height = 600;
-    const char* title = "Window";
+    size_t      width  = 800;
+    size_t      height = 600;
+    const char* title  = "Window";
 };
 
 class WaylandWindow : public GawlWindow {
@@ -48,20 +48,20 @@ class WaylandWindow : public GawlWindow {
 
     std::thread::id     main_thread_id;
     bool                frame_ready   = true;
-    SafeVar<bool>       current_frame = true;
+    Critical<bool>      current_frame = true;
     bool                has_pointer;
     bool                has_keyboard;
     int                 window_size[2] = {0, 0};
     int                 buffer_scale   = 0;
-    ConditionalVariable key_delay_timer;
+    Event               key_delay_timer;
     std::thread         key_repeater;
-    SafeVar<uint32_t>   last_pressed_key     = -1;
+    Critical<uint32_t>  last_pressed_key     = -1;
     bool                is_repeat_info_valid = false;
     uint32_t            repeat_interval      = -1;
     uint32_t            delay_in_milisec     = -1;
-    SafeVar<uint32_t>   key_repeated         = 0;
+    Critical<uint32_t>  key_repeated         = 0;
     std::map<int, bool> keypress_info; // first=linux-syscall-code second=pressed?
-    SafeVar<bool>       do_refresh = false;
+    Critical<bool>      do_refresh = false;
 
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
