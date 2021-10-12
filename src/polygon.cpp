@@ -47,17 +47,18 @@ extern GlobalVar* global;
 
 auto do_draw(const GLenum mode, Screen* const screen, const std::vector<GLfloat>& buffer, const Color& color) -> void {
     const auto copy_size = buffer.size() * sizeof(GLfloat);
+    const auto vbbinder  = internal::VertexBufferBinder(vbo);
     if(current_vbo_capacity < copy_size) {
         glBufferData(GL_ARRAY_BUFFER, copy_size, buffer.data(), GL_DYNAMIC_DRAW);
         current_vbo_capacity = copy_size;
     } else {
         glBufferSubData(GL_ARRAY_BUFFER, 0, copy_size, buffer.data());
     }
-    auto& shader = *global->polygon_shader;
-    shader.bind_vao();
-    screen->prepare();
-    glUseProgram(shader.get_shader());
-    glUniform4f(glGetUniformLocation(shader.get_shader(), "polygon_color"), color[0], color[1], color[2], color[3]);
+    auto&      shader   = *global->polygon_shader;
+    const auto vabinder = shader.bind_vao();
+    const auto fbbinder = screen->prepare();
+    const auto shbinder = shader.use_shader();
+    glUniform4f(glGetUniformLocation(shbinder.get(), "polygon_color"), color[0], color[1], color[2], color[3]);
     glDrawArrays(mode, 0, buffer.size() / 2);
 }
 } // namespace internal

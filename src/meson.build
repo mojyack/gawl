@@ -31,7 +31,9 @@ gawl_files = files(
 )
 
 gawl_headers = files(
+    'binder.hpp',
     'earcut.hpp',
+    'error.hpp',
     'empty-texture.hpp',
     'fd.hpp',
     'gawl-application.hpp',

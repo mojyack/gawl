@@ -2,6 +2,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+#include "binder.hpp"
 #include "empty-texture.hpp"
 #include "error.hpp"
 #include "global.hpp"
@@ -24,7 +25,7 @@ EmptyTextureData::EmptyTextureData(const size_t width, const size_t height) : Gr
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
     glGenFramebuffers(1, &frame_buffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+    auto binder = FramebufferBinder(frame_buffer);
 
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, get_texture(), 0);
     GLenum buffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -44,11 +45,12 @@ auto EmptyTexture::get_size() const -> std::array<std::size_t, 2> {
     ASSERT(data, "texture not initialized")
     return data->get_size();
 }
-auto EmptyTexture::prepare() -> void {
+auto EmptyTexture::prepare() -> internal::FramebufferBinder {
     ASSERT(data, "texture not initialized")
-    glBindFramebuffer(GL_FRAMEBUFFER, data->get_frame_buffer_name());
-    const auto size = get_size();
+    auto       binder = internal::FramebufferBinder(data->get_frame_buffer_name());
+    const auto size   = get_size();
     glViewport(0, 0, size[0], size[1]);
+    return binder;
 }
 auto EmptyTexture::get_width(const Screen* screen) const -> int {
     ASSERT(data, "texture not initialized")

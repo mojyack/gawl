@@ -176,9 +176,10 @@ auto TextRender::draw(Screen* const screen, const Point& point, Color const& col
 }
 auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char32_t* const text, const DrawFunc func) -> Rectangle {
     ASSERT(data, "font not initialized")
-    const auto prep = [&]() {
-        glUseProgram(internal::global->textrender_shader->get_shader());
-        glUniform4f(glGetUniformLocation(internal::global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
+    auto       shbinder = internal::ShaderBinder(0);
+    const auto prep     = [&]() {
+        shbinder = internal::global->textrender_shader->use_shader();
+        glUniform4f(glGetUniformLocation(shbinder.get(), "text_color"), color[0], color[1], color[2], color[3]);
         set_char_color(color);
     };
     const auto scale       = screen->get_scale();
@@ -219,9 +220,9 @@ auto TextRender::draw_fit_rect(Screen* const screen, const Rectangle& rect, Colo
     const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
     auto x = alignx == Align::left ? r.a.x - font_area.a.x : alignx == Align::center ? r.a.x - font_area.a.x + pad[0] / 2
-                                                                                        : r.b.x - font_area.width();
+                                                                                     : r.b.x - font_area.width();
     auto y = aligny == Align::left ? r.a.y - r.a.y : aligny == Align::center ? r.a.y - font_area.a.y + pad[1] / 2
-                                                                                   : r.b.y - font_area.height();
+                                                                             : r.b.y - font_area.height();
     x /= scale;
     y /= scale;
     return draw(screen, {x, y}, color, text, func);

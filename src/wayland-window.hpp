@@ -71,7 +71,7 @@ class WaylandWindow : public GawlWindow {
     auto wait_for_key_repeater_exit() -> void;
 
   public:
-    auto prepare() -> void override;
+    [[nodiscard]] auto prepare() -> internal::FramebufferBinder override;
 
     auto refresh() -> void final;
 

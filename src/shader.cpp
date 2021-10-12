@@ -2,10 +2,13 @@
 #include "error.hpp"
 
 namespace gawl::internal {
-auto Shader::bind_vao() -> void {
-    glBindVertexArray(vao);
+auto Shader::bind_vao() -> VArrayBinder {
+    return VArrayBinder(vao);
 }
-auto Shader::get_shader() -> GLuint {
+auto Shader::use_shader() -> ShaderBinder {
+    return ShaderBinder(shader_program);
+}
+auto Shader::get_shader() const -> GLuint {
     return shader_program;
 }
 Shader::Shader(const char* const vertex_shader_source, const char* const fragment_shader_source, const GLuint vbo, const GLuint ebo, const bool has_texture) {
@@ -32,10 +35,9 @@ Shader::Shader(const char* const vertex_shader_source, const char* const fragmen
     glBindFragDataLocation(shader_program, 0, "color");
 
     glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    auto vabinder = VArrayBinder(vao);
+    auto vbbinder = VertexBufferBinder(vbo);
+    auto ebbinder = ElementBufferBinder(ebo);
 
     const auto pos_attrib = glGetAttribLocation(shader_program, "position");
     glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (has_texture ? 4 : 2), 0);
@@ -45,10 +47,7 @@ Shader::Shader(const char* const vertex_shader_source, const char* const fragmen
         const auto tex_attrib = glGetAttribLocation(shader_program, "texcoord");
         glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, (void*)(sizeof(GLfloat) * 2));
         glEnableVertexAttribArray(tex_attrib);
-        glUseProgram(shader_program);
     }
-
-    glBindVertexArray(0);
 }
 Shader::~Shader() {
     glDeleteVertexArrays(1, &vao);
@@ -56,4 +55,4 @@ Shader::~Shader() {
     glDeleteShader(fragment_shader);
     glDeleteShader(vertex_shader);
 }
-} // namespace gawl
+} // namespace gawl::internal

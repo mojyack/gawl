@@ -8,8 +8,8 @@ auto NullScreen::get_scale() const -> double {
 auto NullScreen::get_size() const -> std::array<std::size_t, 2> {
     return {0, 0};
 }
-auto NullScreen::prepare() -> void {
+auto NullScreen::prepare() -> internal::FramebufferBinder {
     panic("attempt to draw to null-screen");
-    return;
+    return internal::FramebufferBinder();
 }
 } // namespace gawl

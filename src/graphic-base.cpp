@@ -18,7 +18,7 @@ auto move_vertices(const Screen* const screen, const Rectangle& rect, const bool
     vertices[2][1] = invert ? r.a.y : r.b.y;
     vertices[3][0] = r.a.x;
     vertices[3][1] = invert ? r.a.y : r.b.y;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    auto binder    = internal::VertexBufferBinder(vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
 auto move_vertices(const Screen* const screen, const std::array<Point, 4>& points, const bool invert) -> void {
@@ -32,21 +32,21 @@ auto move_vertices(const Screen* const screen, const std::array<Point, 4>& point
     vertices[2][1] = invert ? v[1].y : v[2].y;
     vertices[3][0] = v[3].x;
     vertices[3][1] = invert ? v[0].y : v[3].y;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    auto binder    = internal::VertexBufferBinder(vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
 } // namespace
 namespace internal {
 auto init_graphics() -> std::pair<GLuint, GLuint> {
     glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    auto vbbinder = VertexBufferBinder(vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), NULL, GL_DYNAMIC_DRAW);
 
     const static GLuint elements[] = {
         0, 1, 2,
         2, 3, 0};
     glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    auto ebbinder = ElementBufferBinder(ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
 
     vertices[0][2] = 0.0;
@@ -66,10 +66,10 @@ auto finish_graphics() -> void {
 } // namespace internal
 
 auto GraphicBase::do_draw(Screen* const screen) const -> void {
-    type_specific.bind_vao();
-    screen->prepare();
-    glUseProgram(type_specific.get_shader());
-    glBindTexture(GL_TEXTURE_2D, texture);
+    const auto vabinder = type_specific.bind_vao();
+    const auto fbbinder = screen->prepare();
+    const auto shbinder = type_specific.use_shader();
+    const auto txbinder = internal::TextureBinder(texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 auto GraphicBase::get_texture() const -> GLuint {
@@ -104,7 +104,7 @@ auto GraphicBase::draw_transformed(Screen* const screen, const std::array<Point,
 }
 GraphicBase::GraphicBase(internal::Shader& type_specific) : type_specific(type_specific) {
     glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    auto binder = internal::TextureBinder(texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
