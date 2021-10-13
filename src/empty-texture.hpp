@@ -32,8 +32,6 @@ class EmptyTexture : public Screen {
     auto draw_rect(Screen* screen, const Rectangle& rect) -> void;
     auto draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
     auto clear() -> void;
-         operator internal::EmptyTextureData*() const;
-         operator GraphicBase*() const;
          operator bool() const;
     EmptyTexture(const EmptyTexture&);
     EmptyTexture(EmptyTexture&&);

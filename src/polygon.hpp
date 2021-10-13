@@ -6,13 +6,14 @@
 #include <GL/glext.h>
 
 #include "earcut.hpp"
+#include "globject.hpp"
 #include "screen.hpp"
 #include "type.hpp"
 
 namespace gawl {
 namespace internal {
-auto init_polygon() -> std::pair<GLuint, GLuint>; // vbo, ebo
-auto finish_polygon() -> void;
+auto create_polygon_globject() -> GLObject*;
+
 auto do_draw(GLenum mode, Screen* screen, const std::vector<GLfloat>& buffer, const Color& color) -> void;
 template <GLenum MODE, PointArray T>
 auto generic_draw(Screen* const screen, const T& vertices, const Color& color) -> void {

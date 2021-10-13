@@ -10,7 +10,7 @@
 #include FT_FREETYPE_H
 
 #include "error.hpp"
-#include "global.hpp"
+#include "shader-source.hpp"
 #include "textrender.hpp"
 
 namespace gawl {
@@ -62,50 +62,76 @@ using Faces = std::vector<FT_Face>;
 } // namespace
 
 namespace internal {
-extern GlobalVar* global;
+class TextRenderGLObject : public GLObject {
+  private:
+    Color color;
+
+  public:
+    FT_Library freetype = nullptr;
+
+    auto set_text_color(const Color& text_color) {
+        color = text_color;
+    }
+    auto set_shader_parameters(const GLuint shader) -> void override {
+        const auto l = glGetUniformLocation(shader, "text_color");
+        glUniform4f(l, color[0], color[1], color[2], color[3]);
+    };
+    TextRenderGLObject() : GLObject(textrender_vertex_shader_source, textrender_fragment_shader_source, true) {
+        FT_Init_FreeType(&freetype);
+    }
+    ~TextRenderGLObject() {
+        FT_Done_FreeType(freetype);
+    }
+};
+static TextRenderGLObject* gl;
+
+auto create_text_globject() -> GLObject* {
+    gl = new TextRenderGLObject();
+    return gl;
+}
 
 class Character : public GraphicBase {
   public:
     int offset[2];
     int advance;
-    Character(char32_t code, Faces const& faces);
-};
 
-Character::Character(char32_t code, Faces const& faces) : GraphicBase(*global->textrender_shader) {
-    auto face        = FT_Face(nullptr);
-    auto glyph_index = int(-1);
-    for(auto f : faces) {
-        const auto i = FT_Get_Char_Index(f, code);
-        if(i != 0) {
-            face        = f;
-            glyph_index = i;
-            break;
+    Character(char32_t code, const Faces& faces) : GraphicBase(internal::gl) {
+        auto face        = FT_Face(nullptr);
+        auto glyph_index = int(-1);
+        for(auto f : faces) {
+            const auto i = FT_Get_Char_Index(f, code);
+            if(i != 0) {
+                face        = f;
+                glyph_index = i;
+                break;
+            }
         }
-    }
-    if(glyph_index == -1) {
-        // no font have the glygh. fallback to first font and remove character.
-        code        = U' ';
-        face        = faces[0];
-        glyph_index = FT_Get_Char_Index(faces[0], code);
-    }
+        if(glyph_index == -1) {
+            // no font have the glygh. fallback to first font and remove character.
+            code        = U' ';
+            face        = faces[0];
+            glyph_index = FT_Get_Char_Index(faces[0], code);
+        }
 
-    auto error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
-    if(error) {
-        throw std::runtime_error("failed to load Glyph");
-    };
-    error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+        auto error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
+        ASSERT(!error, "failed to load glyph")
+        error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+        ASSERT(!error, "failed to render glyph")
 
-    width     = face->glyph->bitmap.width;
-    height    = face->glyph->bitmap.rows;
-    offset[0] = face->glyph->bitmap_left;
-    offset[1] = face->glyph->bitmap_top;
-    advance   = static_cast<int>(face->glyph->advance.x) >> 6;
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-}
+        width     = face->glyph->bitmap.width;
+        height    = face->glyph->bitmap.rows;
+        offset[0] = face->glyph->bitmap_left;
+        offset[1] = face->glyph->bitmap_top;
+        advance   = static_cast<int>(face->glyph->advance.x) >> 6;
+
+        const auto txbinder = bind_texture();
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+    }
+};
 
 struct CharacterCache {
     using Map = std::unordered_map<char32_t, Character*>;
@@ -123,7 +149,7 @@ struct CharacterCache {
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
             auto face = FT_Face();
-            ASSERT(FT_New_Face(global->freetype, path.data(), 0, &(face)) == 0, "failed to open font")
+            ASSERT(FT_New_Face(gl->freetype, path.data(), 0, &(face)) == 0, "failed to open font")
             FT_Set_Pixel_Sizes(face, 0, size);
             faces.emplace_back(face);
         }
@@ -176,16 +202,11 @@ auto TextRender::draw(Screen* const screen, const Point& point, Color const& col
 }
 auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char32_t* const text, const DrawFunc func) -> Rectangle {
     ASSERT(data, "font not initialized")
-    auto       shbinder = internal::ShaderBinder(0);
-    const auto prep     = [&]() {
-        shbinder = internal::global->textrender_shader->use_shader();
-        glUniform4f(glGetUniformLocation(shbinder.get(), "text_color"), color[0], color[1], color[2], color[3]);
-        set_char_color(color);
-    };
     const auto scale       = screen->get_scale();
     auto       xpos        = point.x;
     auto       drawed_area = Rectangle{point, point};
-    prep();
+
+    set_char_color(color);
 
     auto c = text;
     while(*c != '\0') {
@@ -199,7 +220,8 @@ auto TextRender::draw(Screen* const screen, const Point& point, Color const& col
         if(func) {
             const auto result = func(c - text, area, *chara);
             if(result) {
-                prep();
+                // hook may change color
+                set_char_color(color);
             } else {
                 chara->draw_rect(screen, area);
             }
@@ -228,7 +250,7 @@ auto TextRender::draw_fit_rect(Screen* const screen, const Rectangle& rect, Colo
     return draw(screen, {x, y}, color, text, func);
 }
 auto TextRender::set_char_color(const Color& color) -> void {
-    glUniform4f(glGetUniformLocation(internal::global->textrender_shader->get_shader(), "text_color"), color[0], color[1], color[2], color[3]);
+    internal::gl->set_text_color(color);
 }
 auto TextRender::get_rect(const Screen* screen, const Point& point, const char* const text) -> Rectangle {
     const auto uni = convert_utf8_to_unicode32(text);

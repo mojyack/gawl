@@ -7,6 +7,7 @@ namespace gawl {
 namespace internal {
 class TextRenderPrivate;
 class Character;
+auto create_text_globject() -> GLObject*;
 } // namespace internal
 class TextRender {
   private:
@@ -15,7 +16,7 @@ class TextRender {
     internal::Character* get_chara_graphic(int size, char32_t c);
 
   public:
-    using DrawFunc = std::function<bool(size_t, const Rectangle&, GraphicBase&)>;
+    using DrawFunc = std::function<bool(size_t, const Rectangle&, internal::GraphicBase&)>;
 
     auto draw(Screen* screen, const Point& point, const Color& color, const char* text, DrawFunc func = nullptr) -> Rectangle;
     auto draw(Screen* screen, const Point& point, const Color& color, const char32_t* text, DrawFunc func = nullptr) -> Rectangle;

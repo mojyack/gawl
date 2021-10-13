@@ -1,8 +1,8 @@
 #include <numbers>
 
 #include "error.hpp"
-#include "global.hpp"
 #include "polygon.hpp"
+#include "shader-source.hpp"
 
 // for triangulate
 namespace mapbox::util {
@@ -21,43 +21,39 @@ struct nth<1, gawl::Point> {
 } // namespace mapbox::util
 
 namespace gawl {
-namespace {
-GLuint ebo;
-size_t current_ebo_capacity;
-
-GLuint vbo;
-size_t current_vbo_capacity;
-} // namespace
-
 namespace internal {
-auto init_polygon() -> std::pair<GLuint, GLuint> {
-    glGenBuffers(1, &vbo);
-    current_vbo_capacity = 0;
+class PolygonGLObject : public GLObject {
+  private:
+    size_t vbo_capacity = 0;
 
-    glGenBuffers(1, &ebo);
-    current_ebo_capacity = 0;
+  public:
+    auto write_buffer(const std::vector<GLfloat>& buffer) -> void {
+        const auto copy_size = buffer.size() * sizeof(GLfloat);
+        if(vbo_capacity < copy_size) {
+            glBufferData(GL_ARRAY_BUFFER, copy_size, buffer.data(), GL_DYNAMIC_DRAW);
+            vbo_capacity = copy_size;
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, copy_size, buffer.data());
+        }
+    }
+    PolygonGLObject() : GLObject(polygon_vertex_shader_source, polygon_fragment_shader_source, false) {}
+};
 
-    return {vbo, ebo};
+static PolygonGLObject* gl;
+
+auto create_polygon_globject() -> GLObject* {
+    gl = new PolygonGLObject();
+    return gl;
 }
-auto finish_polygon() -> void {
-    glDeleteBuffers(1, &ebo);
-    glDeleteBuffers(1, &vbo);
-}
-extern GlobalVar* global;
 
 auto do_draw(const GLenum mode, Screen* const screen, const std::vector<GLfloat>& buffer, const Color& color) -> void {
-    const auto copy_size = buffer.size() * sizeof(GLfloat);
-    const auto vbbinder  = internal::VertexBufferBinder(vbo);
-    if(current_vbo_capacity < copy_size) {
-        glBufferData(GL_ARRAY_BUFFER, copy_size, buffer.data(), GL_DYNAMIC_DRAW);
-        current_vbo_capacity = copy_size;
-    } else {
-        glBufferSubData(GL_ARRAY_BUFFER, 0, copy_size, buffer.data());
-    }
-    auto&      shader   = *global->polygon_shader;
-    const auto vabinder = shader.bind_vao();
+    const auto vabinder = gl->bind_vao();
+    const auto shbinder = gl->use_shader();
+    const auto vbbinder = gl->bind_vbo();
     const auto fbbinder = screen->prepare();
-    const auto shbinder = shader.use_shader();
+
+    gl->write_buffer(buffer);
+
     glUniform4f(glGetUniformLocation(shbinder.get(), "polygon_color"), color[0], color[1], color[2], color[3]);
     glDrawArrays(mode, 0, buffer.size() / 2);
 }

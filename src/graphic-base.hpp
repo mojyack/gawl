@@ -3,34 +3,35 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+#include "globject.hpp"
 #include "screen.hpp"
-#include "shader.hpp"
 #include "type.hpp"
 
-namespace gawl {
-namespace internal {
-auto init_graphics() -> std::pair<GLuint, GLuint>; // vbo, ebo
-auto finish_graphics() -> void;
-} // namespace internal
+namespace gawl::internal {
 class GraphicBase {
   private:
-    GLuint texture;
-    auto   do_draw(Screen* screen) const -> void;
+    GLuint    texture;
+    GLObject* gl;
+    GLfloat   vertices[4][4];
+
+    auto move_vertices(const Screen* screen, const Rectangle& rect, bool invert) -> void;
+    auto move_vertices(const Screen* screen, const std::array<Point, 4>& points, bool invert) -> void;
+    auto do_draw(Screen* screen) const -> void;
 
   protected:
-    internal::Shader& type_specific;
-    int               width, height;
-    bool              invert_top_bottom = false;
-    auto              get_texture() const -> GLuint;
+    int  width, height;
+    bool invert_top_bottom = false;
+    auto get_texture() const -> GLuint;
+    auto bind_texture() const -> TextureBinder;
 
   public:
     virtual auto get_width(const Screen* screen) const -> int;
     virtual auto get_height(const Screen* screen) const -> int;
-    auto         draw(Screen* screen, const Point& point) const -> void;
-    auto         draw_rect(Screen* screen, const Rectangle& rect) const -> void;
-    auto         draw_fit_rect(Screen* screen, const Rectangle& rect) const -> void;
-    auto         draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) const -> void;
-    GraphicBase(internal::Shader& type_specific);
+    auto         draw(Screen* screen, const Point& point) -> void;
+    auto         draw_rect(Screen* screen, const Rectangle& rect) -> void;
+    auto         draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
+    auto         draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) -> void;
+    GraphicBase(internal::GLObject* gl);
     virtual ~GraphicBase();
 };
-} // namespace gawl
+} // namespace gawl::internal
