@@ -8,14 +8,20 @@
 #include "type.hpp"
 
 namespace gawl::internal {
-class GraphicBase {
+class GraphicGLObject : public GLObject {
   private:
-    GLuint    texture;
-    GLObject* gl;
-    GLfloat   vertices[4][4];
+    GLfloat vertices[4][4];
 
+  public:
     auto move_vertices(const Screen* screen, const Rectangle& rect, bool invert) -> void;
     auto move_vertices(const Screen* screen, const std::array<Point, 4>& points, bool invert) -> void;
+    GraphicGLObject(const char* vertex_shader_source, const char* fragment_shader_source);
+};
+class GraphicBase {
+  private:
+    GLuint           texture;
+    GraphicGLObject* gl;
+
     auto do_draw(Screen* screen) const -> void;
 
   protected:
@@ -31,7 +37,7 @@ class GraphicBase {
     auto         draw_rect(Screen* screen, const Rectangle& rect) -> void;
     auto         draw_fit_rect(Screen* screen, const Rectangle& rect) -> void;
     auto         draw_transformed(Screen* screen, const std::array<Point, 4>& vertices) -> void;
-    GraphicBase(internal::GLObject* gl);
+    GraphicBase(GraphicGLObject* gl);
     virtual ~GraphicBase();
 };
 } // namespace gawl::internal

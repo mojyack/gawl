@@ -8,52 +8,50 @@
 
 namespace gawl {
 namespace internal {
-GLObject* gl;
+GraphicGLObject* gl;
 
 auto create_graphic_globject() -> GLObject* {
-    gl = new GLObject(graphic_vertex_shader_source, graphic_fragment_shader_source, true);
+    gl = new GraphicGLObject(graphic_vertex_shader_source, graphic_fragment_shader_source);
     return gl;
 }
 
 // ====== GraphicData ====== //
 class GraphicData : public GraphicBase {
   public:
-    GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop);
-    GraphicData(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop);
+    GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicData(std::move(buffer), crop) {}
+    GraphicData(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase(internal::gl) {
+        const auto txbinder = bind_texture();
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        if(crop) {
+            if((*crop)[0] < 0) {
+                (*crop)[0] += buffer.get_width();
+            }
+            if((*crop)[1] < 0) {
+                (*crop)[1] += buffer.get_height();
+            }
+            if((*crop)[2] < 0) {
+                (*crop)[2] += buffer.get_width();
+            }
+            if((*crop)[3] < 0) {
+                (*crop)[3] += buffer.get_height();
+            }
+        }
+
+        if(crop) {
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, crop.value()[0]);
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, crop.value()[1]);
+        } else {
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+        }
+        width  = crop ? (*crop)[2] : buffer.get_width();
+        height = crop ? (*crop)[3] : buffer.get_height();
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.get_width());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
+    }
     ~GraphicData() {}
 };
 
-GraphicData::GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicData(std::move(buffer), crop) {}
-GraphicData::GraphicData(const PixelBuffer&& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase(internal::gl) {
-    const auto txbinder = bind_texture();
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    if(crop) {
-        if((*crop)[0] < 0) {
-            (*crop)[0] += buffer.get_width();
-        }
-        if((*crop)[1] < 0) {
-            (*crop)[1] += buffer.get_height();
-        }
-        if((*crop)[2] < 0) {
-            (*crop)[2] += buffer.get_width();
-        }
-        if((*crop)[3] < 0) {
-            (*crop)[3] += buffer.get_height();
-        }
-    }
-
-    if(crop) {
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, crop.value()[0]);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, crop.value()[1]);
-    } else {
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-    }
-    width  = crop ? (*crop)[2] : buffer.get_width();
-    height = crop ? (*crop)[3] : buffer.get_height();
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.get_width());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
-}
 } // namespace internal
 
 // ====== Graphic ====== //

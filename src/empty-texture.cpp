@@ -13,7 +13,7 @@ auto EmptyTextureData::get_size() const -> const std::array<size_t, 2>& {
 auto EmptyTextureData::get_frame_buffer_name() const -> GLuint {
     return frame_buffer;
 }
-EmptyTextureData::EmptyTextureData(const size_t width, const size_t height) : GraphicBase(default_gl_object), size{width, height} {
+EmptyTextureData::EmptyTextureData(const size_t width, const size_t height) : GraphicBase(reinterpret_cast<GraphicGLObject*>(default_gl_object)), size{width, height} {
     const auto txbinder = bind_texture();
 
     this->width             = width;

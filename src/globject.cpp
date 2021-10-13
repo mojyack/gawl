@@ -16,7 +16,7 @@ auto GLObject::use_shader() const -> ShaderBinder {
 auto GLObject::get_shader() const -> GLuint {
     return shader_program;
 }
-GLObject::GLObject(const char* const vertex_shader_source, const char* const fragment_shader_source, const bool has_texture) {
+GLObject::GLObject(const char* const vertex_shader_source, const char* const fragment_shader_source) {
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
@@ -42,20 +42,6 @@ GLObject::GLObject(const char* const vertex_shader_source, const char* const fra
     glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
     ASSERT(status == GL_TRUE, "failed to link shaders")
     glBindFragDataLocation(shader_program, 0, "color");
-
-    auto vabinder = bind_vao();
-    auto vbbinder = bind_vbo();
-    auto ebbinder = bind_ebo();
-
-    const auto pos_attrib = glGetAttribLocation(shader_program, "position");
-    glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (has_texture ? 4 : 2), 0);
-    glEnableVertexAttribArray(pos_attrib);
-
-    if(has_texture) {
-        const auto tex_attrib = glGetAttribLocation(shader_program, "texcoord");
-        glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, (void*)(sizeof(GLfloat) * 2));
-        glEnableVertexAttribArray(tex_attrib);
-    }
 }
 GLObject::~GLObject() {
     glDeleteBuffers(1, &ebo);

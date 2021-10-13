@@ -7,7 +7,7 @@
 
 namespace gawl::internal {
 class GLObject {
-  private:
+  protected:
     GLuint vao;
     GLuint vbo;
     GLuint ebo;
@@ -23,7 +23,7 @@ class GLObject {
     [[nodiscard]] auto use_shader() const -> ShaderBinder;
     auto               get_shader() const -> GLuint;
     virtual auto       set_shader_parameters([[maybe_unused]] GLuint shader) -> void{};
-    GLObject(const char* vertex_shader_source, const char* fragment_shader_source, bool has_texture);
+    GLObject(const char* vertex_shader_source, const char* fragment_shader_source);
     virtual ~GLObject();
 };
 } // namespace gawl::internal

@@ -62,7 +62,7 @@ using Faces = std::vector<FT_Face>;
 } // namespace
 
 namespace internal {
-class TextRenderGLObject : public GLObject {
+class TextRenderGLObject : public GraphicGLObject {
   private:
     Color color;
 
@@ -76,7 +76,7 @@ class TextRenderGLObject : public GLObject {
         const auto l = glGetUniformLocation(shader, "text_color");
         glUniform4f(l, color[0], color[1], color[2], color[3]);
     };
-    TextRenderGLObject() : GLObject(textrender_vertex_shader_source, textrender_fragment_shader_source, true) {
+    TextRenderGLObject() : GraphicGLObject(textrender_vertex_shader_source, textrender_fragment_shader_source) {
         FT_Init_FreeType(&freetype);
     }
     ~TextRenderGLObject() {

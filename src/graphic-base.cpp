@@ -2,7 +2,7 @@
 #include "misc.hpp"
 
 namespace gawl::internal {
-auto GraphicBase::move_vertices(const Screen* const screen, const Rectangle& rect, const bool invert) -> void {
+auto GraphicGLObject::move_vertices(const Screen* const screen, const Rectangle& rect, const bool invert) -> void {
     auto r = rect;
     gawl::convert_screen_to_viewport(screen, r);
     vertices[0][0] = r.a.x;
@@ -13,10 +13,10 @@ auto GraphicBase::move_vertices(const Screen* const screen, const Rectangle& rec
     vertices[2][1] = invert ? r.a.y : r.b.y;
     vertices[3][0] = r.a.x;
     vertices[3][1] = invert ? r.a.y : r.b.y;
-    auto vbbinder  = gl->bind_vbo();
+    auto vbbinder  = bind_vbo();
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
-auto GraphicBase::move_vertices(const Screen* const screen, const std::array<Point, 4>& points, const bool invert) -> void {
+auto GraphicGLObject::move_vertices(const Screen* const screen, const std::array<Point, 4>& points, const bool invert) -> void {
     auto v = points;
     gawl::convert_screen_to_viewport(screen, v);
     vertices[0][0] = v[0].x;
@@ -27,9 +27,38 @@ auto GraphicBase::move_vertices(const Screen* const screen, const std::array<Poi
     vertices[2][1] = invert ? v[1].y : v[2].y;
     vertices[3][0] = v[3].x;
     vertices[3][1] = invert ? v[0].y : v[3].y;
-    auto vbbinder  = gl->bind_vbo();
+    auto vbbinder  = bind_vbo();
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
+GraphicGLObject::GraphicGLObject(const char* const vertex_shader_source, const char* const fragment_shader_source) : GLObject(vertex_shader_source, fragment_shader_source) {
+    const auto vabinder = bind_vao();
+    const auto vbbinder = bind_vbo();
+    const auto ebbinder = bind_ebo();
+
+    const auto pos_attrib = glGetAttribLocation(shader_program, "position");
+    glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, 0);
+    glEnableVertexAttribArray(pos_attrib);
+
+    const auto tex_attrib = glGetAttribLocation(shader_program, "texcoord");
+    glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, (void*)(sizeof(GLfloat) * 2));
+    glEnableVertexAttribArray(tex_attrib);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), NULL, GL_DYNAMIC_DRAW);
+    const static GLuint elements[] = {
+        0, 1, 2,
+        2, 3, 0};
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+
+    vertices[0][2] = 0.0;
+    vertices[0][3] = 0.0;
+    vertices[1][2] = 1.0;
+    vertices[1][3] = 0.0;
+    vertices[2][2] = 1.0;
+    vertices[2][3] = 1.0;
+    vertices[3][2] = 0.0;
+    vertices[3][3] = 1.0;
+}
+
 auto GraphicBase::do_draw(Screen* const screen) const -> void {
     const auto vabinder = gl->bind_vao();
     const auto ebbinder = gl->bind_ebo();
@@ -57,7 +86,7 @@ auto GraphicBase::draw(Screen* const screen, const Point& point) -> void {
 auto GraphicBase::draw_rect(Screen* const screen, const Rectangle& rect) -> void {
     auto r = rect;
     r.magnify(screen->get_scale());
-    move_vertices(screen, r, invert_top_bottom);
+    gl->move_vertices(screen, r, invert_top_bottom);
     do_draw(screen);
 }
 auto GraphicBase::draw_fit_rect(Screen* const screen, const Rectangle& rect) -> void {
@@ -69,29 +98,10 @@ auto GraphicBase::draw_transformed(Screen* const screen, const std::array<Point,
     for(auto& p : v) {
         p.magnify(s);
     }
-    move_vertices(screen, v, invert_top_bottom);
+    gl->move_vertices(screen, v, invert_top_bottom);
     do_draw(screen);
 }
-GraphicBase::GraphicBase(internal::GLObject* gl) : gl(gl) {
-    auto vbbinder = gl->bind_vbo();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), NULL, GL_DYNAMIC_DRAW);
-
-    auto ebbinder = gl->bind_ebo();
-
-    const static GLuint elements[] = {
-        0, 1, 2,
-        2, 3, 0};
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-
-    vertices[0][2] = 0.0;
-    vertices[0][3] = 0.0;
-    vertices[1][2] = 1.0;
-    vertices[1][3] = 0.0;
-    vertices[2][2] = 1.0;
-    vertices[2][3] = 1.0;
-    vertices[3][2] = 0.0;
-    vertices[3][3] = 1.0;
-
+GraphicBase::GraphicBase(GraphicGLObject* gl) : gl(gl) {
     glGenTextures(1, &texture);
     const auto txbinder = bind_texture();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
