@@ -218,15 +218,7 @@ auto TextRender::draw(Screen* const screen, const Point& point, Color const& col
         drawed_area.a.y  = drawed_area.a.y < area.a.y ? drawed_area.a.y : area.a.y;
         drawed_area.b.x  = drawed_area.b.x > area.b.x ? drawed_area.b.x : area.b.x;
         drawed_area.b.y  = drawed_area.b.y > area.b.y ? drawed_area.b.y : area.b.y;
-        if(func) {
-            const auto result = func(c - text, area, *chara);
-            if(result) {
-                // hook may change color
-                set_char_color(color);
-            } else {
-                chara->draw_rect(screen, area);
-            }
-        } else {
+        if(!func || !func(c - text, area, *chara)) {
             chara->draw_rect(screen, area);
         }
         xpos += 1. * chara->advance / scale;
