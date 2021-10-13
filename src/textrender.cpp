@@ -1,4 +1,5 @@
 #include <iterator>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -16,10 +17,10 @@
 namespace gawl {
 namespace {
 auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
-    auto utf8  = std::string(str);
+    auto utf8  = std::string_view(str);
     auto uni32 = std::u32string();
 
-    for(auto i = size_t(0); i < utf8.size(); i++) {
+    for(auto i = size_t(0); i < utf8.size(); i += 1) {
         auto c = (uint32_t)utf8[i];
 
         if((0x80 & c) == 0) {
