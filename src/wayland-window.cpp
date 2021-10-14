@@ -91,8 +91,7 @@ auto WaylandWindow::resize_buffer(int width, int height, int scale) -> void {
     app.tell_event(this);
 }
 auto WaylandWindow::handle_event() -> void {
-    uint32_t repeated = key_repeated.load();
-    key_repeated.store(0);
+    auto repeated = key_repeated.replace(0);
     if(repeated != 0) {
         auto key = last_pressed_key.load();
         for(uint32_t i = 0; i < repeated; ++i) {

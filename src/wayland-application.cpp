@@ -33,12 +33,7 @@ auto WaylandApplication::run() -> void {
         poll(fds.data(), fds.size(), -1);
         if(window_event_poll.revents & POLLIN) {
             window_event.consume();
-            auto handle_copy = std::vector<WaylandWindow*>();
-            {
-                const auto lock = to_handle.get_lock();
-                handle_copy     = std::move(to_handle.data);
-            }
-            for(auto w : handle_copy) {
+            for(const auto w : to_handle.replace()) {
                 if(w != nullptr) {
                     w->handle_event();
                     continue;

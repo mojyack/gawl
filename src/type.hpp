@@ -50,7 +50,8 @@ template <typename T>
 concept PointArray = requires(T c) {
     std::same_as<typename T::value_type, Point>;
     c[0];
-} && std::ranges::range<T>;
+}
+&&std::ranges::range<T>;
 
 template <PointArray T>
 auto rotate(T& points, const Point& origin, const double angle) -> void {
@@ -88,12 +89,17 @@ struct Critical {
         return std::lock_guard<std::mutex>(mutex);
     }
     auto store(T src) -> void {
-        auto lock = get_lock();
-        data      = src;
+        const auto lock = get_lock();
+        data            = src;
     }
     auto load() const -> T {
-        auto lock = get_lock();
+        const auto lock = get_lock();
         return data;
+    }
+    auto replace(T src = T()) -> T {
+        const auto lock = get_lock();
+        std::swap(data, src);
+        return src;
     }
     auto operator->() -> T* {
         return &data;
