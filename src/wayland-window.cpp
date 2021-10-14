@@ -59,7 +59,7 @@ auto WaylandWindow::init_egl() -> void {
     choose_surface();
     egl_global_count += 1;
 }
-auto WaylandWindow::resize_buffer(int width, int height, int scale) -> void {
+auto WaylandWindow::resize_buffer(const int width, const int height, const int scale) -> void {
     if((width != -1 && height != -1 && width == window_size[0] && height == window_size[1]) || (scale != -1 && scale == buffer_scale)) {
         return;
     }
@@ -79,8 +79,8 @@ auto WaylandWindow::resize_buffer(int width, int height, int scale) -> void {
         window_size[1] = height;
     }
     // apply new scale
-    int bw = window_size[0] * buffer_scale;
-    int bh = window_size[1] * buffer_scale;
+    const auto bw = window_size[0] * buffer_scale;
+    const auto bh = window_size[1] * buffer_scale;
     if(is_running()) {
         choose_surface();
         egl_window.resize(bw, bh);
@@ -91,7 +91,7 @@ auto WaylandWindow::resize_buffer(int width, int height, int scale) -> void {
     app.tell_event(this);
 }
 auto WaylandWindow::handle_event() -> void {
-    auto repeated = key_repeated.replace(0);
+    const auto repeated = key_repeated.replace(0);
     if(repeated != 0) {
         auto key = last_pressed_key.load();
         for(uint32_t i = 0; i < repeated; ++i) {
@@ -128,14 +128,8 @@ auto WaylandWindow::refresh() -> void {
 
     frame_cb           = surface.frame();
     frame_cb.on_done() = [&](uint32_t /* elapsed */) {
-        frame_ready  = true;
-        auto current = bool();
-        {
-            const auto lock    = current_frame.get_lock();
-            current            = current_frame.data;
-            current_frame.data = true;
-        }
-        if(!get_event_driven() || !current) {
+        frame_ready = true;
+        if(!get_event_driven() || !current_frame.replace(true)) {
             refresh();
         }
     };
