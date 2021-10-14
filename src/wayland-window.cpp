@@ -182,6 +182,9 @@ WaylandWindow::WaylandWindow(GawlApplication& app, WindowCreateHint hint)
     output.on_scale() = [&](const int32_t s) {
         resize_buffer(-1, -1, s);
     };
+
+    auto has_pointer       = false;
+    auto has_keyboard      = false;
     seat.on_capabilities() = [&](const wayland::seat_capability& capability) {
         has_keyboard = capability & wayland::seat_capability::keyboard;
         has_pointer  = capability & wayland::seat_capability::pointer;
@@ -227,27 +230,25 @@ WaylandWindow::WaylandWindow(GawlApplication& app, WindowCreateHint hint)
     keyboard.on_key()         = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
         const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
         keyboard_callback(key, s);
-        if(!is_repeat_info_valid) {
+        if(!repeat_config.has_value()) {
             return;
         }
         if(s == gawl::ButtonState::press) {
             wait_for_key_repeater_exit();
             last_pressed_key.store(key);
             key_repeater                   = std::thread([this, key]() {
-                key_delay_timer.wait_for(std::chrono::milliseconds(delay_in_milisec));
+                key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->delay_in_milisec));
                 while(last_pressed_key.load() == key) {
                     key_repeated.store(key_repeated.load() + 1);
                     this->app.tell_event(this);
-                    key_delay_timer.wait_for(std::chrono::milliseconds(repeat_interval));
+                    key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->interval));
                 }
             });
         } else if(last_pressed_key.load() == key){
             wait_for_key_repeater_exit();
         } };
     keyboard.on_repeat_info() = [&](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
-        this->repeat_interval  = 1000 / repeat_per_sec;
-        this->delay_in_milisec = delay_in_milisec;
-        is_repeat_info_valid   = true;
+        repeat_config.emplace(KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
     };
     keyboard.on_leave() = [this](const uint32_t /* serial */, const wayland::surface_t /* surface */) {
         wait_for_key_repeater_exit();

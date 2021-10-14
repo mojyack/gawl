@@ -1,5 +1,4 @@
 #pragma once
-#include <map>
 #include <thread>
 
 #include <wayland-client-core.h>
@@ -46,22 +45,23 @@ class WaylandWindow : public GawlWindow {
     wayland::egl_window_t egl_window;
     EGLSurface            eglsurface = nullptr;
 
-    std::thread::id     main_thread_id;
-    bool                frame_ready   = true;
-    Critical<bool>      current_frame = true;
-    bool                has_pointer;
-    bool                has_keyboard;
-    int                 window_size[2] = {0, 0};
-    int                 buffer_scale   = 0;
-    Event               key_delay_timer;
-    std::thread         key_repeater;
-    Critical<uint32_t>  last_pressed_key     = -1;
-    bool                is_repeat_info_valid = false;
-    uint32_t            repeat_interval      = -1;
-    uint32_t            delay_in_milisec     = -1;
-    Critical<uint32_t>  key_repeated         = 0;
-    std::map<int, bool> keypress_info; // first=linux-syscall-code second=pressed?
-    Critical<bool>      do_refresh = false;
+    // gawl
+    struct KeyRepeatConfig {
+        uint32_t interval;
+        uint32_t delay_in_milisec;
+    };
+
+    std::thread::id                main_thread_id;
+    bool                           frame_ready    = true;
+    Critical<bool>                 current_frame  = true;
+    int                            window_size[2] = {0, 0};
+    int                            buffer_scale   = 0;
+    Event                          key_delay_timer;
+    std::thread                    key_repeater;
+    Critical<uint32_t>             last_pressed_key = -1;
+    std::optional<KeyRepeatConfig> repeat_config;
+    Critical<uint32_t>             key_repeated = 0;
+    Critical<bool>                 do_refresh = false;
 
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
