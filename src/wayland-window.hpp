@@ -61,7 +61,7 @@ class WaylandWindow : public GawlWindow {
     Critical<uint32_t>             last_pressed_key = -1;
     std::optional<KeyRepeatConfig> repeat_config;
     Critical<uint32_t>             key_repeated = 0;
-    Critical<bool>                 do_refresh = false;
+    Critical<bool>                 do_refresh   = false;
 
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
@@ -71,7 +71,7 @@ class WaylandWindow : public GawlWindow {
     auto wait_for_key_repeater_exit() -> void;
 
   public:
-    [[nodiscard]] auto prepare() -> internal::FramebufferBinder override;
+    auto prepare() -> internal::FramebufferBinder override;
 
     auto refresh() -> void final;
 

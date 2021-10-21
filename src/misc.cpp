@@ -38,8 +38,7 @@ auto draw_rect(Screen* const screen, const Rectangle& rect, const Color& color) 
     auto r = rect;
     r.magnify(screen->get_scale());
     gawl::convert_screen_to_viewport(screen, r);
-    glUseProgram(0);
-    screen->prepare();
+    const auto fbbinder = screen->prepare();
     glColor4f(color[0], color[1], color[2], color[3]);
     glRectf(r.a.x, r.a.y, r.b.x, r.b.y);
 }

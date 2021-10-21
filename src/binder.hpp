@@ -15,7 +15,7 @@ concept BindCaller = requires(F f) {
 };
 
 template <GLenum E, BindCaller F>
-class Binder {
+class [[nodiscard]] Binder {
   private:
     std::optional<GLuint> b;
 

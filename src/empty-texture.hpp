@@ -22,9 +22,9 @@ class EmptyTexture : public Screen {
     std::shared_ptr<internal::EmptyTextureData> data;
 
   public:
-    auto               get_scale() const -> double override;
-    auto               get_size() const -> std::array<std::size_t, 2> override;
-    [[nodiscard]] auto prepare() -> internal::FramebufferBinder override;
+    auto get_scale() const -> double override;
+    auto get_size() const -> std::array<std::size_t, 2> override;
+    auto prepare() -> internal::FramebufferBinder override;
 
     auto get_width(const Screen* screen) const -> int;
     auto get_height(const Screen* screen) const -> int;
