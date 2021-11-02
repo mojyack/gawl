@@ -14,6 +14,14 @@ struct BufferSize {
 
 class GawlApplication;
 
+struct WindowCreateHint {
+    GawlApplication& app;
+    size_t           width          = 800;
+    size_t           height         = 600;
+    const char*      title          = "Window";
+    bool             manual_refresh = false;
+};
+
 class GawlWindow : public Screen {
     friend class GawlApplication;
 
@@ -69,7 +77,7 @@ class GawlWindow : public Screen {
     GawlWindow& operator=(const GawlWindow&) = delete;
     GawlWindow& operator=(GawlWindow&&) = delete;
 
-    GawlWindow(GawlApplication& app);
+    GawlWindow(const WindowCreateHint& hint);
     virtual ~GawlWindow();
 };
 } // namespace gawl

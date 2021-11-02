@@ -154,8 +154,8 @@ auto WaylandWindow::wait_for_key_repeater_exit() -> void {
         key_repeater.join();
     }
 }
-WaylandWindow::WaylandWindow(GawlApplication& app, WindowCreateHint hint)
-    : GawlWindow(app), display(dynamic_cast<WaylandApplication*>(&app)->get_display()) {
+WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
+    : GawlWindow(hint), display(dynamic_cast<WaylandApplication*>(&app)->get_display()) {
     // retrieve global objects
     registry             = display.get_registry();
     registry.on_global() = [&](uint32_t name, const std::string& interface, uint32_t version) {

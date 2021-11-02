@@ -105,7 +105,7 @@ auto GawlWindow::close_window() -> void {
 auto GawlWindow::quit_application() -> void {
     app.quit();
 }
-GawlWindow::GawlWindow(GawlApplication& app) : app(app) {}
+GawlWindow::GawlWindow(const WindowCreateHint& hint) : event_driven(hint.manual_refresh), app(hint.app) {}
 GawlWindow::~GawlWindow() {
     if(global_count == 1) {
         delete internal::global;
