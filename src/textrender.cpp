@@ -167,7 +167,6 @@ class TextRenderPrivate {
     std::unordered_map<int, std::shared_ptr<CharacterCache>> caches;
 
     const std::vector<std::string> font_names;
-    const int                      size;
 
   public:
     auto clear() -> void {
@@ -178,16 +177,13 @@ class TextRenderPrivate {
         }
         caches.clear();
     }
-    auto get_size() const -> int {
-        return size;
-    }
-    auto operator[](const int size) -> CharacterCache& {
+    auto operator[](int size) -> CharacterCache& {
         if(!caches.contains(size)) {
             caches.insert(std::make_pair(size, new CharacterCache(font_names, size)));
         }
         return *caches.find(size)->second;
     }
-    TextRenderPrivate(const std::vector<std::string>&& font_names, const int size) : font_names(font_names), size(size) {}
+    TextRenderPrivate(const std::vector<std::string>&& font_names) : font_names(font_names) {}
     ~TextRenderPrivate() {
         clear();
     }
@@ -197,66 +193,26 @@ class TextRenderPrivate {
 auto TextRender::get_chara_graphic(const int size, const char32_t c) -> internal::Character* {
     return (*data)[size].get_character(c);
 }
-auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char* const text, const DrawFunc func) -> Rectangle {
-    const auto uni = convert_utf8_to_unicode32(text);
-    return draw(screen, point, color, uni.data(), func);
-}
-auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char32_t* const text, const DrawFunc func) -> Rectangle {
-    ASSERT(data, "font not initialized")
-    const auto scale       = screen->get_scale();
-    auto       xpos        = point.x;
-    auto       drawed_area = Rectangle{point, point};
-
-    set_char_color(color);
-
-    auto c = text;
-    while(*c != '\0') {
-        const auto chara = get_chara_graphic(data->get_size() * scale, *c);
-        const auto p     = std::array{xpos + 1. * chara->offset[0] / scale, point.y - 1. * chara->offset[1] / scale};
-        const auto area  = Rectangle{{p[0], p[1]}, {p[0] + chara->get_width(screen), p[1] + chara->get_height(screen)}};
-        drawed_area.a.x  = drawed_area.a.x < area.a.x ? drawed_area.a.x : area.a.x;
-        drawed_area.a.y  = drawed_area.a.y < area.a.y ? drawed_area.a.y : area.a.y;
-        drawed_area.b.x  = drawed_area.b.x > area.b.x ? drawed_area.b.x : area.b.x;
-        drawed_area.b.y  = drawed_area.b.y > area.b.y ? drawed_area.b.y : area.b.y;
-        if(!func || !func(c - text, area, *chara)) {
-            chara->draw_rect(screen, area);
-        }
-        xpos += 1. * chara->advance / scale;
-        c += 1;
-    }
-    return drawed_area;
-}
-auto TextRender::draw_fit_rect(Screen* const screen, const Rectangle& rect, Color const& color, const char* const text, const Align alignx, const Align aligny, const DrawFunc func) -> Rectangle {
-    const auto scale = screen->get_scale();
-    auto       r     = rect;
-    r.magnify(scale);
-    auto font_area = get_rect(screen, {0, 0}, text);
-    font_area.magnify(scale);
-    const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
-
-    auto x = alignx == Align::left ? r.a.x - font_area.a.x : alignx == Align::center ? r.a.x - font_area.a.x + pad[0] / 2
-                                                                                     : r.b.x - font_area.width();
-    auto y = aligny == Align::left ? r.a.y - r.a.y : aligny == Align::center ? r.a.y - font_area.a.y + pad[1] / 2
-                                                                             : r.b.y - font_area.height();
-    x /= scale;
-    y /= scale;
-    return draw(screen, {x, y}, color, text, func);
-}
 auto TextRender::set_char_color(const Color& color) -> void {
     internal::gl->set_text_color(color);
 }
-auto TextRender::get_rect(const Screen* screen, const Point& point, const char* const text) -> Rectangle {
+auto TextRender::get_rect(const Screen* screen, const Point& point, const char* const text, int size) -> Rectangle {
     const auto uni = convert_utf8_to_unicode32(text);
-    return get_rect(screen, point, uni.data());
+    return get_rect(screen, point, uni.data(), size);
 }
-auto TextRender::get_rect(const Screen* screen, const Point& point, const char32_t* const text) -> Rectangle {
+auto TextRender::get_rect(const Screen* screen, const Point& point, const char32_t* const text, int size) -> Rectangle {
     ASSERT(data, "font not initialized")
-    auto       r   = Rectangle{point, point};
+    auto r = Rectangle{point, point};
+    size   = size != 0 ? size : default_size;
+    if(size <= 0) {
+        return r;
+    }
     auto       rx1 = 0.0, ry1 = 0.0, rx2 = 0.0, ry2 = 0.0;
     const auto scale = screen->get_scale();
     auto       c     = text;
+
     while(*c != '\0') {
-        auto       chara = get_chara_graphic(data->get_size() * scale, *c);
+        auto       chara = get_chara_graphic(size * scale, *c);
         const auto xpos  = std::array{static_cast<double>(rx1 + chara->offset[0]), static_cast<double>(rx1 + chara->offset[0] + chara->get_width(screen) * scale)};
 
         rx1 = rx1 > xpos[0] ? xpos[0] : rx1;
@@ -279,7 +235,66 @@ auto TextRender::get_rect(const Screen* screen, const Point& point, const char32
     r.b.y += ry2 / scale;
     return r;
 }
-auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const int line_spacing, const Color& color, const char* const text, const Align alignx, const Align aligny) -> void {
+
+const TextRender::DrawArgs TextRender::default_draw_args;
+
+auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char* const text, const DrawArgs& args) -> Rectangle {
+    const auto uni = convert_utf8_to_unicode32(text);
+    return draw(screen, point, color, uni.data(), args);
+}
+auto TextRender::draw(Screen* const screen, const Point& point, Color const& color, const char32_t* const text, const DrawArgs& args) -> Rectangle {
+    ASSERT(data, "font not initialized")
+
+    const auto size = args.size != 0 ? args.size : default_size;
+    if(size <= 0) {
+        return Rectangle{point, point};
+    }
+    const auto scale       = screen->get_scale();
+    auto       xpos        = point.x;
+    auto       drawed_area = Rectangle{point, point};
+
+    set_char_color(color);
+
+    auto c = text;
+    while(*c != '\0') {
+        const auto chara = get_chara_graphic(size * scale, *c);
+        const auto p     = std::array{xpos + 1. * chara->offset[0] / scale, point.y - 1. * chara->offset[1] / scale};
+        const auto area  = Rectangle{{p[0], p[1]}, {p[0] + chara->get_width(screen), p[1] + chara->get_height(screen)}};
+        drawed_area.a.x  = drawed_area.a.x < area.a.x ? drawed_area.a.x : area.a.x;
+        drawed_area.a.y  = drawed_area.a.y < area.a.y ? drawed_area.a.y : area.a.y;
+        drawed_area.b.x  = drawed_area.b.x > area.b.x ? drawed_area.b.x : area.b.x;
+        drawed_area.b.y  = drawed_area.b.y > area.b.y ? drawed_area.b.y : area.b.y;
+        if(!args.func || !args.func(c - text, area, *chara)) {
+            chara->draw_rect(screen, area);
+        }
+        xpos += 1. * chara->advance / scale;
+        c += 1;
+    }
+    return drawed_area;
+}
+
+const TextRender::DrawFitRectArgs TextRender::default_draw_fit_rect_args;
+
+auto TextRender::draw_fit_rect(Screen* const screen, const Rectangle& rect, Color const& color, const char* const text, const DrawFitRectArgs& args) -> Rectangle {
+    const auto scale = screen->get_scale();
+    auto       r     = rect;
+    r.magnify(scale);
+    auto font_area = get_rect(screen, {0, 0}, text, args.size);
+    font_area.magnify(scale);
+    const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
+
+    auto x = args.alignx == Align::left ? r.a.x - font_area.a.x : args.alignx == Align::center ? r.a.x - font_area.a.x + pad[0] / 2
+                                                                                               : r.b.x - font_area.width();
+    auto y = args.aligny == Align::left ? r.a.y - font_area.a.y : args.aligny == Align::center ? r.a.y - font_area.a.y + pad[1] / 2
+                                                                                               : r.b.y - font_area.height();
+    x /= scale;
+    y /= scale;
+    return draw(screen, {x, y}, color, text, {args.size, args.func});
+}
+
+const TextRender::DrawWrappedArgs TextRender::default_draw_wrapped_args;
+
+auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const double line_spacing, const Color& color, const char* const text, const DrawWrappedArgs& args) -> void {
     ASSERT(data, "font not initialized")
 
     const auto str   = convert_utf8_to_unicode32(text);
@@ -309,7 +324,7 @@ auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const int l
             }
         }
         lines.back() += chara;
-        auto area = get_rect(screen, {0, 0}, lines.back().data());
+        auto area = get_rect(screen, {0, 0}, lines.back().data(), args.size);
         if(area.width() > max_width) {
             lines.back().pop_back();
 
@@ -318,7 +333,7 @@ auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const int l
             }
             lines.emplace_back(1, chara);
 
-            area = get_rect(screen, area.a, lines.back().data());
+            area = get_rect(screen, area.a, lines.back().data(), args.size);
             if(area.width() > max_width) {
                 lines.pop_back();
                 goto draw;
@@ -328,27 +343,34 @@ auto TextRender::draw_wrapped(Screen* screen, const Rectangle& rect, const int l
 
 draw:
     const auto total_height = size_t(lines.size() * line_spacing);
-    const auto y_offset     = aligny == Align::left ? 0.0 : aligny == Align::right ? max_height - total_height
-                                                                                   : (max_height - total_height) / 2.0;
+    const auto y_offset     = args.aligny == Align::left ? 0.0 : args.aligny == Align::right ? max_height - total_height
+                                                                                             : (max_height - total_height) / 2.0;
     for(auto i = size_t(0); i < lines.size(); i += 1) {
         const auto& line        = lines[i];
-        const auto  area        = get_rect(screen, {0, 0}, line.data());
+        const auto  area        = get_rect(screen, {0, 0}, line.data(), args.size);
         const auto  total_width = area.width();
-        const auto  x_offset    = alignx == Align::left ? 0.0 : alignx == Align::right ? max_width - total_width
-                                                                                       : (max_width - total_width) / 2.0;
-        draw(screen, {rect.a.x + x_offset, rect.a.y + y_offset + i * line_spacing - area.a.y}, color, line.data());
+        const auto  x_offset    = args.alignx == Align::left ? 0.0 : args.alignx == Align::right ? max_width - total_width
+                                                                                                 : (max_width - total_width) / 2.0;
+        draw(screen, {rect.a.x + x_offset, rect.a.y + y_offset + i * line_spacing - area.a.y}, color, line.data(), {args.size, nullptr});
     }
 }
 TextRender::operator bool() const {
     return data.get() != nullptr;
 }
-TextRender::TextRender(const std::vector<const char*>& font_names, const int size) {
+auto TextRender::operator=(const TextRender& o) noexcept -> TextRender& {
+    default_size = o.default_size;
+    data         = o.data;
+    return *this;
+}
+TextRender::TextRender(const std::vector<const char*>& font_names, const int default_size) : default_size(default_size) {
     auto fonts = std::vector<std::string>();
     for(auto path : font_names) {
         fonts.emplace_back(path);
     }
-    data.reset(new internal::TextRenderPrivate(std::move(fonts), size));
+    data.reset(new internal::TextRenderPrivate(std::move(fonts)));
 }
-TextRender::TextRender() {}
+TextRender::TextRender(const TextRender& o) {
+    *this = o;
+}
 TextRender::~TextRender() {}
 } // namespace gawl

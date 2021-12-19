@@ -1,3 +1,5 @@
+#include <poll.h>
+
 #include "error.hpp"
 #include "wayland-application.hpp"
 #include "wayland-window.hpp"

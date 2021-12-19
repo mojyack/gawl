@@ -1,5 +1,5 @@
 #pragma once
-#include <thread>
+#include <variant>
 
 #include <wayland-client-core.h>
 #include <wayland-client-protocol-extra.hpp>
@@ -10,6 +10,32 @@
 #include "gawl-window.hpp"
 
 namespace gawl {
+namespace internal {
+struct RefreshCallbackArgs {};
+struct WindowResizeCallbackArgs {};
+struct KeyBoardCallbackArgs {
+    uint32_t          key;
+    gawl::ButtonState state;
+};
+struct PointermoveCallbackArgs {
+    double x;
+    double y;
+};
+struct ClickCallbackArgs {
+    uint32_t          key;
+    gawl::ButtonState state;
+};
+struct ScrollCallbackArgs {
+    gawl::WheelAxis axis;
+    double          value;
+};
+struct CloseRequestCallbackArgs {};
+struct UserCallbackArgs {
+    void* data;
+};
+using CallbackArgs = std::variant<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
+} // namespace internal
+
 class WaylandWindow : public GawlWindow {
     friend class WaylandApplication;
 
@@ -45,17 +71,16 @@ class WaylandWindow : public GawlWindow {
         uint32_t delay_in_milisec;
     };
 
-    std::thread::id                main_thread_id;
-    bool                           frame_ready    = true;
-    Critical<bool>                 current_frame  = true;
+    bool                           frame_done     = true;
+    Critical<bool>                 latest_frame   = true;
     int                            window_size[2] = {0, 0};
     int                            buffer_scale   = 0;
     Event                          key_delay_timer;
     std::thread                    key_repeater;
     Critical<uint32_t>             last_pressed_key = -1;
     std::optional<KeyRepeatConfig> repeat_config;
-    Critical<uint32_t>             key_repeated = 0;
-    Critical<bool>                 do_refresh   = false;
+
+    Critical<std::vector<internal::CallbackArgs>> callback_queue;
 
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
@@ -63,11 +88,13 @@ class WaylandWindow : public GawlWindow {
     auto swap_buffer() -> void;
     auto choose_surface() -> void;
     auto wait_for_key_repeater_exit() -> void;
+    auto queue_callback(internal::CallbackArgs args) -> void;
 
   public:
     auto prepare() -> internal::FramebufferBinder override;
 
     auto refresh() -> void final;
+    auto invoke_user_callback(void* data = nullptr) -> void final;
 
     WaylandWindow(const WindowCreateHint& hint);
     virtual ~WaylandWindow();

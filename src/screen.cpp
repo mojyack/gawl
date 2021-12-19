@@ -2,6 +2,8 @@
 #include "error.hpp"
 
 namespace gawl {
+const NullScreen nullscreen_;
+const NullScreen* const nullscreen = &nullscreen_;
 auto NullScreen::get_scale() const -> double {
     return 1.0;
 }

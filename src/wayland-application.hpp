@@ -1,5 +1,4 @@
 #pragma once
-#include <poll.h>
 #include <wayland-client.hpp>
 
 #include "fd.hpp"

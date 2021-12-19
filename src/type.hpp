@@ -25,15 +25,28 @@ struct Point {
         x             = origin.x + rx * c - ry * s;
         y             = origin.y + rx * s + ry * c;
     }
+    auto operator+=(const Point& o) -> Point& {
+        x += o.x;
+        y += o.y;
+        return *this;
+    }
 };
 
 struct Rectangle {
     Point a;
     Point b;
 
-    auto magnify(const double scale) -> void {
+    auto magnify(const double scale) -> Rectangle& {
         a.magnify(scale);
         b.magnify(scale);
+        return *this;
+    }
+    auto expand(const double w, const double h) -> Rectangle& {
+        a.x -= w;
+        a.y -= h;
+        b.x += w;
+        b.y += h;
+        return *this;
     }
     auto to_points() const -> std::array<Point, 4> {
         return {a, {b.x, a.y}, b, {a.x, b.y}};
@@ -43,6 +56,11 @@ struct Rectangle {
     }
     auto height() const -> double {
         return b.y - a.y;
+    }
+    auto operator+=(const Point& o) -> Rectangle& {
+        a += o;
+        b += o;
+        return *this;
     }
 };
 

@@ -62,12 +62,14 @@ class GawlWindow : public Screen {
     virtual auto click_callback(uint32_t /* button */, gawl::ButtonState /* state */) -> void {}
     virtual auto scroll_callback(gawl::WheelAxis /* axis */, double /* value */) -> void {}
     virtual auto close_request_callback() -> void;
+    virtual auto user_callback(void* /* data */) -> void{};
 
   public:
     auto get_scale() const -> double override;
     auto get_size() const -> std::array<std::size_t, 2> override;
 
-    virtual auto refresh() -> void = 0;
+    virtual auto refresh() -> void                                  = 0;
+    virtual auto invoke_user_callback(void* data = nullptr) -> void = 0;
     auto         is_close_pending() const -> bool;
     auto         close_window() -> void;
     auto         quit_application() -> void;
