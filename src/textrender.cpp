@@ -372,5 +372,4 @@ TextRender::TextRender(const std::vector<const char*>& font_names, const int def
 TextRender::TextRender(const TextRender& o) {
     *this = o;
 }
-TextRender::~TextRender() {}
 } // namespace gawl

@@ -167,10 +167,8 @@ auto WaylandWindow::queue_callback(internal::CallbackArgs args) -> void {
     if(!app.is_running()) {
         return;
     }
-    {
-        const auto lock = callback_queue.get_lock();
-        callback_queue.data.emplace_back(args);
-    }
+    const auto lock = callback_queue.get_lock();
+    callback_queue.data.emplace_back(args);
     app.tell_event(this);
 }
 WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
@@ -191,13 +189,13 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     };
     display.roundtrip();
     ASSERT(xdg_wm_base, "xdg_wm_base not supported")
-    output.on_scale() = [&](const int32_t s) {
+    output.on_scale() = [this](const int32_t s) {
         resize_buffer(-1, -1, s);
     };
 
     auto has_pointer       = false;
     auto has_keyboard      = false;
-    seat.on_capabilities() = [&](const wayland::seat_capability& capability) {
+    seat.on_capabilities() = [&has_keyboard, &has_pointer](const wayland::seat_capability& capability) {
         has_keyboard = capability & wayland::seat_capability::keyboard;
         has_pointer  = capability & wayland::seat_capability::pointer;
     };
@@ -209,7 +207,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     xdg_surface.on_configure() = [&](const uint32_t serial) { xdg_surface.ack_configure(serial); };
     xdg_toplevel               = xdg_surface.get_toplevel();
     xdg_toplevel.set_title(hint.title);
-    xdg_toplevel.on_close() = [&]() { queue_callback(internal::CloseRequestCallbackArgs{}); };
+    xdg_toplevel.on_close() = [this]() { queue_callback(internal::CloseRequestCallbackArgs{}); };
 
     // create cursor surface
     cursor_surface = compositor.create_surface();
@@ -224,7 +222,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     keyboard = seat.get_keyboard();
 
     // draw cursor
-    pointer.on_enter() = [&](const uint32_t serial, const wayland::surface_t& /*unused*/, const int32_t /*unused*/, const int32_t /*unused*/) {
+    pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t& /*unused*/, const int32_t /*unused*/, const int32_t /*unused*/) {
         cursor_surface.attach(cursor_buffer, 0, 0);
         cursor_surface.damage(0, 0, cursor_image.width() * buffer_scale, cursor_image.height() * buffer_scale);
         cursor_surface.commit();
@@ -239,7 +237,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     xdg_toplevel.on_configure() = [&](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
         resize_buffer(w, h, -1);
     };
-    keyboard.on_key()         = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
+    keyboard.on_key() = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
         const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
         queue_callback(internal::KeyBoardCallbackArgs{key, s});
         if(!repeat_config.has_value()) {
@@ -248,31 +246,32 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
         if(s == gawl::ButtonState::press) {
             wait_for_key_repeater_exit();
             last_pressed_key.store(key);
-            key_repeater                   = std::thread([this, key]() {
+            key_repeater = std::thread([this, key]() {
                 key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->delay_in_milisec));
                 while(last_pressed_key.load() == key) {
                     queue_callback(internal::KeyBoardCallbackArgs{key, gawl::ButtonState::repeat});
                     key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->interval));
                 }
             });
-        } else if(last_pressed_key.load() == key){
+        } else if(last_pressed_key.load() == key) {
             wait_for_key_repeater_exit();
-        } };
-    keyboard.on_repeat_info() = [&](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
+        }
+    };
+    keyboard.on_repeat_info() = [this](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
         repeat_config.emplace(KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
     };
     keyboard.on_leave() = [this](const uint32_t /* serial */, const wayland::surface_t /* surface */) {
         wait_for_key_repeater_exit();
         queue_callback(internal::KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::leave});
     };
-    pointer.on_button() = [&](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
+    pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
         const auto s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
         queue_callback(internal::ClickCallbackArgs{button, s});
     };
-    pointer.on_motion() = [&](const uint32_t, const double x, const double y) {
+    pointer.on_motion() = [this](const uint32_t, const double x, const double y) {
         queue_callback(internal::PointermoveCallbackArgs{x, y});
     };
-    pointer.on_axis() = [&](const uint32_t, const wayland::pointer_axis axis, const double value) {
+    pointer.on_axis() = [this](const uint32_t, const wayland::pointer_axis axis, const double value) {
         const auto w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::horizontal : gawl::WheelAxis::vertical;
         queue_callback(internal::ScrollCallbackArgs{w, value});
     };

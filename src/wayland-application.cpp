@@ -9,10 +9,8 @@ auto WaylandApplication::get_display() -> wayland::display_t& {
     return display;
 }
 auto WaylandApplication::tell_event(GawlWindow* window) -> void {
-    {
-        const auto lock = to_handle.get_lock();
-        to_handle.data.emplace_back(dynamic_cast<WaylandWindow*>(window));
-    }
+    const auto lock = to_handle.get_lock();
+    to_handle->emplace_back(dynamic_cast<WaylandWindow*>(window));
     window_event.notify();
 }
 auto WaylandApplication::run() -> void {
@@ -24,9 +22,9 @@ auto WaylandApplication::run() -> void {
     }
 
     auto wayland_main_stop = EventFileDescriptor();
-    auto wayland_main = std::thread([&]() {
-        auto fds = std::array<pollfd, 2>{pollfd{display.get_fd(), POLLIN, 0}, pollfd{wayland_main_stop, POLLIN, 0}};
-        auto& wl_display_event_poll = fds[0];
+    auto wayland_main      = std::thread([this, &wayland_main_stop]() {
+        auto  fds                    = std::array<pollfd, 2>{pollfd{display.get_fd(), POLLIN, 0}, pollfd{wayland_main_stop, POLLIN, 0}};
+        auto& wl_display_event_poll  = fds[0];
         auto& wayland_main_stop_poll = fds[1];
         while(true) {
             auto read_intent = display.obtain_read_intent();
@@ -37,15 +35,15 @@ auto WaylandApplication::run() -> void {
                 display.dispatch_pending();
             }
             if(wayland_main_stop_poll.revents & POLLIN) {
-                wayland_main_stop.consume(); 
+                wayland_main_stop.consume();
                 break;
             }
         }
-    });
+         });
 
-    auto  fds                   = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}};
-    auto& window_event_poll     = fds[0];
-    auto& quit_event_poll       = fds[1];
+    auto  fds               = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}};
+    auto& window_event_poll = fds[0];
+    auto& quit_event_poll   = fds[1];
     while(true) {
         poll(fds.data(), fds.size(), -1);
         if(window_event_poll.revents & POLLIN) {
@@ -55,14 +53,13 @@ auto WaylandApplication::run() -> void {
                     w->handle_event();
                     continue;
                 }
-                auto windows = get_windows();
-                for(auto w = windows.begin(); w != windows.end(); w += 1) {
-                    if((*w)->is_close_pending()) {
-                        unregister_window(*w);
-                        delete *w;
+                for(const auto w : get_windows()) {
+                    if(w->is_close_pending()) {
+                        unregister_window(w);
+                        delete w;
                         break;
                     }
-                }
+                };
                 if(quitted && get_windows().empty()) {
                     quitted = false;
                     goto exit;

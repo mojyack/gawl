@@ -62,6 +62,6 @@ class TextRender {
     TextRender() {}
     TextRender(const std::vector<const char*>& font_names, int default_size);
     TextRender(const TextRender& o);
-    ~TextRender();
+    ~TextRender(){};
 };
 } // namespace gawl
