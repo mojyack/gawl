@@ -22,13 +22,31 @@ auto WaylandApplication::run() -> void {
             w->refresh();
         }
     }
-    auto  fds                   = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}, pollfd{wl_display_event, POLLIN, 0}};
+
+    auto wayland_main_stop = EventFileDescriptor();
+    auto wayland_main = std::thread([&]() {
+        auto fds = std::array<pollfd, 2>{pollfd{display.get_fd(), POLLIN, 0}, pollfd{wayland_main_stop, POLLIN, 0}};
+        auto& wl_display_event_poll = fds[0];
+        auto& wayland_main_stop_poll = fds[1];
+        while(true) {
+            auto read_intent = display.obtain_read_intent();
+            display.flush();
+            poll(fds.data(), fds.size(), -1);
+            if(wl_display_event_poll.revents & POLLIN) {
+                read_intent.read();
+                display.dispatch_pending();
+            }
+            if(wayland_main_stop_poll.revents & POLLIN) {
+                wayland_main_stop.consume(); 
+                break;
+            }
+        }
+    });
+
+    auto  fds                   = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}};
     auto& window_event_poll     = fds[0];
     auto& quit_event_poll       = fds[1];
-    auto& wl_display_event_poll = fds[2];
     while(true) {
-        auto read_intent = display.obtain_read_intent();
-        display.flush();
         poll(fds.data(), fds.size(), -1);
         if(window_event_poll.revents & POLLIN) {
             window_event.consume();
@@ -55,14 +73,14 @@ auto WaylandApplication::run() -> void {
             quit_event.consume();
             close_all_windows();
         }
-        if(wl_display_event_poll.revents & POLLIN) {
-            read_intent.read();
-        }
-        display.dispatch_pending();
     }
+
 exit:
-    display.roundtrip();
+    wayland_main_stop.notify();
+    wayland_main.join();
+
     running = false;
+    display.roundtrip();
 }
 auto WaylandApplication::quit() -> void {
     quitted = true;
@@ -70,11 +88,5 @@ auto WaylandApplication::quit() -> void {
 }
 auto WaylandApplication::is_running() const -> bool {
     return running;
-}
-WaylandApplication::WaylandApplication() {
-    wl_display_event = display.get_fd();
-}
-WaylandApplication::~WaylandApplication() {
-    wl_display_event.forget();
 }
 } // namespace gawl

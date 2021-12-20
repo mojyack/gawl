@@ -13,7 +13,6 @@ class WaylandApplication : public GawlApplication {
     wayland::display_t  display;
     EventFileDescriptor window_event;
     EventFileDescriptor quit_event;
-    FileDescriptor      wl_display_event;
     bool                quitted = false;
     bool                running = false;
 
@@ -26,7 +25,7 @@ class WaylandApplication : public GawlApplication {
     auto quit() -> void final;
     auto is_running() const -> bool final;
 
-    WaylandApplication();
-    virtual ~WaylandApplication();
+    WaylandApplication(){};
+    virtual ~WaylandApplication(){};
 };
 } // namespace gawl
