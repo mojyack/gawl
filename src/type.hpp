@@ -4,6 +4,8 @@
 #include <concepts>
 #include <condition_variable>
 #include <mutex>
+#include <numbers>
+#include <ranges>
 
 #include <linux/input-event-codes.h>
 

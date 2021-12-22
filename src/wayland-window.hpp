@@ -1,4 +1,5 @@
 #pragma once
+#include <thread>
 #include <variant>
 
 #include <wayland-client-core.h>
