@@ -23,15 +23,8 @@ struct WindowCreateHint {
 };
 
 class GawlWindow : public Screen {
-    friend class GawlApplication;
-
   private:
-    enum class Status {
-        PREPARE,
-        READY,
-        CLOSE,
-    };
-    Status               status              = Status::PREPARE;
+    bool                 prepared            = false;
     bool                 follow_buffer_scale = true;
     double               specified_scale     = 0;
     double               draw_scale          = 1.0;
@@ -44,9 +37,9 @@ class GawlWindow : public Screen {
 
     // used by backend.
     auto on_buffer_resize(size_t width, size_t height, size_t scale) -> void;
-    auto is_running() const -> bool;
+    auto is_prepared() const -> bool;
+    auto mark_as_prepared() -> void;
     auto init_global() -> void;
-    auto init_complete() -> void;
 
     // used by user.
     auto         get_window_size() const -> const std::array<int, 2>&;
@@ -70,7 +63,6 @@ class GawlWindow : public Screen {
 
     virtual auto refresh() -> void                                  = 0;
     virtual auto invoke_user_callback(void* data = nullptr) -> void = 0;
-    auto         is_close_pending() const -> bool;
     auto         close_window() -> void;
     auto         quit_application() -> void;
 

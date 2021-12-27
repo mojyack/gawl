@@ -1,4 +1,6 @@
 #pragma once
+#include <variant>
+
 #include <wayland-client.hpp>
 
 #include "fd.hpp"
@@ -10,17 +12,28 @@ class WaylandWindow;
 
 class WaylandApplication : public GawlApplication {
   private:
-    wayland::display_t  display;
-    EventFileDescriptor window_event;
-    EventFileDescriptor quit_event;
-    bool                quitted = false;
-    bool                running = false;
+    struct HandleEventArgs {
+        WaylandWindow& window;
+    };
+    struct CloseWindowArgs {
+        GawlWindow& window;
+    };
+    struct QuitApplicationArgs {};
+    using ApplicationEventArgs = std::variant<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
 
-    Critical<std::vector<WaylandWindow*>> to_handle;
+    wayland::display_t display;
+    Event              application_event;
+    bool               quitted = false;
+    bool               running = false;
+
+    Critical<std::vector<ApplicationEventArgs>> application_events;
+
+    auto queue_application_event(ApplicationEventArgs&& args) -> void;
 
   public:
     auto get_display() -> wayland::display_t&;
-    auto tell_event(GawlWindow* window) -> void final;
+    auto close_window(GawlWindow& window) -> void final;
+    auto tell_event(WaylandWindow& window) -> void;
     auto run() -> void final;
     auto quit() -> void final;
     auto is_running() const -> bool final;

@@ -5,20 +5,24 @@
 #include "wayland-window.hpp"
 
 namespace gawl {
+auto WaylandApplication::queue_application_event(ApplicationEventArgs&& args) -> void {
+    const auto lock = application_events.get_lock();
+    application_events->emplace_back(args);
+    application_event.wakeup();
+}
 auto WaylandApplication::get_display() -> wayland::display_t& {
     return display;
 }
-auto WaylandApplication::tell_event(GawlWindow* window) -> void {
-    const auto lock = to_handle.get_lock();
-    to_handle->emplace_back(dynamic_cast<WaylandWindow*>(window));
-    window_event.notify();
+auto WaylandApplication::tell_event(WaylandWindow& window) -> void {
+    queue_application_event(HandleEventArgs{window});
+}
+auto WaylandApplication::close_window(GawlWindow& window) -> void {
+    queue_application_event(CloseWindowArgs{window});
 }
 auto WaylandApplication::run() -> void {
     running = true;
     if(!quitted) {
-        for(auto& w : get_windows()) {
-            w->refresh();
-        }
+        GawlApplication::run();
     }
 
     auto wayland_main_stop = EventFileDescriptor();
@@ -41,35 +45,26 @@ auto WaylandApplication::run() -> void {
         }
          });
 
-    auto  fds               = std::array<pollfd, 3>{pollfd{window_event, POLLIN, 0}, pollfd{quit_event, POLLIN, 0}};
-    auto& window_event_poll = fds[0];
-    auto& quit_event_poll   = fds[1];
     while(true) {
-        poll(fds.data(), fds.size(), -1);
-        if(window_event_poll.revents & POLLIN) {
-            window_event.consume();
-            for(const auto w : to_handle.replace()) {
-                if(w != nullptr) {
-                    w->handle_event();
-                    continue;
-                }
-                for(const auto w : get_windows()) {
-                    if(w->is_close_pending()) {
-                        unregister_window(w);
-                        delete w;
-                        break;
+        auto events = application_events.replace();
+        do {
+            for(const auto& e : events) {
+                if(std::holds_alternative<HandleEventArgs>(e)) {
+                    std::get<HandleEventArgs>(e).window.handle_event();
+                } else if(std::holds_alternative<CloseWindowArgs>(e)) {
+                    auto&      w           = std::get<CloseWindowArgs>(e).window;
+                    const auto last_window = !unregister_window(&w);
+                    delete &w;
+                    if(quitted && last_window) {
+                        quitted = false;
+                        goto exit;
                     }
-                };
-                if(quitted && get_windows().empty()) {
-                    quitted = false;
-                    goto exit;
+                } else if(std::holds_alternative<QuitApplicationArgs>(e)) {
+                    close_all_windows();
                 }
             }
-        }
-        if(quit_event_poll.revents & POLLIN) {
-            quit_event.consume();
-            close_all_windows();
-        }
+        } while(!(events = application_events.replace()).empty());
+        application_event.wait();
     }
 
 exit:
@@ -81,7 +76,7 @@ exit:
 }
 auto WaylandApplication::quit() -> void {
     quitted = true;
-    quit_event.notify();
+    queue_application_event(QuitApplicationArgs{});
 }
 auto WaylandApplication::is_running() const -> bool {
     return running;

@@ -11,36 +11,37 @@
 #include "gawl-window.hpp"
 
 namespace gawl {
-namespace internal {
-struct RefreshCallbackArgs {};
-struct WindowResizeCallbackArgs {};
-struct KeyBoardCallbackArgs {
-    uint32_t          key;
-    gawl::ButtonState state;
-};
-struct PointermoveCallbackArgs {
-    double x;
-    double y;
-};
-struct ClickCallbackArgs {
-    uint32_t          key;
-    gawl::ButtonState state;
-};
-struct ScrollCallbackArgs {
-    gawl::WheelAxis axis;
-    double          value;
-};
-struct CloseRequestCallbackArgs {};
-struct UserCallbackArgs {
-    void* data;
-};
-using CallbackArgs = std::variant<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
-} // namespace internal
-
+class WaylandApplication;
 class WaylandWindow : public GawlWindow {
-    friend class WaylandApplication;
+    friend WaylandApplication;
 
   private:
+    struct RefreshCallbackArgs {};
+    struct WindowResizeCallbackArgs {};
+    struct KeyBoardCallbackArgs {
+        uint32_t          key;
+        gawl::ButtonState state;
+    };
+    struct PointermoveCallbackArgs {
+        double x;
+        double y;
+    };
+    struct ClickCallbackArgs {
+        uint32_t          key;
+        gawl::ButtonState state;
+    };
+    struct ScrollCallbackArgs {
+        gawl::WheelAxis axis;
+        double          value;
+    };
+    struct CloseRequestCallbackArgs {};
+    struct UserCallbackArgs {
+        void* data;
+    };
+    using CallbackArgs = std::variant<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
+
+    WaylandApplication& app;
+
     // global objects
     wayland::display_t&    display;
     wayland::registry_t    registry;
@@ -81,7 +82,7 @@ class WaylandWindow : public GawlWindow {
     Critical<uint32_t>             last_pressed_key = -1;
     std::optional<KeyRepeatConfig> repeat_config;
 
-    Critical<std::vector<internal::CallbackArgs>> callback_queue;
+    Critical<std::vector<CallbackArgs>> callback_queue;
 
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
@@ -89,7 +90,7 @@ class WaylandWindow : public GawlWindow {
     auto swap_buffer() -> void;
     auto choose_surface() -> void;
     auto wait_for_key_repeater_exit() -> void;
-    auto queue_callback(internal::CallbackArgs args) -> void;
+    auto queue_callback(CallbackArgs args) -> void;
 
   public:
     auto prepare() -> internal::FramebufferBinder override;

@@ -81,20 +81,20 @@ auto WaylandWindow::resize_buffer(const int width, const int height, const int s
     // apply new scale
     const auto bw = window_size[0] * buffer_scale;
     const auto bh = window_size[1] * buffer_scale;
-    if(is_running()) {
+    if(is_prepared()) {
         choose_surface();
         egl_window.resize(bw, bh);
         glViewport(0, 0, bw, bh);
     }
     on_buffer_resize(bw, bh, buffer_scale);
-    queue_callback(internal::WindowResizeCallbackArgs{});
+    queue_callback(WindowResizeCallbackArgs{});
     refresh();
 }
 auto WaylandWindow::handle_event() -> void {
     auto queue = callback_queue.replace();
     do {
         for(const auto& a : queue) {
-            if(std::holds_alternative<internal::RefreshCallbackArgs>(a)) {
+            if(std::holds_alternative<RefreshCallbackArgs>(a)) {
                 if(!frame_done) {
                     continue;
                 }
@@ -105,28 +105,28 @@ auto WaylandWindow::handle_event() -> void {
                 frame_cb.on_done() = [&](uint32_t /* elapsed */) {
                     frame_done = true;
                     if(!latest_frame.replace(true) || !get_event_driven()) {
-                        queue_callback(internal::RefreshCallbackArgs{});
+                        queue_callback(RefreshCallbackArgs{});
                     }
                 };
                 swap_buffer();
-            } else if(std::holds_alternative<internal::WindowResizeCallbackArgs>(a)) {
+            } else if(std::holds_alternative<WindowResizeCallbackArgs>(a)) {
                 window_resize_callback();
-            } else if(std::holds_alternative<internal::KeyBoardCallbackArgs>(a)) {
-                const auto& args = std::get<internal::KeyBoardCallbackArgs>(a);
+            } else if(std::holds_alternative<KeyBoardCallbackArgs>(a)) {
+                const auto& args = std::get<KeyBoardCallbackArgs>(a);
                 keyboard_callback(args.key, args.state);
-            } else if(std::holds_alternative<internal::PointermoveCallbackArgs>(a)) {
-                const auto& args = std::get<internal::PointermoveCallbackArgs>(a);
+            } else if(std::holds_alternative<PointermoveCallbackArgs>(a)) {
+                const auto& args = std::get<PointermoveCallbackArgs>(a);
                 pointermove_callback(args.x, args.y);
-            } else if(std::holds_alternative<internal::ClickCallbackArgs>(a)) {
-                const auto& args = std::get<internal::ClickCallbackArgs>(a);
+            } else if(std::holds_alternative<ClickCallbackArgs>(a)) {
+                const auto& args = std::get<ClickCallbackArgs>(a);
                 click_callback(args.key, args.state);
-            } else if(std::holds_alternative<internal::ScrollCallbackArgs>(a)) {
-                const auto& args = std::get<internal::ScrollCallbackArgs>(a);
+            } else if(std::holds_alternative<ScrollCallbackArgs>(a)) {
+                const auto& args = std::get<ScrollCallbackArgs>(a);
                 scroll_callback(args.axis, args.value);
-            } else if(std::holds_alternative<internal::CloseRequestCallbackArgs>(a)) {
+            } else if(std::holds_alternative<CloseRequestCallbackArgs>(a)) {
                 close_request_callback();
-            } else if(std::holds_alternative<internal::UserCallbackArgs>(a)) {
-                const auto& args = std::get<internal::UserCallbackArgs>(a);
+            } else if(std::holds_alternative<UserCallbackArgs>(a)) {
+                const auto& args = std::get<UserCallbackArgs>(a);
                 user_callback(args.data);
             }
         }
@@ -140,10 +140,10 @@ auto WaylandWindow::prepare() -> internal::FramebufferBinder {
 }
 auto WaylandWindow::refresh() -> void {
     latest_frame.store(false);
-    queue_callback(internal::RefreshCallbackArgs{});
+    queue_callback(RefreshCallbackArgs{});
 }
 auto WaylandWindow::invoke_user_callback(void* data) -> void {
-    queue_callback(internal::UserCallbackArgs{data});
+    queue_callback(UserCallbackArgs{data});
 }
 auto WaylandWindow::swap_buffer() -> void {
     ASSERT(eglSwapBuffers(egl_global->display, eglsurface) != EGL_FALSE, "eglSwapBuffers() failed")
@@ -163,16 +163,16 @@ auto WaylandWindow::wait_for_key_repeater_exit() -> void {
         key_repeater.join();
     }
 }
-auto WaylandWindow::queue_callback(internal::CallbackArgs args) -> void {
+auto WaylandWindow::queue_callback(CallbackArgs args) -> void {
     if(!app.is_running()) {
         return;
     }
     const auto lock = callback_queue.get_lock();
     callback_queue.data.emplace_back(args);
-    app.tell_event(this);
+    app.tell_event(*this);
 }
 WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
-    : GawlWindow(hint), display(dynamic_cast<WaylandApplication*>(&app)->get_display()) {
+    : GawlWindow(hint), app(*dynamic_cast<WaylandApplication*>(&hint.app)), display(app.get_display()) {
     // retrieve global objects
     registry             = display.get_registry();
     registry.on_global() = [&](uint32_t name, const std::string& interface, uint32_t version) {
@@ -207,7 +207,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     xdg_surface.on_configure() = [&](const uint32_t serial) { xdg_surface.ack_configure(serial); };
     xdg_toplevel               = xdg_surface.get_toplevel();
     xdg_toplevel.set_title(hint.title);
-    xdg_toplevel.on_close() = [this]() { queue_callback(internal::CloseRequestCallbackArgs{}); };
+    xdg_toplevel.on_close() = [this]() { queue_callback(CloseRequestCallbackArgs{}); };
 
     // create cursor surface
     cursor_surface = compositor.create_surface();
@@ -239,7 +239,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     };
     keyboard.on_key() = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
         const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
-        queue_callback(internal::KeyBoardCallbackArgs{key, s});
+        queue_callback(KeyBoardCallbackArgs{key, s});
         if(!repeat_config.has_value()) {
             return;
         }
@@ -249,7 +249,7 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
             key_repeater = std::thread([this, key]() {
                 key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->delay_in_milisec));
                 while(last_pressed_key.load() == key) {
-                    queue_callback(internal::KeyBoardCallbackArgs{key, gawl::ButtonState::repeat});
+                    queue_callback(KeyBoardCallbackArgs{key, gawl::ButtonState::repeat});
                     key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->interval));
                 }
             });
@@ -262,22 +262,22 @@ WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     };
     keyboard.on_leave() = [this](const uint32_t /* serial */, const wayland::surface_t /* surface */) {
         wait_for_key_repeater_exit();
-        queue_callback(internal::KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::leave});
+        queue_callback(KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::leave});
     };
     pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
         const auto s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::press : gawl::ButtonState::release;
-        queue_callback(internal::ClickCallbackArgs{button, s});
+        queue_callback(ClickCallbackArgs{button, s});
     };
     pointer.on_motion() = [this](const uint32_t, const double x, const double y) {
-        queue_callback(internal::PointermoveCallbackArgs{x, y});
+        queue_callback(PointermoveCallbackArgs{x, y});
     };
     pointer.on_axis() = [this](const uint32_t, const wayland::pointer_axis axis, const double value) {
         const auto w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::horizontal : gawl::WheelAxis::vertical;
-        queue_callback(internal::ScrollCallbackArgs{w, value});
+        queue_callback(ScrollCallbackArgs{w, value});
     };
 
     init_global();
-    init_complete();
+    mark_as_prepared();
 }
 WaylandWindow::~WaylandWindow() {
     wait_for_key_repeater_exit();

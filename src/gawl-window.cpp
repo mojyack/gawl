@@ -41,8 +41,11 @@ auto GawlWindow::on_buffer_resize(const size_t width, const size_t height, const
         refresh();
     }
 }
-auto GawlWindow::is_running() const -> bool {
-    return status == Status::READY;
+auto GawlWindow::is_prepared() const -> bool {
+    return prepared;
+}
+auto GawlWindow::mark_as_prepared() -> void {
+    prepared = true;
 }
 auto GawlWindow::init_global() -> void {
     if(global_count == 0) {
@@ -50,9 +53,6 @@ auto GawlWindow::init_global() -> void {
     }
     global_count += 1;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-}
-auto GawlWindow::init_complete() -> void {
-    status = Status::READY;
 }
 auto GawlWindow::get_window_size() const -> const std::array<int, 2>& {
     return window_size;
@@ -96,11 +96,8 @@ auto GawlWindow::get_scale() const -> double {
 auto GawlWindow::get_size() const -> std::array<std::size_t, 2> {
     return buffer_size.size;
 }
-auto GawlWindow::is_close_pending() const -> bool {
-    return status == Status::CLOSE;
-}
 auto GawlWindow::close_window() -> void {
-    app.close_window(this);
+    app.close_window(*this);
 }
 auto GawlWindow::quit_application() -> void {
     app.quit();
