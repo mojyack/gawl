@@ -5,19 +5,14 @@
 #include "wayland-window.hpp"
 
 namespace gawl {
-auto WaylandApplication::queue_application_event(ApplicationEventArgs&& args) -> void {
-    const auto lock = application_events.get_lock();
-    application_events->emplace_back(args);
-    application_event.wakeup();
-}
 auto WaylandApplication::get_display() -> wayland::display_t& {
     return display;
 }
 auto WaylandApplication::tell_event(WaylandWindow& window) -> void {
-    queue_application_event(HandleEventArgs{window});
+    application_events.push(HandleEventArgs{window});
 }
 auto WaylandApplication::close_window(GawlWindow& window) -> void {
-    queue_application_event(CloseWindowArgs{window});
+    application_events.push(CloseWindowArgs{window});
 }
 auto WaylandApplication::run() -> void {
     running = true;
@@ -46,25 +41,29 @@ auto WaylandApplication::run() -> void {
          });
 
     while(true) {
-        auto events = application_events.replace();
+        auto events = application_events.exchange();
         do {
             for(const auto& e : events) {
-                if(std::holds_alternative<HandleEventArgs>(e)) {
-                    std::get<HandleEventArgs>(e).window.handle_event();
-                } else if(std::holds_alternative<CloseWindowArgs>(e)) {
-                    auto&      w           = std::get<CloseWindowArgs>(e).window;
+                switch(e.index()) {
+                case decltype(application_events)::index_of<HandleEventArgs>():
+                    e.get<HandleEventArgs>().window.handle_event();
+                    break;
+                case decltype(application_events)::index_of<CloseWindowArgs>(): {
+                    auto&      w           = e.get<CloseWindowArgs>().window;
                     const auto last_window = !unregister_window(&w);
                     delete &w;
                     if(quitted && last_window) {
                         quitted = false;
                         goto exit;
                     }
-                } else if(std::holds_alternative<QuitApplicationArgs>(e)) {
+                } break;
+                case decltype(application_events)::index_of<QuitApplicationArgs>():
                     close_all_windows();
+                    break;
                 }
             }
-        } while(!(events = application_events.replace()).empty());
-        application_event.wait();
+        } while(!(events = application_events.exchange()).empty());
+        application_events.wait();
     }
 
 exit:
@@ -76,7 +75,7 @@ exit:
 }
 auto WaylandApplication::quit() -> void {
     quitted = true;
-    queue_application_event(QuitApplicationArgs{});
+    application_events.push(QuitApplicationArgs{});
 }
 auto WaylandApplication::is_running() const -> bool {
     return running;

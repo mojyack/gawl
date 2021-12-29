@@ -91,10 +91,11 @@ auto WaylandWindow::resize_buffer(const int width, const int height, const int s
     refresh();
 }
 auto WaylandWindow::handle_event() -> void {
-    auto queue = callback_queue.replace();
+    auto queue = callback_queue.exchange();
     do {
         for(const auto& a : queue) {
-            if(std::holds_alternative<RefreshCallbackArgs>(a)) {
+            switch(a.index()) {
+            case decltype(callback_queue)::index_of<RefreshCallbackArgs>(): {
                 if(!frame_done) {
                     continue;
                 }
@@ -109,28 +110,36 @@ auto WaylandWindow::handle_event() -> void {
                     }
                 };
                 swap_buffer();
-            } else if(std::holds_alternative<WindowResizeCallbackArgs>(a)) {
+            } break;
+            case decltype(callback_queue)::index_of<WindowResizeCallbackArgs>():
                 window_resize_callback();
-            } else if(std::holds_alternative<KeyBoardCallbackArgs>(a)) {
-                const auto& args = std::get<KeyBoardCallbackArgs>(a);
+                break;
+            case decltype(callback_queue)::index_of<KeyBoardCallbackArgs>(): {
+                const auto& args = a.get<KeyBoardCallbackArgs>();
                 keyboard_callback(args.key, args.state);
-            } else if(std::holds_alternative<PointermoveCallbackArgs>(a)) {
-                const auto& args = std::get<PointermoveCallbackArgs>(a);
+            } break;
+            case decltype(callback_queue)::index_of<PointermoveCallbackArgs>(): {
+                const auto& args = a.get<PointermoveCallbackArgs>();
                 pointermove_callback(args.x, args.y);
-            } else if(std::holds_alternative<ClickCallbackArgs>(a)) {
-                const auto& args = std::get<ClickCallbackArgs>(a);
+            } break;
+            case decltype(callback_queue)::index_of<ClickCallbackArgs>(): {
+                const auto& args = a.get<ClickCallbackArgs>();
                 click_callback(args.key, args.state);
-            } else if(std::holds_alternative<ScrollCallbackArgs>(a)) {
-                const auto& args = std::get<ScrollCallbackArgs>(a);
+            } break;
+            case decltype(callback_queue)::index_of<ScrollCallbackArgs>(): {
+                const auto& args = a.get<ScrollCallbackArgs>();
                 scroll_callback(args.axis, args.value);
-            } else if(std::holds_alternative<CloseRequestCallbackArgs>(a)) {
+            } break;
+            case decltype(callback_queue)::index_of<CloseRequestCallbackArgs>():
                 close_request_callback();
-            } else if(std::holds_alternative<UserCallbackArgs>(a)) {
-                const auto& args = std::get<UserCallbackArgs>(a);
+                break;
+            case decltype(callback_queue)::index_of<UserCallbackArgs>(): {
+                const auto& args = a.get<UserCallbackArgs>();
                 user_callback(args.data);
+            } break;
             }
         }
-    } while(!(queue = callback_queue.replace()).empty());
+    } while(!(queue = callback_queue.exchange()).empty());
 }
 auto WaylandWindow::prepare() -> internal::FramebufferBinder {
     auto       binder = internal::FramebufferBinder(0);
@@ -162,14 +171,6 @@ auto WaylandWindow::wait_for_key_repeater_exit() -> void {
     if(key_repeater.joinable()) {
         key_repeater.join();
     }
-}
-auto WaylandWindow::queue_callback(CallbackArgs args) -> void {
-    if(!app.is_running()) {
-        return;
-    }
-    const auto lock = callback_queue.get_lock();
-    callback_queue.data.emplace_back(args);
-    app.tell_event(*this);
 }
 WaylandWindow::WaylandWindow(const WindowCreateHint& hint)
     : GawlWindow(hint), app(*dynamic_cast<WaylandApplication*>(&hint.app)), display(app.get_display()) {

@@ -34,8 +34,8 @@ gawl_files = files(
 gawl_headers = files(
     'binder.hpp',
     'earcut.hpp',
-    'error.hpp',
     'empty-texture.hpp',
+    'error.hpp',
     'fd.hpp',
     'gawl-application.hpp',
     'gawl-window.hpp',
@@ -50,6 +50,8 @@ gawl_headers = files(
     'textrender.hpp',
     'thread.hpp',
     'type.hpp',
+    'variant-buffer.hpp',
+    'variant.hpp',
     'wayland-application.hpp',
     'wayland-window.hpp',
 )

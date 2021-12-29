@@ -1,12 +1,10 @@
 #pragma once
-#include <variant>
-
 #include <wayland-client.hpp>
 
 #include "fd.hpp"
 #include "gawl-application.hpp"
-#include "thread.hpp"
 #include "type.hpp"
+#include "variant-buffer.hpp"
 
 namespace gawl {
 class WaylandWindow;
@@ -20,16 +18,12 @@ class WaylandApplication : public GawlApplication {
         GawlWindow& window;
     };
     struct QuitApplicationArgs {};
-    using ApplicationEventArgs = std::variant<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
+
+    VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs> application_events;
 
     wayland::display_t display;
-    Event              application_event;
     bool               quitted = false;
     bool               running = false;
-
-    Critical<std::vector<ApplicationEventArgs>> application_events;
-
-    auto queue_application_event(ApplicationEventArgs&& args) -> void;
 
   public:
     auto get_display() -> wayland::display_t&;

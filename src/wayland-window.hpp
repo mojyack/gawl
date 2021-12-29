@@ -1,6 +1,5 @@
 #pragma once
 #include <thread>
-#include <variant>
 
 #include <wayland-client-core.h>
 #include <wayland-client-protocol-extra.hpp>
@@ -10,6 +9,8 @@
 
 #include "gawl-window.hpp"
 #include "thread.hpp"
+#include "variant-buffer.hpp"
+#include "wayland-application.hpp"
 
 namespace gawl {
 class WaylandApplication;
@@ -39,7 +40,8 @@ class WaylandWindow : public GawlWindow {
     struct UserCallbackArgs {
         void* data;
     };
-    using CallbackArgs = std::variant<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
+    using CallbackQueue = VariantBuffer<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
+    CallbackQueue callback_queue;
 
     WaylandApplication& app;
 
@@ -83,15 +85,19 @@ class WaylandWindow : public GawlWindow {
     Critical<uint32_t>             last_pressed_key = -1;
     std::optional<KeyRepeatConfig> repeat_config;
 
-    Critical<std::vector<CallbackArgs>> callback_queue;
-
     auto init_egl() -> void;
     auto resize_buffer(int width, int height, int scale) -> void;
     auto handle_event() -> void;
     auto swap_buffer() -> void;
     auto choose_surface() -> void;
     auto wait_for_key_repeater_exit() -> void;
-    auto queue_callback(CallbackArgs args) -> void;
+    auto queue_callback(auto&& args) -> void {
+        if(!app.is_running()) {
+            return;
+        }
+        callback_queue.push(std::move(args));
+        app.tell_event(*this);
+    }
 
   public:
     auto prepare() -> internal::FramebufferBinder override;
