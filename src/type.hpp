@@ -2,14 +2,10 @@
 #include <array>
 #include <cmath>
 #include <concepts>
-#include <condition_variable>
-#include <mutex>
 #include <numbers>
 #include <ranges>
 
 #include <linux/input-event-codes.h>
-
-#include "thread.hpp"
 
 namespace gawl {
 struct Point {

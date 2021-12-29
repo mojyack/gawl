@@ -48,6 +48,7 @@ gawl_headers = files(
     'polygon.hpp',
     'screen.hpp',
     'textrender.hpp',
+    'thread.hpp',
     'type.hpp',
     'wayland-application.hpp',
     'wayland-window.hpp',

@@ -1,5 +1,6 @@
 #pragma once
 #include <mutex>
+#include <atomic>
 
 namespace gawl {
 template <typename T>
@@ -34,6 +35,25 @@ struct Critical {
 };
 
 class Event {
+  private:
+    std::atomic_flag flag;
+
+  public:
+    auto wait() -> void {
+        flag.clear();
+        while(!flag.test()) {
+            flag.wait(false);
+        }
+    }
+    auto wakeup() -> void {
+        flag.test_and_set();
+        flag.notify_all();
+    }
+    Event() {}
+    Event(const Event&) {}
+};
+
+class TimerEvent {
   private:
     std::condition_variable condv;
     Critical<bool>          waked;

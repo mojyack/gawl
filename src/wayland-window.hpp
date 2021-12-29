@@ -9,6 +9,7 @@
 #include <wayland-egl.hpp>
 
 #include "gawl-window.hpp"
+#include "thread.hpp"
 
 namespace gawl {
 class WaylandApplication;
@@ -77,7 +78,7 @@ class WaylandWindow : public GawlWindow {
     Critical<bool>                 latest_frame   = true;
     int                            window_size[2] = {0, 0};
     int                            buffer_scale   = 0;
-    Event                          key_delay_timer;
+    TimerEvent                     key_delay_timer;
     std::thread                    key_repeater;
     Critical<uint32_t>             last_pressed_key = -1;
     std::optional<KeyRepeatConfig> repeat_config;

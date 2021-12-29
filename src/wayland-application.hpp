@@ -5,6 +5,7 @@
 
 #include "fd.hpp"
 #include "gawl-application.hpp"
+#include "thread.hpp"
 #include "type.hpp"
 
 namespace gawl {
