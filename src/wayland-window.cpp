@@ -96,16 +96,13 @@ auto WaylandWindow::handle_event() -> void {
         for(const auto& a : queue) {
             switch(a.index()) {
             case decltype(callback_queue)::index_of<RefreshCallbackArgs>(): {
-                if(!frame_done) {
-                    continue;
-                }
                 frame_done = false;
                 choose_surface();
                 refresh_callback();
                 frame_cb           = surface.frame();
                 frame_cb.on_done() = [&](uint32_t /* elapsed */) {
                     frame_done = true;
-                    if(!latest_frame.replace(true) || !get_event_driven()) {
+                    if(!latest_frame.exchange(true) || !get_event_driven()) {
                         queue_callback(RefreshCallbackArgs{});
                     }
                 };
@@ -149,6 +146,9 @@ auto WaylandWindow::prepare() -> internal::FramebufferBinder {
 }
 auto WaylandWindow::refresh() -> void {
     latest_frame.store(false);
+    if(!frame_done) {
+        return;
+    }
     queue_callback(RefreshCallbackArgs{});
 }
 auto WaylandWindow::invoke_user_callback(void* data) -> void {

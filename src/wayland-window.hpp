@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <thread>
 
 #include <wayland-client-core.h>
@@ -76,8 +77,8 @@ class WaylandWindow : public GawlWindow {
         uint32_t delay_in_milisec;
     };
 
-    bool                           frame_done     = true;
-    Critical<bool>                 latest_frame   = true;
+    std::atomic_bool               frame_done     = true;
+    std::atomic_bool               latest_frame   = true;
     int                            window_size[2] = {0, 0};
     int                            buffer_scale   = 0;
     TimerEvent                     key_delay_timer;
