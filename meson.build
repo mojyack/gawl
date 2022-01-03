@@ -1,2 +1,2 @@
-project('gawl', 'cpp', version : '1.6.0b', default_options : ['warning_level=3', 'werror=false', 'cpp_std=c++20'])
+project('gawl', 'cpp', version : '2.0.0b', default_options : ['warning_level=3', 'werror=false', 'cpp_std=c++20'])
 subdir('src')

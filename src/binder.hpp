@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <concepts>
 #include <optional>
 
@@ -27,7 +28,7 @@ class [[nodiscard]] Binder {
 
   public:
     auto get() const -> GLuint {
-        ASSERT(b, "buffer name moved")
+        assert(b);
         return b.value();
     }
     auto operator=(Binder&& o) -> Binder& {

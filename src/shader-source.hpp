@@ -1,6 +1,6 @@
 #pragma once
 namespace gawl::internal {
-constexpr const char* graphic_vertex_shader_source      = R"glsl(
+constexpr auto graphic_vertex_shader_source      = R"glsl(
     #version 330 core
     in vec2  position;
     in vec2  texcoord;
@@ -10,7 +10,7 @@ constexpr const char* graphic_vertex_shader_source      = R"glsl(
         tex_coordinate = texcoord;
     }
 )glsl";
-constexpr const char* graphic_fragment_shader_source    = R"glsl(
+constexpr auto graphic_fragment_shader_source    = R"glsl(
     #version 330 core
     in vec2           tex_coordinate;
     uniform sampler2D tex;
@@ -19,8 +19,8 @@ constexpr const char* graphic_fragment_shader_source    = R"glsl(
         color = texture(tex, tex_coordinate);
     }
 )glsl";
-constexpr const char* textrender_vertex_shader_source   = graphic_vertex_shader_source;
-constexpr const char* textrender_fragment_shader_source = R"glsl(
+constexpr auto textrender_vertex_shader_source   = graphic_vertex_shader_source;
+constexpr auto textrender_fragment_shader_source = R"glsl(
     #version 330 core
     in vec2           tex_coordinate;
     out vec4          color;
@@ -32,14 +32,14 @@ constexpr const char* textrender_fragment_shader_source = R"glsl(
         color        = vec4(text_color) * sampled;
     }
 )glsl";
-constexpr const char* polygon_vertex_shader_source = R"glsl(
+constexpr auto polygon_vertex_shader_source      = R"glsl(
     #version 330 core
     in vec2 position;
     void main() {
         gl_Position = vec4(position, 0.0, 1.0);
     }
 )glsl";
-constexpr const char* polygon_fragment_shader_source = R"glsl(
+constexpr auto polygon_fragment_shader_source    = R"glsl(
     #version 330 core
     out vec4     color;
     uniform vec4 polygon_color;
@@ -47,4 +47,4 @@ constexpr const char* polygon_fragment_shader_source = R"glsl(
         color = polygon_color;
     }
 )glsl";
-} // namespace gawl
+} // namespace gawl::internal

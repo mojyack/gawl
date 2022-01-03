@@ -13,61 +13,49 @@ thread_dep = dependency('threads')
 magick_inc = include_directories('/usr/include/ImageMagick-7')
 magick_dep = dependency('Magick++')
 
-gawl_inc = [freetype_inc, magick_inc]
 gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep]
-gawl_files = files(
-    'empty-texture.cpp',
-    'gawl-application.cpp',
-    'gawl-window.cpp',
-    'globject.cpp',
-    'graphic-base.cpp',
-    'graphic.cpp',
-    'misc.cpp',
-    'pixelbuffer.cpp',
-    'polygon.cpp',
-    'screen.cpp',
-    'textrender.cpp',
-    'wayland-application.cpp',
-    'wayland-window.cpp',
-)
 
 gawl_headers = files(
-    'binder.hpp',
-    'earcut.hpp',
-    'empty-texture.hpp',
-    'error.hpp',
-    'fd.hpp',
-    'gawl-application.hpp',
-    'gawl-window.hpp',
-    'gawl.hpp',
-    'globject.hpp',
-    'graphic-base.hpp',
-    'graphic.hpp',
-    'misc.hpp',
-    'pixelbuffer.hpp',
-    'polygon.hpp',
-    'screen.hpp',
-    'textrender.hpp',
-    'thread.hpp',
-    'type.hpp',
-    'variant-buffer.hpp',
-    'variant.hpp',
-    'wayland-application.hpp',
-    'wayland-window.hpp',
-)
-
-gawl = shared_module(
-    'gawl',
-    gawl_files,
-    dependencies: [gawl_dep],
-    install: true
+  'application.hpp',
+  'binder.hpp',
+  'declvar.hpp',
+  'earcut.hpp',
+  'error.hpp',
+  'fd.hpp',
+  'global.hpp',
+  'globject.hpp',
+  'graphic-base.hpp',
+  'graphic-data.hpp',
+  'graphic-globject.hpp',
+  'graphic.hpp',
+  'include.hpp',
+  'internal-type.hpp',
+  'misc.hpp',
+  'null-screen.hpp',
+  'pixelbuffer.hpp',
+  'polygon-globject.hpp',
+  'polygon.hpp',
+  'screen.hpp',
+  'shader-source.hpp',
+  'textrender-data.hpp',
+  'textrender-globject.hpp',
+  'textrender.hpp',
+  'thread.hpp',
+  'type.hpp',
+  'variant-buffer.hpp',
+  'variant.hpp',
+  'window-creat-hint.hpp',
+  'window.hpp',
+  'window-impl-concept.hpp',
 )
 
 install_headers(gawl_headers, subdir: 'gawl')
 
+subdir('wayland')
+
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
-    libraries: [gawl, gawl_dep],
+    libraries: [gawl_dep],
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl'

@@ -1,23 +1,19 @@
 #pragma once
 #include <array>
+#include <concepts>
 
 #include "binder.hpp"
 
 namespace gawl {
-class Screen {
-  public:
-    virtual auto get_scale() const -> double                    = 0;
-    virtual auto get_size() const -> std::array<std::size_t, 2> = 0;
-    virtual auto prepare() -> internal::FramebufferBinder       = 0;
-    virtual ~Screen() {}
+namespace concepts {
+template <class S>
+concept MetaScreen = requires(const S& c) {
+    { c.get_scale() } -> std::same_as<double>;
+    { c.get_size() } -> std::convertible_to<std::array<std::size_t, 2>>;
 };
-
-class NullScreen : public Screen {
-  public:
-    auto get_scale() const -> double override;
-    auto get_size() const -> std::array<std::size_t, 2> override;
-    auto prepare() -> internal::FramebufferBinder override;
-};
-
-extern const NullScreen* const nullscreen;
+template <class S>
+concept Screen = requires(S& m) {
+    { m.prepare() } -> std::same_as<internal::FramebufferBinder>;
+} && MetaScreen<S>;
+} // namespace concepts
 } // namespace gawl

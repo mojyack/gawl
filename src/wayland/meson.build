@@ -1,0 +1,9 @@
+gawl_wayland_headers = files(
+  'application.hpp',
+  'eglobject.hpp',
+  'gawl.hpp',
+  'shared-data.hpp',
+  'window.hpp',
+)
+
+install_headers(gawl_wayland_headers, subdir: 'gawl/wayland')

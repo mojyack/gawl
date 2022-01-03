@@ -81,20 +81,20 @@ auto rotate(T& points, const Point& origin, const double angle) -> void {
 using Color = std::array<double, 4>;
 
 enum class ButtonState {
-    press,
-    release,
-    repeat,
-    leave,
+    Press,
+    Release,
+    Repeat,
+    Leave,
 };
 
 enum class WheelAxis {
-    vertical,
-    horizontal,
+    Vertical,
+    Horizontal,
 };
 
 enum class Align {
-    left,
-    center,
-    right,
+    Left,
+    Center,
+    Right,
 };
 } // namespace gawl
