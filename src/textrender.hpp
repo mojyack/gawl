@@ -55,11 +55,11 @@ inline auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
 }
 } // namespace internal
 
-template <int default_size = 24>
 class TextRender {
   private:
     struct DefaultHook {};
 
+    int                                       default_size;
     std::shared_ptr<internal::TextRenderData> data;
 
     internal::Character* get_chara_graphic(const int size, const char32_t c) {
@@ -234,7 +234,7 @@ class TextRender {
         return static_cast<bool>(data);
     }
     TextRender() {}
-    TextRender(const std::vector<const char*>& font_names) {
+    TextRender(const std::vector<const char*>& font_names, int default_size) : default_size(default_size) {
         auto fonts = std::vector<std::string>();
         for(auto path : font_names) {
             fonts.emplace_back(path);
