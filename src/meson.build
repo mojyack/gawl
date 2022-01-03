@@ -21,6 +21,8 @@ gawl_headers = files(
   'declvar.hpp',
   'earcut.hpp',
   'error.hpp',
+  'empty-texture-data.hpp',
+  'empty-texture.hpp',
   'fd.hpp',
   'global.hpp',
   'globject.hpp',

@@ -1,4 +1,5 @@
 #pragma once
+#include "empty-texture.hpp"
 #include "graphic.hpp"
-#include "textrender.hpp"
 #include "null-screen.hpp"
+#include "textrender.hpp"
