@@ -2,13 +2,6 @@
 #include "textrender-data.hpp"
 
 namespace gawl {
-namespace concepts {
-template <class Hook>
-concept TextRenderHook = requires(Hook& hook, gawl::Rectangle& rect, gawl::TextRenderCharacterGraphic& graphic) {
-    { hook.callback(size_t(), rect, graphic) } -> std::same_as<bool>;
-};
-} // namespace concepts
-
 namespace internal {
 inline auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
     auto utf8  = std::string_view(str);
@@ -57,8 +50,6 @@ inline auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
 
 class TextRender {
   private:
-    struct DefaultHook {};
-
     int                                       default_size;
     std::shared_ptr<internal::TextRenderData> data;
 
@@ -67,6 +58,8 @@ class TextRender {
     }
 
   public:
+    using Callback = std::function<bool(size_t, const gawl::Rectangle&, gawl::TextRenderCharacterGraphic&)>;
+
     auto set_char_color(const Color& color) -> void {
         internal::get_global()->textrender_shader.set_text_color(color);
     }
@@ -110,13 +103,11 @@ class TextRender {
         return r;
     }
 
-    template <auto hook = DefaultHook()>
-    auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char* const text, const int size = 0) -> Rectangle {
+    auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char* const text, const int size = 0, const Callback callback = nullptr) -> Rectangle {
         const auto uni = internal::convert_utf8_to_unicode32(text);
-        return draw<hook>(screen, point, color, uni.data(), size);
+        return draw(screen, point, color, uni.data(), size, callback);
     }
-    template <auto hook = DefaultHook()>
-    auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char32_t* const text, int size = 0) -> Rectangle {
+    auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char32_t* const text, int size = 0, const Callback callback = nullptr) -> Rectangle {
         assert(data);
 
         size = size != 0 ? size : default_size;
@@ -138,11 +129,7 @@ class TextRender {
             drawed_area.a.y  = drawed_area.a.y < area.a.y ? drawed_area.a.y : area.a.y;
             drawed_area.b.x  = drawed_area.b.x > area.b.x ? drawed_area.b.x : area.b.x;
             drawed_area.b.y  = drawed_area.b.y > area.b.y ? drawed_area.b.y : area.b.y;
-            if constexpr(concepts::TextRenderHook<decltype(hook)>) {
-                if(!hook.callback(c - text, area, *chara)) {
-                    chara->draw_rect(screen, area);
-                }
-            } else {
+            if(!callback || !callback(c - text, area, *chara)) {
                 chara->draw_rect(screen, area);
             }
             xpos += 1. * chara->advance / scale;
@@ -151,8 +138,7 @@ class TextRender {
         return drawed_area;
     }
 
-    template <auto hook = DefaultHook()>
-    auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect, Color const& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> Rectangle {
+    auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect, const Color& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center, const Callback callback = nullptr) -> Rectangle {
         const auto scale = screen.get_scale();
         auto       r     = rect;
         r.magnify(scale);
@@ -166,7 +152,7 @@ class TextRender {
                                                                                          : r.b.y - font_area.height();
         x /= scale;
         y /= scale;
-        return draw<hook>(screen, {x, y}, color, text, size);
+        return draw(screen, {x, y}, color, text, size, callback);
     }
 
     auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
