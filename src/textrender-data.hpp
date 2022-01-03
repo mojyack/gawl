@@ -14,7 +14,7 @@ class Character : public gawl::TextRenderCharacterGraphic {
     int offset[2];
     int advance;
 
-    Character(char32_t code, const std::vector<FT_Face>& faces) : GraphicBase<TextRenderGLObject>(global.gl->textrender_shader) {
+    Character(char32_t code, const std::vector<FT_Face>& faces) : GraphicBase<TextRenderGLObject>(get_global()->textrender_shader) {
         auto face        = FT_Face(nullptr);
         auto glyph_index = int(-1);
         for(auto f : faces) {
@@ -67,7 +67,7 @@ class CharacterCache {
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
             auto face = FT_Face();
-            assert(!FT_New_Face(global.gl->textrender_shader.freetype, path.data(), 0, &(face)));
+            assert(!FT_New_Face(get_global()->textrender_shader.freetype, path.data(), 0, &(face)));
             FT_Set_Pixel_Sizes(face, 0, size);
             faces.emplace_back(face);
         }

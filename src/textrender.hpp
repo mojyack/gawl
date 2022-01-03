@@ -68,7 +68,7 @@ class TextRender {
 
   public:
     auto set_char_color(const Color& color) -> void {
-        internal::global.gl->textrender_shader.set_text_color(color);
+        internal::get_global()->textrender_shader.set_text_color(color);
     }
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const Point& base, const char* const text, const int size = 0) -> Rectangle {
         const auto uni = internal::convert_utf8_to_unicode32(text);

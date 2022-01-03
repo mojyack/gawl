@@ -18,7 +18,6 @@ gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep]
 gawl_headers = files(
   'application.hpp',
   'binder.hpp',
-  'declvar.hpp',
   'earcut.hpp',
   'error.hpp',
   'empty-texture-data.hpp',

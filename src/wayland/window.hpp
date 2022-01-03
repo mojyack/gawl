@@ -364,7 +364,6 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         }
 
         this->set_event_driven(hint.manual_refresh);
-        this->init_global();
         this->set_state(gawl::internal::WindowState::Running);
         refresh();
     }

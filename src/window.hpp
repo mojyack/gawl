@@ -39,12 +39,6 @@ class Window {
         window_size[1]    = buffer_size.size[1] / draw_scale;
         impl()->refresh();
     }
-    auto init_global() -> void {
-        if(global.gl == nullptr) {
-            global.gl = new GLObjects;
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        }
-    }
 
   public:
     auto get_size() const -> const std::array<std::size_t, 2>& {
