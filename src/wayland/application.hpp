@@ -210,7 +210,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 const auto matched = std::visit(
                     [this, key, state](auto& w) -> bool {
                         const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == pointer_focused) {
+                        if(wlw.surface == keyboard_focused) {
                             w.wl_on_key_input(key, state);
                             return true;
                         }
