@@ -160,8 +160,8 @@ class WindowBackend : public gawl::internal::Window<Impl> {
             this->on_buffer_resize(0, 0, buffer_scale);
         } else {
             // update buffer size
-            auto  new_width    = width * buffer_scale;
-            auto  new_height   = height * buffer_scale;
+            auto  new_width    = size_t(width * buffer_scale);
+            auto  new_height   = size_t(height * buffer_scale);
             auto& current_size = this->get_size();
             if(current_size[0] == new_width && current_size[1] == new_height) {
                 return;

@@ -5,7 +5,7 @@
 namespace gawl::internal {
 class GraphicData : public GraphicBase<GraphicGLObject> {
   public:
-    GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase<GraphicGLObject>(get_global()->graphic_shader) {
+    GraphicData(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase<GraphicGLObject>(global->graphic_shader) {
         const auto txbinder = this->bind_texture();
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         if(crop) {

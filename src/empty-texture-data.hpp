@@ -1,6 +1,6 @@
 #pragma once
-#include "global.hpp"
 #include "graphic-base.hpp"
+#include "internal-type.hpp"
 
 namespace gawl::internal {
 class EmptyTextureData : public GraphicBase<GraphicGLObject> {
@@ -15,7 +15,7 @@ class EmptyTextureData : public GraphicBase<GraphicGLObject> {
     auto get_frame_buffer_name() const -> GLuint {
         return frame_buffer;
     }
-    EmptyTextureData(const size_t width, const size_t height) : GraphicBase<GraphicGLObject>(get_global()->graphic_shader), size{width, height} {
+    EmptyTextureData(const size_t width, const size_t height) : GraphicBase<GraphicGLObject>(global->graphic_shader), size{width, height} {
         const auto txbinder = bind_texture();
 
         this->width             = width;

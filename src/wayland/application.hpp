@@ -170,7 +170,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
         wl.keyboard.on_repeat_info() = [this](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
             wl.repeat_config.emplace(WaylandClientObject::KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
         };
-        wl.keyboard.on_enter() = [this](const uint32_t serial, const wayland::surface_t surface, const wayland::array_t keys) {
+        wl.keyboard.on_enter() = [this](const uint32_t /*serial*/, const wayland::surface_t surface, const wayland::array_t keys) {
             keyboard_focused = surface;
             for(auto& w : this->windows) {
                 const auto matched = std::visit(
@@ -188,7 +188,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
-        wl.keyboard.on_leave() = [this](const uint32_t serial, const wayland::surface_t surface) {
+        wl.keyboard.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t surface) {
             keyboard_focused = nullptr;
             for(auto& w : this->windows) {
                 std::visit(
@@ -202,7 +202,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                     w.as_variant());
             }
         };
-        wl.keyboard.on_key() = [this](const uint32_t serial, const uint32_t time, const uint32_t key, const wayland::keyboard_key_state state) {
+        wl.keyboard.on_key() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t key, const wayland::keyboard_key_state state) {
             if(!keyboard_focused) {
                 return;
             }
@@ -222,7 +222,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
-        wl.pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t surface, const double x, const double y) {
+        wl.pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t surface, const double /*x*/, const double /*y*/) {
             pointer_focused = surface;
             for(auto& w : this->windows) {
                 const auto matched = std::visit(
@@ -243,10 +243,10 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
-        wl.pointer.on_leave() = [this](const uint32_t serial, const wayland::surface_t surface) {
+        wl.pointer.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t /*surface*/) {
             pointer_focused = nullptr;
         };
-        wl.pointer.on_button() = [this](const uint32_t serial, const uint32_t time, const uint32_t button, const wayland::pointer_button_state state) {
+        wl.pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
             if(!pointer_focused) {
                 return;
             }
@@ -266,7 +266,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
-        wl.pointer.on_motion() = [this](const uint32_t serial, const double x, const double y) {
+        wl.pointer.on_motion() = [this](const uint32_t /*serial*/, const double x, const double y) {
             if(!pointer_focused) {
                 return;
             }
@@ -286,7 +286,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
-        wl.pointer.on_axis() = [this](const uint32_t serial, const wayland::pointer_axis axis, const double value) {
+        wl.pointer.on_axis() = [this](const uint32_t /*serial*/, const wayland::pointer_axis axis, const double value) {
             if(!pointer_focused) {
                 return;
             }
@@ -306,6 +306,12 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                 }
             }
         };
+
+        assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
+        gawl::internal::global = new gawl::internal::GLObjects();
+    }
+    ~ApplicationBackend() {
+        delete gawl::internal::global;
     }
 };
 }; // namespace gawl::internal::wl

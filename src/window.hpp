@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 
-#include "global.hpp"
 #include "internal-type.hpp"
 #include "type.hpp"
 #include "window-creat-hint.hpp"

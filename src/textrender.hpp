@@ -61,7 +61,7 @@ class TextRender {
     using Callback = std::function<bool(size_t, const gawl::Rectangle&, gawl::TextRenderCharacterGraphic&)>;
 
     auto set_char_color(const Color& color) -> void {
-        internal::get_global()->textrender_shader.set_text_color(color);
+        internal::global->textrender_shader.set_text_color(color);
     }
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const Point& base, const char* const text, const int size = 0) -> Rectangle {
         const auto uni = internal::convert_utf8_to_unicode32(text);
@@ -228,5 +228,4 @@ class TextRender {
         data.reset(new internal::TextRenderData(std::move(fonts)));
     }
 };
-
 } // namespace gawl

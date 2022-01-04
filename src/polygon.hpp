@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "earcut.hpp"
-#include "global.hpp"
+#include "internal-type.hpp"
 #include "polygon-globject.hpp"
 #include "screen.hpp"
 #include "type.hpp"
@@ -28,7 +28,7 @@ namespace internal {
 template <GLenum mode>
 auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
     auto       buffer = std::vector<GLfloat>(vertices.size() * 2);
-    auto&      gl     = get_global()->polygon_shader;
+    auto&      gl     = global->polygon_shader;
     const auto s      = screen->get_size();
     const auto scale  = screen->get_scale();
     for(auto i = size_t(0); i < vertices.size(); i += 1) {
