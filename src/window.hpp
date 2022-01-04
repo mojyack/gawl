@@ -37,7 +37,6 @@ class Window {
                                                                                                  : 1;
         window_size[0]    = buffer_size.size[0] / draw_scale;
         window_size[1]    = buffer_size.size[1] / draw_scale;
-        impl()->refresh();
     }
 
   public:

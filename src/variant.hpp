@@ -13,6 +13,9 @@ class Variant {
     std::variant<Ts...> data;
 
   public:
+    auto as_variant() -> std::variant<Ts...>& {
+        return data;
+    }
     auto index() const -> size_t {
         return data.index();
     }
@@ -41,5 +44,7 @@ class Variant {
     Variant(auto&& o) : data(std::move(o)) {}
     template <typename T, typename... Args>
     Variant(std::in_place_type_t<T>, Args&&... args) : data(std::in_place_type<T>, std::forward<Args>(args)...) {}
+    template <typename... Args>
+    Variant(Args&&... args) : data(args...){};
 };
 } // namespace gawl

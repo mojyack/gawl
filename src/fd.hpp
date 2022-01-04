@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 
+#include <poll.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
 
@@ -75,7 +76,7 @@ class FileDescriptor {
     }
     auto operator=(FileDescriptor&& o) -> FileDescriptor& {
         close_fd();
-        fd   = o.fd;
+        fd = o.fd;
         o.forget();
         return *this;
     }
@@ -103,6 +104,17 @@ class EventFileDescriptor {
     auto consume() const -> uint64_t {
         const auto v = fd.read<uint64_t>();
         return v.has_value() ? *v : 0;
+    }
+    auto wait() const -> void {
+        auto pfd = pollfd{fd, POLLIN, 0};
+        while(true) {
+            poll(&pfd, 1, -1);
+            if(pfd.revents & POLLIN) {
+                consume();
+                return;
+            }
+        }
+        return;
     }
     operator int() const {
         return fd;

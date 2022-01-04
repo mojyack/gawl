@@ -1,7 +1,7 @@
 #pragma once
 #include <cstddef>
 
-namespace gawl {
+namespace gawl::internal {
 template <class BackendHint>
 struct WindowCreateHint {
     size_t      width          = 800;
@@ -12,4 +12,4 @@ struct WindowCreateHint {
     // internal use
     BackendHint backend_hint;
 };
-} // namespace gawl
+} // namespace gawl::internal

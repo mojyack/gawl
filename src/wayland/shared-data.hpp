@@ -2,23 +2,23 @@
 #include <wayland-client.hpp>
 
 #include "../variant-buffer.hpp"
-#include "../window.hpp"
 #include "eglobject.hpp"
+#include "wlobject.hpp"
 
 namespace gawl::internal::wl {
-template <class Backend>
+template <class... Impls>
 struct SharedData {
     struct HandleEventArgs {
-        Backend& window;
+        Variant<Impls*...> window;
     };
     struct CloseWindowArgs {
-        Backend& window;
+        Variant<Impls*...> window;
     };
     struct QuitApplicationArgs {};
     using BufferType = VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
 
-    wayland::display_t* display;
-    BufferType*         application_events;
-    EGLObject*          egl;
+    WaylandClientObject* wl;
+    EGLObject*           egl;
+    BufferType*          application_events;
 };
 }; // namespace gawl::internal::wl

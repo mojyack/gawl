@@ -1,12 +1,6 @@
 #pragma once
 #include <thread>
 
-#include <wayland-client-core.h>
-#include <wayland-client-protocol-extra.hpp>
-#include <wayland-client-protocol.hpp>
-#include <wayland-cursor.hpp>
-#include <wayland-egl.hpp>
-
 #include "../binder.hpp"
 #include "../type.hpp"
 #include "../variant-buffer.hpp"
@@ -15,9 +9,19 @@
 #include "../window.hpp"
 #include "eglobject.hpp"
 #include "shared-data.hpp"
+#include "wlobject.hpp"
 
 namespace gawl::internal::wl {
-template <class Impl>
+inline auto choose_surface(const EGLSurface eglsurface, const EGLObject& egl) -> void {
+    static auto current_surface = EGLSurface(nullptr);
+    if(current_surface == eglsurface) {
+        return;
+    }
+    assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
+    current_surface = eglsurface;
+}
+
+template <class Impl, class... Impls>
 class WindowBackend : public gawl::internal::Window<Impl> {
   private:
     struct RefreshCallbackArgs {};
@@ -42,108 +46,41 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         void* data;
     };
     using CallbackQueue = VariantBuffer<RefreshCallbackArgs, WindowResizeCallbackArgs, KeyBoardCallbackArgs, PointermoveCallbackArgs, ClickCallbackArgs, ScrollCallbackArgs, CloseRequestCallbackArgs, UserCallbackArgs>;
-    CallbackQueue callback_queue;
 
-    // global objects
-    wayland::display_t&    display;
-    wayland::registry_t    registry;
-    wayland::compositor_t  compositor;
-    wayland::xdg_wm_base_t xdg_wm_base;
-    wayland::seat_t        seat;
-    wayland::shm_t         shm;
-    wayland::output_t      output;
+    using BackendType = WindowBackend;
+    using SharedData  = internal::wl::SharedData<Impls...>;
+    using BufferType  = typename SharedData::BufferType;
 
-    // local objects
-    wayland::surface_t       surface;
-    wayland::shell_surface_t shell_surface;
-    wayland::xdg_surface_t   xdg_surface;
-    wayland::xdg_toplevel_t  xdg_toplevel;
-    wayland::pointer_t       pointer;
-    wayland::keyboard_t      keyboard;
-    wayland::callback_t      frame_cb;
-    wayland::cursor_image_t  cursor_image;
-    wayland::buffer_t        cursor_buffer;
-    wayland::surface_t       cursor_surface;
-
-    // EGL
+    WaylandClientObject&  wl;
+    WaylandWindowObject   wlw;
+    EGLObject&            egl;
+    BufferType&           application_events;
+    CallbackQueue         callback_queue;
     wayland::egl_window_t egl_window;
     EGLSurface            eglsurface = nullptr;
 
-    // gawl
-    struct KeyRepeatConfig {
-        uint32_t interval;
-        uint32_t delay_in_milisec;
-    };
-
-    using BackendType = WindowBackend;
-    using SharedData  = SharedData<WindowBackend<Impl>>;
-    using BufferType  = typename SharedData::BufferType;
-
-    BufferType& application_events;
-    EGLObject&  egl;
-
-    std::atomic_bool               frame_done   = true;
-    std::atomic_bool               latest_frame = true;
-    int                            buffer_scale = 0;
-    TimerEvent                     key_delay_timer;
-    std::thread                    key_repeater;
-    Critical<uint32_t>             last_pressed_key = -1;
-    std::optional<KeyRepeatConfig> repeat_config;
+    std::atomic_bool            frame_done               = true;
+    std::atomic_bool            latest_frame             = true;
+    std::atomic_bool            obsolete_egl_window_size = true;
+    TimerEvent                  key_delay_timer;
+    gawl::Critical<std::thread> key_repeater;
+    std::atomic_uint32_t        last_pressed_key = -1;
+    int                         buffer_scale     = -1;
 
     auto init_egl() -> void {
         eglsurface = eglCreateWindowSurface(egl.display, egl.config, egl_window, nullptr);
         assert(eglsurface != EGL_NO_SURFACE);
-        choose_surface();
-    }
-    auto resize_buffer(const int width, const int height, const int scale) -> void {
-        auto window_size = this->get_window_size();
-        if((width != -1 && height != -1 && width == window_size[0] && height == window_size[1]) || (scale != -1 && scale == buffer_scale)) {
-            return;
-        }
-        if(scale != -1 && scale != buffer_scale) {
-            buffer_scale = scale;
-            surface.set_buffer_scale(buffer_scale);
-
-            // load cursor theme
-            wayland::cursor_theme_t cursor_theme = wayland::cursor_theme_t("default", 24 * buffer_scale, shm);
-            wayland::cursor_t       cursor       = cursor_theme.get_cursor("left_ptr");
-            cursor_image                         = cursor.image(0);
-            cursor_buffer                        = cursor_image.get_buffer();
-            cursor_surface.set_buffer_scale(buffer_scale);
-        }
-        if(width != -1 && height != -1) {
-            window_size[0] = width;
-            window_size[1] = height;
-        }
-        // apply new scale
-        const auto bw = window_size[0] * buffer_scale;
-        const auto bh = window_size[1] * buffer_scale;
-        if(this->get_state() == WindowState::Running) {
-            choose_surface();
-            egl_window.resize(bw, bh);
-        }
-        this->on_buffer_resize(bw, bh, buffer_scale);
-        if constexpr(gawl::concepts::WindowImplWithWindowResizeCallback<Impl>) {
-            queue_callback(WindowResizeCallbackArgs{});
-        }
-        refresh();
+        choose_surface(eglsurface, egl);
+        assert(eglSwapInterval(egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
     }
     auto swap_buffer() -> void {
         assert(eglSwapBuffers(egl.display, eglsurface) != EGL_FALSE);
     }
-    auto choose_surface() -> void {
-        static auto current_surface = EGLSurface(nullptr);
-        if(current_surface == eglsurface) {
-            return;
-        }
-        assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
-        current_surface = eglsurface;
-    }
     auto wait_for_key_repeater_exit() -> void {
         last_pressed_key.store(-1);
         key_delay_timer.wakeup();
-        if(key_repeater.joinable()) {
-            key_repeater.join();
+        if(key_repeater->joinable()) {
+            key_repeater->join();
         }
     }
     auto queue_callback(auto&& args) -> void {
@@ -151,12 +88,94 @@ class WindowBackend : public gawl::internal::Window<Impl> {
             return;
         }
         callback_queue.push(std::move(args));
-        application_events.push(typename SharedData::HandleEventArgs{*this});
+        application_events.push(typename SharedData::HandleEventArgs{this->impl()});
     }
 
   public:
-    using WindowCreateHintType = WindowCreateHint<internal::wl::SharedData<WindowBackend<Impl>>>;
+    using WindowCreateHintType = WindowCreateHint<internal::wl::SharedData<Impls...>>;
 
+    auto wl_get_object() -> WaylandWindowObject& {
+        return wlw;
+    }
+    auto wl_on_key_enter(const std::vector<uint32_t>& keys) -> void {
+        for(const auto key : keys) {
+            queue_callback(KeyBoardCallbackArgs{key, gawl::ButtonState::Enter});
+        }
+    }
+    auto wl_on_key_leave() -> void {
+        wait_for_key_repeater_exit();
+        queue_callback(KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::Leave});
+    }
+    auto wl_on_key_input(const uint32_t key, const wayland::keyboard_key_state state) -> void {
+        const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::Press : gawl::ButtonState::Release;
+        queue_callback(KeyBoardCallbackArgs{key, s});
+        if(!wl.repeat_config.has_value()) {
+            return;
+        }
+        if(s == gawl::ButtonState::Press) {
+            const auto lock = key_repeater.get_lock();
+            if(this->get_state() != gawl::internal::WindowState::Running) {
+                return;
+            }
+            wait_for_key_repeater_exit();
+            last_pressed_key.store(key);
+            *key_repeater = std::thread([this, key]() {
+                key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->delay_in_milisec));
+                while(last_pressed_key.load() == key) {
+                    queue_callback(KeyBoardCallbackArgs{key, gawl::ButtonState::Repeat});
+                    key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->interval));
+                }
+            });
+        } else if(last_pressed_key.load() == key) {
+            wait_for_key_repeater_exit();
+        }
+    }
+    auto wl_on_click(const uint32_t button, const wayland::pointer_button_state state) -> void {
+        const auto s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::Press : gawl::ButtonState::Release;
+        queue_callback(ClickCallbackArgs{button, s});
+    }
+    auto wl_on_pointer_motion(const double x, const double y) -> void {
+        queue_callback(PointermoveCallbackArgs{gawl::Point{x, y}});
+    }
+    auto wl_on_pointer_axis(const wayland::pointer_axis axis, const double value) -> void {
+        const auto w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
+        queue_callback(ScrollCallbackArgs{w, value});
+    }
+
+    auto resize_buffer(const int width, const int height) -> void {
+        if(width == -1 || height == -1) {
+            // update scale
+            if(buffer_scale == wl.buffer_scale) {
+                return;
+            }
+            buffer_scale = wl.buffer_scale;
+            wlw.surface.set_buffer_scale(buffer_scale);
+
+            // load cursor theme
+            wayland::cursor_theme_t cursor_theme = wayland::cursor_theme_t("default", 24 * buffer_scale, wl.shm);
+            wayland::cursor_t       cursor       = cursor_theme.get_cursor("left_ptr");
+            wlw.cursor_image                     = cursor.image(0);
+            wlw.cursor_buffer                    = wlw.cursor_image.get_buffer();
+            wlw.cursor_surface.set_buffer_scale(buffer_scale);
+            this->on_buffer_resize(0, 0, buffer_scale);
+        } else {
+            // update buffer size
+            auto  new_width    = width * buffer_scale;
+            auto  new_height   = height * buffer_scale;
+            auto& current_size = this->get_size();
+            if(current_size[0] == new_width && current_size[1] == new_height) {
+                return;
+            }
+            this->on_buffer_resize(new_width, new_height, buffer_scale);
+        }
+
+        // apply new buffer size
+        obsolete_egl_window_size = true;
+        if constexpr(gawl::concepts::WindowImplWithWindowResizeCallback<Impl>) {
+            queue_callback(WindowResizeCallbackArgs{});
+        }
+        refresh();
+    }
     auto handle_event() -> void {
         auto queue = callback_queue.exchange();
         do {
@@ -164,12 +183,17 @@ class WindowBackend : public gawl::internal::Window<Impl> {
                 switch(a.index()) {
                 case decltype(callback_queue)::template index_of<RefreshCallbackArgs>(): {
                     frame_done = false;
-                    choose_surface();
+                    choose_surface(eglsurface, egl);
+                    if(obsolete_egl_window_size) {
+                        obsolete_egl_window_size = false;
+                        const auto& buffer_size  = this->get_size();
+                        egl_window.resize(buffer_size[0], buffer_size[1]);
+                    }
                     if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
                         this->impl()->refresh_callback();
                     }
-                    frame_cb           = surface.frame();
-                    frame_cb.on_done() = [&](uint32_t /* elapsed */) {
+                    wlw.frame_cb           = wlw.surface.frame();
+                    wlw.frame_cb.on_done() = [&](uint32_t /* elapsed */) {
                         frame_done = true;
                         if(!latest_frame.exchange(true) || !this->get_event_driven()) {
                             queue_callback(RefreshCallbackArgs{});
@@ -240,47 +264,20 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         }
     }
     auto close_window() -> void {
-        application_events.push(typename SharedData::CloseWindowArgs{*this});
+        this->set_state(gawl::internal::WindowState::Destructing);
+        application_events.push(typename SharedData::CloseWindowArgs{this->impl()});
     }
     auto quit_application() -> void {
         application_events.push(typename SharedData::QuitApplicationArgs{});
     }
-    WindowBackend(const WindowCreateHintType& hint) : display(*hint.backend_hint.display), application_events(*hint.backend_hint.application_events), egl(*hint.backend_hint.egl) {
-        // retrieve global objects
-        registry             = display.get_registry();
-        registry.on_global() = [&](uint32_t name, const std::string& interface, uint32_t version) {
-            if(interface == wayland::compositor_t::interface_name)
-                registry.bind(name, compositor, version);
-            else if(interface == wayland::xdg_wm_base_t::interface_name)
-                registry.bind(name, xdg_wm_base, version);
-            else if(interface == wayland::seat_t::interface_name)
-                registry.bind(name, seat, version);
-            else if(interface == wayland::shm_t::interface_name)
-                registry.bind(name, shm, version);
-            else if(interface == wayland::output_t::interface_name)
-                registry.bind(name, output, version);
-        };
-        display.roundtrip();
-        assert(xdg_wm_base);
-        output.on_scale() = [this](const int32_t s) {
-            resize_buffer(-1, -1, s);
-        };
-
-        auto has_pointer       = false;
-        auto has_keyboard      = false;
-        seat.on_capabilities() = [&has_keyboard, &has_pointer](const wayland::seat_capability& capability) {
-            has_keyboard = capability & wayland::seat_capability::keyboard;
-            has_pointer  = capability & wayland::seat_capability::pointer;
-        };
-
+    WindowBackend(const WindowCreateHintType& hint) : wl(*hint.backend_hint.wl), egl(*hint.backend_hint.egl), application_events(*hint.backend_hint.application_events) {
         // create a surface
-        surface                    = compositor.create_surface();
-        xdg_wm_base.on_ping()      = [&](const uint32_t serial) { xdg_wm_base.pong(serial); };
-        xdg_surface                = xdg_wm_base.get_xdg_surface(surface);
-        xdg_surface.on_configure() = [&](const uint32_t serial) { xdg_surface.ack_configure(serial); };
-        xdg_toplevel               = xdg_surface.get_toplevel();
-        xdg_toplevel.set_title(hint.title);
-        xdg_toplevel.on_close() = [this]() {
+        wlw.surface                    = wl.compositor.create_surface();
+        wlw.xdg_surface                = wl.xdg_wm_base.get_xdg_surface(wlw.surface);
+        wlw.xdg_surface.on_configure() = [&](const uint32_t serial) { wlw.xdg_surface.ack_configure(serial); };
+        wlw.xdg_toplevel               = wlw.xdg_surface.get_toplevel();
+        wlw.xdg_toplevel.set_title(hint.title);
+        wlw.xdg_toplevel.on_close() = [this]() {
             if constexpr(gawl::concepts::WindowImplWithCloseRequestCallback<Impl>) {
                 queue_callback(CloseRequestCallbackArgs{});
             } else {
@@ -289,85 +286,28 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         };
 
         // create cursor surface
-        cursor_surface = compositor.create_surface();
+        wlw.cursor_surface = wl.compositor.create_surface();
 
-        surface.commit();
-        display.roundtrip();
-
-        // get input devices
-        assert(has_keyboard);
-        assert(has_pointer);
-        pointer  = seat.get_pointer();
-        keyboard = seat.get_keyboard();
-
-        // draw cursor
-        pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t& /*unused*/, const int32_t /*unused*/, const int32_t /*unused*/) {
-            cursor_surface.attach(cursor_buffer, 0, 0);
-            cursor_surface.damage(0, 0, cursor_image.width() * buffer_scale, cursor_image.height() * buffer_scale);
-            cursor_surface.commit();
-            pointer.set_cursor(serial, cursor_surface, 0, 0);
-        };
+        wlw.surface.commit();
+        wl.display.roundtrip();
 
         // intitialize egl
-        egl_window = wayland::egl_window_t(surface, hint.width, hint.height);
+        egl_window = wayland::egl_window_t(wlw.surface, hint.width, hint.height);
         init_egl();
 
         // other configuration
-        xdg_toplevel.on_configure() = [&](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
-            resize_buffer(w, h, -1);
+        wlw.xdg_toplevel.on_configure() = [&](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
+            resize_buffer(w, h);
         };
-        if constexpr(gawl::concepts::WindowImplWithKeyboardCallback<Impl>) {
-            keyboard.on_key() = [this](const uint32_t /*unused*/, const uint32_t /*unused*/, const uint32_t key, const wayland::keyboard_key_state state) {
-                const auto s = state == wayland::keyboard_key_state::pressed ? gawl::ButtonState::Press : gawl::ButtonState::Release;
-                queue_callback(KeyBoardCallbackArgs{key, s});
-                if(!repeat_config.has_value()) {
-                    return;
-                }
-                if(s == gawl::ButtonState::Press) {
-                    wait_for_key_repeater_exit();
-                    last_pressed_key.store(key);
-                    key_repeater = std::thread([this, key]() {
-                        key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->delay_in_milisec));
-                        while(last_pressed_key.load() == key) {
-                            queue_callback(KeyBoardCallbackArgs{key, gawl::ButtonState::Repeat});
-                            key_delay_timer.wait_for(std::chrono::milliseconds(repeat_config->interval));
-                        }
-                    });
-                } else if(last_pressed_key.load() == key) {
-                    wait_for_key_repeater_exit();
-                }
-            };
-            keyboard.on_repeat_info() = [this](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
-                repeat_config.emplace(KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
-            };
-            keyboard.on_leave() = [this](const uint32_t /* serial */, const wayland::surface_t /* surface */) {
-                wait_for_key_repeater_exit();
-                queue_callback(KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::Leave});
-            };
-        }
-        if constexpr(gawl::concepts::WindowImplWithClickCallback<Impl>) {
-            pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
-                const auto s = state == wayland::pointer_button_state::pressed ? gawl::ButtonState::Press : gawl::ButtonState::Release;
-                queue_callback(ClickCallbackArgs{button, s});
-            };
-        }
-        if constexpr(gawl::concepts::WindowImplWithPointermoveCallback<Impl>) {
-            pointer.on_motion() = [this](const uint32_t, const double x, const double y) {
-                queue_callback(PointermoveCallbackArgs{gawl::Point{x, y}});
-            };
-        }
-        if constexpr(gawl::concepts::WindowImplWithScrollCallback<Impl>) {
-            pointer.on_axis() = [this](const uint32_t, const wayland::pointer_axis axis, const double value) {
-                const auto w = axis == wayland::pointer_axis::horizontal_scroll ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
-                queue_callback(ScrollCallbackArgs{w, value});
-            };
-        }
+
+        resize_buffer(-1, -1); // load buffer scale from application
 
         this->set_event_driven(hint.manual_refresh);
         this->set_state(gawl::internal::WindowState::Running);
         refresh();
     }
     ~WindowBackend() {
+        const auto lock = key_repeater.get_lock();
         wait_for_key_repeater_exit();
         // finialize EGL.
         assert(eglDestroySurface(egl.display, eglsurface) != EGL_FALSE);

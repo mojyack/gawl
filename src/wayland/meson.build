@@ -4,6 +4,7 @@ gawl_wayland_headers = files(
   'gawl.hpp',
   'shared-data.hpp',
   'window.hpp',
+  'wlobject.hpp',
 )
 
 install_headers(gawl_wayland_headers, subdir: 'gawl/wayland')
