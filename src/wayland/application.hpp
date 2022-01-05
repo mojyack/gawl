@@ -39,25 +39,22 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
             auto& wayland_main_stop_poll    = fds[1];
             auto& wayland_main_suspend_poll = fds[2];
             while(true) {
-                auto suspend = false;
-                {
-                    auto read_intent = wl.display.obtain_read_intent();
-                    wl.display.flush();
-                    poll(fds.data(), fds.size(), -1);
-                    if(wl_display_event_poll.revents & POLLIN) {
-                        read_intent.read();
-                        wl.display.dispatch_pending();
-                    }
-                    if(wayland_main_stop_poll.revents & POLLIN) {
-                        wayland_main_stop.consume();
-                        break;
-                    }
-                    if(wayland_main_suspend_poll.revents & POLLIN) {
-                        wayland_main_suspend_request.consume();
-                        suspend = true;
-                    }
+                auto read_intent = wl.display.obtain_read_intent();
+                wl.display.flush();
+                poll(fds.data(), fds.size(), -1);
+                if(wl_display_event_poll.revents & POLLIN) {
+                    read_intent.read();
+                    wl.display.dispatch_pending();
                 }
-                if(suspend) [[unlikely]] {
+                if(wayland_main_stop_poll.revents & POLLIN) {
+                    wayland_main_stop.consume();
+                    break;
+                }
+                if(wayland_main_suspend_poll.revents & POLLIN) {
+                    wayland_main_suspend_request.consume();
+                    if(!read_intent.is_finalized()) {
+                        read_intent.cancel();
+                    }
                     wayland_main_suspend_reply.notify();
                     wayland_main_suspend_request.wait();
                 }
