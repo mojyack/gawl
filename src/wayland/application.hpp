@@ -6,6 +6,7 @@
 
 #include "../application.hpp"
 #include "../fd.hpp"
+#include "../window-impl-concept.hpp"
 #include "../window.hpp"
 #include "eglobject.hpp"
 #include "shared-data.hpp"
@@ -162,150 +163,166 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
         wl.display.roundtrip();
 
         // get input devices
-        assert(has_keyboard);
-        assert(has_pointer);
-        wl.pointer  = wl.seat.get_pointer();
-        wl.keyboard = wl.seat.get_keyboard();
+        constexpr auto enable_keyboard = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::KeyboardCallback, Impls...>();
+        if constexpr(enable_keyboard) {
+            assert(has_keyboard);
+            wl.keyboard = wl.seat.get_keyboard();
 
-        wl.keyboard.on_repeat_info() = [this](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
-            wl.repeat_config.emplace(WaylandClientObject::KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
-        };
-        wl.keyboard.on_enter() = [this](const uint32_t /*serial*/, const wayland::surface_t surface, const wayland::array_t keys) {
-            keyboard_focused = surface;
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [surface, keys](auto& w) -> bool {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == surface) {
-                            w.wl_on_key_enter(keys);
-                            return true;
-                        }
-                        return false;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
-                }
-            }
-        };
-        wl.keyboard.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t surface) {
-            keyboard_focused = nullptr;
-            for(auto& w : this->windows) {
-                std::visit(
-                    [surface](auto& w) {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface != surface) {
-                            return;
-                        }
-                        w.wl_on_key_leave();
-                    },
-                    w.as_variant());
-            }
-        };
-        wl.keyboard.on_key() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t key, const wayland::keyboard_key_state state) {
-            if(!keyboard_focused) {
-                return;
-            }
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [this, key, state](auto& w) -> bool {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == keyboard_focused) {
-                            w.wl_on_key_input(key, state);
-                            return true;
-                        }
-                        return false;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
-                }
-            }
-        };
-        wl.pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t surface, const double /*x*/, const double /*y*/) {
-            pointer_focused = surface;
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [this, surface, serial](auto& w) -> bool {
-                        auto& wlw = w.wl_get_object();
-                        if(wlw.surface != surface) {
+            wl.keyboard.on_repeat_info() = [this](const uint32_t repeat_per_sec, const uint32_t delay_in_milisec) {
+                wl.repeat_config.emplace(WaylandClientObject::KeyRepeatConfig{1000 / repeat_per_sec, delay_in_milisec});
+            };
+            wl.keyboard.on_enter() = [this](const uint32_t /*serial*/, const wayland::surface_t surface, const wayland::array_t keys) {
+                keyboard_focused = surface;
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [surface, keys](auto& w) -> bool {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface == surface) {
+                                w.wl_on_key_enter(keys);
+                                return true;
+                            }
                             return false;
-                        }
-                        wlw.cursor_surface.attach(wlw.cursor_buffer, 0, 0);
-                        wlw.cursor_surface.damage(0, 0, wlw.cursor_image.width() * wl.buffer_scale, wlw.cursor_image.height() * wl.buffer_scale);
-                        wlw.cursor_surface.commit();
-                        wl.pointer.set_cursor(serial, wlw.cursor_surface, 0, 0);
-                        return true;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
                 }
-            }
-        };
-        wl.pointer.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t /*surface*/) {
-            pointer_focused = nullptr;
-        };
-        wl.pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
-            if(!pointer_focused) {
-                return;
-            }
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [this, button, state](auto& w) -> bool {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == pointer_focused) {
-                            w.wl_on_click(button, state);
+            };
+            wl.keyboard.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t surface) {
+                keyboard_focused = nullptr;
+                for(auto& w : this->windows) {
+                    std::visit(
+                        [surface](auto& w) {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface != surface) {
+                                return;
+                            }
+                            w.wl_on_key_leave();
+                        },
+                        w.as_variant());
+                }
+            };
+            wl.keyboard.on_key() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t key, const wayland::keyboard_key_state state) {
+                if(!keyboard_focused) {
+                    return;
+                }
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [this, key, state](auto& w) -> bool {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface == keyboard_focused) {
+                                w.wl_on_key_input(key, state);
+                                return true;
+                            }
+                            return false;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
+                }
+            };
+        }
+
+        constexpr auto enable_click   = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::ClickCallback, Impls...>();
+        constexpr auto enable_motion  = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::PointermoveCallback, Impls...>();
+        constexpr auto enable_pointer = enable_click || enable_motion;
+        if constexpr(enable_pointer) {
+            assert(has_pointer);
+            wl.pointer            = wl.seat.get_pointer();
+            wl.pointer.on_enter() = [this](const uint32_t serial, const wayland::surface_t surface, const double /*x*/, const double /*y*/) {
+                pointer_focused = surface;
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [this, surface, serial](auto& w) -> bool {
+                            auto& wlw = w.wl_get_object();
+                            if(wlw.surface != surface) {
+                                return false;
+                            }
+                            wlw.cursor_surface.attach(wlw.cursor_buffer, 0, 0);
+                            wlw.cursor_surface.damage(0, 0, wlw.cursor_image.width() * wl.buffer_scale, wlw.cursor_image.height() * wl.buffer_scale);
+                            wlw.cursor_surface.commit();
+                            wl.pointer.set_cursor(serial, wlw.cursor_surface, 0, 0);
                             return true;
-                        }
-                        return false;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
                 }
-            }
-        };
-        wl.pointer.on_motion() = [this](const uint32_t /*serial*/, const double x, const double y) {
-            if(!pointer_focused) {
-                return;
-            }
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [this, x, y](auto& w) -> bool {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == pointer_focused) {
-                            w.wl_on_pointer_motion(x, y);
-                            return true;
-                        }
-                        return false;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
+            };
+            wl.pointer.on_leave() = [this](const uint32_t /*serial*/, const wayland::surface_t /*surface*/) {
+                pointer_focused = nullptr;
+            };
+        }
+        if constexpr(enable_click) {
+            wl.pointer.on_button() = [this](const uint32_t /*serial*/, const uint32_t /*time*/, const uint32_t button, const wayland::pointer_button_state state) {
+                if(!pointer_focused) {
+                    return;
                 }
-            }
-        };
-        wl.pointer.on_axis() = [this](const uint32_t /*serial*/, const wayland::pointer_axis axis, const double value) {
-            if(!pointer_focused) {
-                return;
-            }
-            for(auto& w : this->windows) {
-                const auto matched = std::visit(
-                    [this, axis, value](auto& w) -> bool {
-                        const auto& wlw = w.wl_get_object();
-                        if(wlw.surface == pointer_focused) {
-                            w.wl_on_pointer_axis(axis, value);
-                            return true;
-                        }
-                        return false;
-                    },
-                    w.as_variant());
-                if(matched) {
-                    break;
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [this, button, state](auto& w) -> bool {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface == pointer_focused) {
+                                w.wl_on_click(button, state);
+                                return true;
+                            }
+                            return false;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
                 }
-            }
-        };
+            };
+        }
+        if constexpr(enable_motion) {
+            wl.pointer.on_motion() = [this](const uint32_t /*serial*/, const double x, const double y) {
+                if(!pointer_focused) {
+                    return;
+                }
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [this, x, y](auto& w) -> bool {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface == pointer_focused) {
+                                w.wl_on_pointer_motion(x, y);
+                                return true;
+                            }
+                            return false;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
+                }
+            };
+        }
+        constexpr auto enable_scroll = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::ScrollCallback, Impls...>();
+        if constexpr(enable_scroll) {
+            wl.pointer.on_axis() = [this](const uint32_t /*serial*/, const wayland::pointer_axis axis, const double value) {
+                if(!pointer_focused) {
+                    return;
+                }
+                for(auto& w : this->windows) {
+                    const auto matched = std::visit(
+                        [this, axis, value](auto& w) -> bool {
+                            const auto& wlw = w.wl_get_object();
+                            if(wlw.surface == pointer_focused) {
+                                w.wl_on_pointer_axis(axis, value);
+                                return true;
+                            }
+                            return false;
+                        },
+                        w.as_variant());
+                    if(matched) {
+                        break;
+                    }
+                }
+            };
+        }
 
         assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
         gawl::internal::global = new gawl::internal::GLObjects();

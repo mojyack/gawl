@@ -46,4 +46,36 @@ template <class Impl>
 concept WindowImplWithUserCallback = requires(Impl& m) {
     { m.user_callback(nullptr) } -> std::same_as<void>;
 };
+
+namespace impl {
+    template <class Impl>
+    using RefreshCallback = typename std::conditional<WindowImplWithRefreshCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using WindowResizeCallback = typename std::conditional<WindowImplWithWindowResizeCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using KeyboardCallback = typename std::conditional<WindowImplWithKeyboardCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using PointermoveCallback = typename std::conditional<WindowImplWithPointermoveCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using ClickCallback = typename std::conditional<WindowImplWithClickCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using ScrollCallback = typename std::conditional<WindowImplWithScrollCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using CloseCallback = typename std::conditional<WindowImplWithCloseRequestCallback<Impl>, std::true_type, std::false_type>::type;
+    template <class Impl>
+    using UserCallback = typename std::conditional<WindowImplWithUserCallback<Impl>, std::true_type, std::false_type>::type;
+
+    template <template <class> class Concept, class T, class... Ts>
+    constexpr auto not_implemented()->bool {
+        if constexpr(!Concept<T>::value) {
+            if constexpr(sizeof...(Ts) == 0) {
+                return true;
+            } else {
+                return not_implemented<Concept, Ts...>();
+            }
+        } else {
+            return false;
+        }
+    }
+} // namespace impl
 } // namespace gawl::concepts
