@@ -29,7 +29,7 @@ template <GLenum mode>
 auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
     auto       buffer = std::vector<GLfloat>(vertices.size() * 2);
     auto&      gl     = global->polygon_shader;
-    const auto s      = screen->get_size();
+    const auto s      = screen->get_screen_size();
     const auto scale  = screen->get_scale();
     for(auto i = size_t(0); i < vertices.size(); i += 1) {
         auto x            = vertices[i].x * scale;

@@ -5,7 +5,7 @@
 namespace gawl {
 template <PointArray Vertices, concepts::MetaScreen Screen>
 auto convert_screen_to_viewport(const Screen& screen, Vertices& vertices) -> void {
-    const auto s = screen.get_size();
+    const auto& s = screen.get_screen_size();
     for(auto& v : vertices) {
         v.x = (v.x * 2 - s[0]) / static_cast<int>(s[0]);
         v.y = (v.y * 2 - s[1]) / -static_cast<int>(s[1]);
@@ -13,11 +13,12 @@ auto convert_screen_to_viewport(const Screen& screen, Vertices& vertices) -> voi
 }
 template <concepts::MetaScreen Screen>
 auto convert_screen_to_viewport(const Screen& screen, Rectangle& rect) -> void {
-    const auto& s = screen.get_size();
-    rect.a.x     = (rect.a.x * 2 - s[0]) /  static_cast<double>(s[0]);
-    rect.a.y     = (rect.a.y * 2 - s[1]) / -static_cast<double>(s[1]);
-    rect.b.x     = (rect.b.x * 2 - s[0]) / static_cast<double>(s[0]);
-    rect.b.y     = (rect.b.y * 2 - s[1]) / -static_cast<double>(s[1]);
+    const auto& s = screen.get_screen_size();
+
+    rect.a.x = (rect.a.x * 2 - s[0]) / static_cast<double>(s[0]);
+    rect.a.y = (rect.a.y * 2 - s[1]) / -static_cast<double>(s[1]);
+    rect.b.x = (rect.b.x * 2 - s[0]) / static_cast<double>(s[0]);
+    rect.b.y = (rect.b.y * 2 - s[1]) / -static_cast<double>(s[1]);
 }
 inline auto calc_fit_rect(const Rectangle& rect, const double width, const double height, const Align horizontal = Align::Center, const Align vertical = Align::Center) -> Rectangle {
     auto       r = double();

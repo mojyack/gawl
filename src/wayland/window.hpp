@@ -157,16 +157,12 @@ class WindowBackend : public gawl::internal::Window<Impl> {
             wlw.cursor_image                     = cursor.image(0);
             wlw.cursor_buffer                    = wlw.cursor_image.get_buffer();
             wlw.cursor_surface.set_buffer_scale(buffer_scale);
-            this->on_buffer_resize(0, 0, buffer_scale);
+            this->on_buffer_resize(std::nullopt, buffer_scale);
         } else {
             // update buffer size
-            auto  new_width    = size_t(width * buffer_scale);
-            auto  new_height   = size_t(height * buffer_scale);
-            auto& current_size = this->get_size();
-            if(current_size[0] == new_width && current_size[1] == new_height) {
-                return;
-            }
-            this->on_buffer_resize(new_width, new_height, buffer_scale);
+            auto new_width  = size_t(width * buffer_scale);
+            auto new_height = size_t(height * buffer_scale);
+            this->on_buffer_resize(std::array{new_width, new_height}, std::nullopt);
         }
 
         // apply new buffer size
@@ -186,7 +182,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
                     choose_surface(eglsurface, egl);
                     if(obsolete_egl_window_size) {
                         obsolete_egl_window_size = false;
-                        const auto& buffer_size  = this->get_size();
+                        const auto& buffer_size  = this->get_buffer_size();
                         egl_window.resize(buffer_size[0], buffer_size[1]);
                     }
                     if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
@@ -244,12 +240,6 @@ class WindowBackend : public gawl::internal::Window<Impl> {
                 }
             }
         } while(!(queue = callback_queue.exchange()).empty());
-    }
-    auto prepare() -> gawl::internal::FramebufferBinder {
-        auto       binder = gawl::internal::FramebufferBinder(0);
-        const auto size   = this->get_size();
-        glViewport(0, 0, size[0], size[1]);
-        return binder;
     }
     auto refresh() -> void {
         latest_frame.store(false);

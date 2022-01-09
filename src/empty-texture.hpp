@@ -10,7 +10,7 @@ class EmptyTexture {
     auto get_scale() const -> double {
         return 1.0;
     }
-    auto get_size() const -> const std::array<std::size_t, 2>& {
+    auto get_screen_size() const -> const std::array<std::size_t, 2>& {
         assert(data);
         return data->get_size();
     }

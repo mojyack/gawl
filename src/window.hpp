@@ -11,7 +11,7 @@ class Window {
   private:
     struct BufferSize {
         std::array<size_t, 2> size  = {800, 600};
-        size_t                scale = 1.0;
+        size_t                scale = 1;
     };
 
     WindowState        state               = WindowState::Constructing;
@@ -22,25 +22,54 @@ class Window {
     BufferSize         buffer_size;
     std::array<int, 2> window_size;
 
+    std::array<std::array<size_t, 2>, 2> viewport = {{{0, 0}, {800, 600}}};
+
   protected:
     auto impl() -> Impl* {
         return reinterpret_cast<Impl*>(this);
     }
-    auto on_buffer_resize(const size_t width, const size_t height, const size_t scale) -> void {
+    auto on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
         constexpr auto MIN_SCALE = 0.01;
-        if(width != 0 || height != 0) {
-            buffer_size.size = {width, height};
+        if(size) {
+            buffer_size.size = *size;
+            viewport[0]      = {0, 0};
+            viewport[1]      = buffer_size.size;
         }
-        buffer_size.scale = scale;
-        draw_scale        = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size.scale
-                                                                                                 : 1;
-        window_size[0]    = buffer_size.size[0] / draw_scale;
-        window_size[1]    = buffer_size.size[1] / draw_scale;
+        if(scale) {
+            buffer_size.scale = *scale;
+            draw_scale        = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size.scale
+                                                                                                     : 1;
+        }
+        window_size[0] = viewport[1][0] / draw_scale;
+        window_size[1] = viewport[1][1] / draw_scale;
+    }
+    auto get_buffer_size() const -> const std::array<std::size_t, 2>& {
+        return buffer_size.size;
     }
 
   public:
-    auto get_size() const -> const std::array<std::size_t, 2>& {
-        return buffer_size.size;
+    auto get_screen_size() const -> const std::array<std::size_t, 2>& {
+        return viewport[1];
+    }
+    auto set_viewport(const gawl::Rectangle& region) -> void {
+        auto r = region;
+        r.magnify(draw_scale);
+        viewport[0][0] = r.a.x;
+        viewport[0][1] = buffer_size.size[1] - r.height() - r.a.y;
+        viewport[1][0] = r.width();
+        viewport[1][1] = r.height();
+    }
+    auto unset_viewport() -> void {
+        viewport[0]    = {0, 0};
+        viewport[1]    = buffer_size.size;
+        window_size[0] = viewport[1][0] / draw_scale;
+        window_size[1] = viewport[1][1] / draw_scale;
+    }
+    auto prepare() -> gawl::internal::FramebufferBinder {
+        auto binder = gawl::internal::FramebufferBinder(0);
+        glViewport(viewport[0][0], viewport[0][1], viewport[1][0], viewport[1][1]);
+        print(viewport[0][0], " ", viewport[0][1], " ", viewport[1][0], " ", viewport[1][1], " ");
+        return binder;
     }
     auto get_state() const -> internal::WindowState {
         return state;
