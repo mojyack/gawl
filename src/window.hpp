@@ -56,6 +56,20 @@ class Window {
     auto set_viewport(const gawl::Rectangle& region) -> void {
         auto r = region;
         r.magnify(draw_scale);
+
+        if(r.a.x < 0) {
+            r.a.x = 0;
+        }
+        if(r.a.y < 0) {
+            r.a.y = 0;
+        }
+        if(r.b.x > buffer_size.size[0]) {
+            r.b.x = buffer_size.size[0];
+        }
+        if(r.b.y > buffer_size.size[1]) {
+            r.b.y = buffer_size.size[1];
+        }
+
         viewport.base[0] = r.a.x;
         viewport.base[1] = r.a.y;
         viewport_gl_base = buffer_size.size[1] - r.height() - r.a.y;
