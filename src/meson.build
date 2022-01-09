@@ -23,6 +23,7 @@ gawl_headers = files(
   'empty-texture-data.hpp',
   'empty-texture.hpp',
   'fd.hpp',
+  'global.hpp',
   'globject.hpp',
   'graphic-base.hpp',
   'graphic-data.hpp',

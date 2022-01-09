@@ -10,9 +10,9 @@ class EmptyTexture {
     auto get_scale() const -> double {
         return 1.0;
     }
-    auto get_screen_size() const -> const std::array<std::size_t, 2>& {
+    auto get_viewport() const -> internal::Viewport {
         assert(data);
-        return data->get_size();
+        return {{0, 0}, data->get_size()};
     }
     auto prepare() -> internal::FramebufferBinder {
         assert(data);

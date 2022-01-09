@@ -1,5 +1,5 @@
 #pragma once
-#include "internal-type.hpp"
+#include "global.hpp"
 #include "screen.hpp"
 
 namespace gawl::internal {

@@ -1,6 +1,5 @@
 #pragma once
 #include "graphic-base.hpp"
-#include "internal-type.hpp"
 
 namespace gawl::internal {
 class EmptyTextureData : public GraphicBase<GraphicGLObject> {

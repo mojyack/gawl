@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 
+#include "binder.hpp"
 #include "internal-type.hpp"
 #include "type.hpp"
 #include "window-creat-hint.hpp"
@@ -21,8 +22,8 @@ class Window {
     bool               event_driven        = false;
     BufferSize         buffer_size;
     std::array<int, 2> window_size;
-
-    std::array<std::array<size_t, 2>, 2> viewport = {{{0, 0}, {800, 600}}};
+    Viewport           viewport = {{0, 0}, {800, 600}};
+    size_t             viewport_gl_base; // coordinates of the origin of the viewport with the lower right as the coordinate origin
 
   protected:
     auto impl() -> Impl* {
@@ -32,43 +33,45 @@ class Window {
         constexpr auto MIN_SCALE = 0.01;
         if(size) {
             buffer_size.size = *size;
-            viewport[0]      = {0, 0};
-            viewport[1]      = buffer_size.size;
+            viewport.base    = {0, 0};
+            viewport.size    = buffer_size.size;
+            viewport_gl_base = 0;
         }
         if(scale) {
             buffer_size.scale = *scale;
             draw_scale        = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size.scale
                                                                                                      : 1;
         }
-        window_size[0] = viewport[1][0] / draw_scale;
-        window_size[1] = viewport[1][1] / draw_scale;
+        window_size[0] = viewport.size[0] / draw_scale;
+        window_size[1] = viewport.size[1] / draw_scale;
     }
     auto get_buffer_size() const -> const std::array<std::size_t, 2>& {
         return buffer_size.size;
     }
 
   public:
-    auto get_screen_size() const -> const std::array<std::size_t, 2>& {
-        return viewport[1];
+    auto get_viewport() const -> const Viewport& {
+        return viewport;
     }
     auto set_viewport(const gawl::Rectangle& region) -> void {
         auto r = region;
         r.magnify(draw_scale);
-        viewport[0][0] = r.a.x;
-        viewport[0][1] = buffer_size.size[1] - r.height() - r.a.y;
-        viewport[1][0] = r.width();
-        viewport[1][1] = r.height();
+        viewport.base[0] = r.a.x;
+        viewport.base[1] = r.a.y;
+        viewport_gl_base = buffer_size.size[1] - r.height() - r.a.y;
+        viewport.size[0] = r.width();
+        viewport.size[1] = r.height();
     }
     auto unset_viewport() -> void {
-        viewport[0]    = {0, 0};
-        viewport[1]    = buffer_size.size;
-        window_size[0] = viewport[1][0] / draw_scale;
-        window_size[1] = viewport[1][1] / draw_scale;
+        viewport.base    = {0, 0};
+        viewport.size    = buffer_size.size;
+        viewport_gl_base = 0;
+        window_size[0]   = viewport.size[0] / draw_scale;
+        window_size[1]   = viewport.size[1] / draw_scale;
     }
     auto prepare() -> gawl::internal::FramebufferBinder {
         auto binder = gawl::internal::FramebufferBinder(0);
-        glViewport(viewport[0][0], viewport[0][1], viewport[1][0], viewport[1][1]);
-        print(viewport[0][0], " ", viewport[0][1], " ", viewport[1][0], " ", viewport[1][1], " ");
+        glViewport(viewport.base[0], viewport_gl_base, viewport.size[0], viewport.size[1]);
         return binder;
     }
     auto get_state() const -> internal::WindowState {

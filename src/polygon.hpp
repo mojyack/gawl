@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "earcut.hpp"
-#include "internal-type.hpp"
+#include "global.hpp"
 #include "polygon-globject.hpp"
 #include "screen.hpp"
 #include "type.hpp"
@@ -27,15 +27,15 @@ namespace gawl {
 namespace internal {
 template <GLenum mode>
 auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
-    auto       buffer = std::vector<GLfloat>(vertices.size() * 2);
-    auto&      gl     = global->polygon_shader;
-    const auto s      = screen->get_screen_size();
-    const auto scale  = screen->get_scale();
+    auto        buffer = std::vector<GLfloat>(vertices.size() * 2);
+    auto&       gl     = global->polygon_shader;
+    const auto& s      = screen->get_viewport();
+    const auto  scale  = screen->get_scale();
     for(auto i = size_t(0); i < vertices.size(); i += 1) {
         auto x            = vertices[i].x * scale;
         auto y            = vertices[i].y * scale;
-        buffer[i * 2 + 0] = (x * 2 - s[0]) / static_cast<int>(s[0]);
-        buffer[i * 2 + 1] = (y * 2 - s[1]) / -static_cast<int>(s[1]);
+        buffer[i * 2 + 0] = ((x - s.base[0]) * 2 - s.size[0]) / static_cast<int>(s[0]);
+        buffer[i * 2 + 1] = ((y - s.base[1]) * 2 - s.size[1]) / -static_cast<int>(s[1]);
     }
     const auto vabinder = gl.bind_vao();
     const auto shbinder = gl.use_shader();
