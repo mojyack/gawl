@@ -5,14 +5,22 @@ namespace gawl {
 class EmptyTexture {
   private:
     std::shared_ptr<internal::EmptyTextureData> data;
+    internal::Viewport                          viewport;
 
   public:
     auto get_scale() const -> double {
         return 1.0;
     }
-    auto get_viewport() const -> internal::Viewport {
+    auto set_viewport(const gawl::Rectangle& region) -> void {
         assert(data);
-        return {{0, 0}, data->get_size()};
+        viewport.set(region, data->get_size());
+    }
+    auto unset_viewport() -> void {
+        assert(data);
+        viewport.unset(data->get_size());
+    }
+    auto get_viewport() const -> internal::Viewport {
+        return viewport;
     }
     auto prepare() -> internal::FramebufferBinder {
         assert(data);

@@ -23,7 +23,6 @@ class Window {
     BufferSize         buffer_size;
     std::array<int, 2> window_size;
     Viewport           viewport = {{0, 0}, {800, 600}};
-    size_t             viewport_gl_base; // coordinates of the origin of the viewport with the lower right as the coordinate origin
 
   protected:
     auto impl() -> Impl* {
@@ -33,9 +32,7 @@ class Window {
         constexpr auto MIN_SCALE = 0.01;
         if(size) {
             buffer_size.size = *size;
-            viewport.base    = {0, 0};
-            viewport.size    = buffer_size.size;
-            viewport_gl_base = 0;
+            viewport.unset(buffer_size.size);
         }
         if(scale) {
             buffer_size.scale = *scale;
@@ -56,36 +53,14 @@ class Window {
     auto set_viewport(const gawl::Rectangle& region) -> void {
         auto r = region;
         r.magnify(draw_scale);
-
-        if(r.a.x < 0) {
-            r.a.x = 0;
-        }
-        if(r.a.y < 0) {
-            r.a.y = 0;
-        }
-        if(r.b.x > buffer_size.size[0]) {
-            r.b.x = buffer_size.size[0];
-        }
-        if(r.b.y > buffer_size.size[1]) {
-            r.b.y = buffer_size.size[1];
-        }
-
-        viewport.base[0] = r.a.x;
-        viewport.base[1] = r.a.y;
-        viewport_gl_base = buffer_size.size[1] - r.height() - r.a.y;
-        viewport.size[0] = r.width();
-        viewport.size[1] = r.height();
+        viewport.set(r, buffer_size.size);
     }
     auto unset_viewport() -> void {
-        viewport.base    = {0, 0};
-        viewport.size    = buffer_size.size;
-        viewport_gl_base = 0;
-        window_size[0]   = viewport.size[0] / draw_scale;
-        window_size[1]   = viewport.size[1] / draw_scale;
+        viewport.unset(buffer_size.size);
     }
     auto prepare() -> gawl::internal::FramebufferBinder {
         auto binder = gawl::internal::FramebufferBinder(0);
-        glViewport(viewport.base[0], viewport_gl_base, viewport.size[0], viewport.size[1]);
+        glViewport(viewport.base[0], viewport.gl_base, viewport.size[0], viewport.size[1]);
         return binder;
     }
     auto get_state() const -> internal::WindowState {
