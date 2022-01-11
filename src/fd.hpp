@@ -19,7 +19,7 @@ class FileDescriptor {
 
   public:
     auto read(void* const data, const size_t size) const -> bool {
-        size_t len = 0;
+        auto len = size_t(0);
         while(len < size) {
             const auto n = ::read(fd, (uint8_t*)data + len, size - len);
             if(n == -1) {
@@ -51,11 +51,11 @@ class FileDescriptor {
     }
     template <class T>
     auto write(const T data) const -> bool {
-        const size_t size = sizeof(T);
+        const auto size = sizeof(T);
         return write(&data, size);
     }
     auto write(const void* data, const size_t size) const -> bool {
-        size_t wrote = 0;
+        auto wrote = size_t(0);
         while(wrote != size) {
             const auto r = ::write(fd, data, size);
             if(r == -1) {
@@ -99,7 +99,7 @@ class EventFileDescriptor {
 
   public:
     auto notify() const -> void {
-        fd.write((uint64_t)1);
+        fd.write(uint64_t(1));
     }
     auto consume() const -> uint64_t {
         const auto v = fd.read<uint64_t>();
