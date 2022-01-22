@@ -10,19 +10,14 @@ namespace gawl::internal {
 template <class Impl>
 class Window {
   private:
-    struct BufferSize {
-        std::array<size_t, 2> size  = {800, 600};
-        size_t                scale = 1;
-    };
-
-    WindowState        state               = WindowState::Constructing;
-    bool               follow_buffer_scale = true;
-    double             specified_scale     = 0;
-    double             draw_scale          = 1.0;
-    bool               event_driven        = false;
-    BufferSize         buffer_size;
-    std::array<int, 2> window_size;
-    Viewport           viewport = {{0, 0}, {800, 600}};
+    WindowState          state               = WindowState::Constructing;
+    bool                 follow_buffer_scale = true;
+    double               specified_scale     = 0;
+    double               draw_scale          = 1.0;
+    bool                 event_driven        = false;
+    Critical<BufferSize> buffer_size;
+    std::array<int, 2>   window_size;
+    Viewport             viewport = {{0, 0}, {800, 600}};
 
   protected:
     auto impl() -> Impl* {
@@ -30,20 +25,21 @@ class Window {
     }
     auto on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
         constexpr auto MIN_SCALE = 0.01;
+        const auto     lock      = buffer_size.get_lock();
         if(size) {
-            buffer_size.size = *size;
-            viewport.unset(buffer_size.size);
+            buffer_size->size = *size;
+            viewport.unset(buffer_size->size);
         }
         if(scale) {
-            buffer_size.scale = *scale;
-            draw_scale        = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size.scale
-                                                                                                     : 1;
+            buffer_size->scale = *scale;
+            draw_scale         = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size->scale
+                                                                                                      : 1;
         }
         window_size[0] = viewport.size[0] / draw_scale;
         window_size[1] = viewport.size[1] / draw_scale;
     }
-    auto get_buffer_size() const -> const std::array<std::size_t, 2>& {
-        return buffer_size.size;
+    auto get_buffer_size() const -> const Critical<BufferSize>& {
+        return buffer_size;
     }
 
   public:
@@ -53,10 +49,12 @@ class Window {
     auto set_viewport(const gawl::Rectangle& region) -> void {
         auto r = region;
         r.magnify(draw_scale);
-        viewport.set(r, buffer_size.size);
+        const auto lock = buffer_size.get_lock();
+        viewport.set(r, buffer_size->size);
     }
     auto unset_viewport() -> void {
-        viewport.unset(buffer_size.size);
+        const auto lock = buffer_size.get_lock();
+        viewport.unset(buffer_size->size);
     }
     auto prepare() -> gawl::internal::FramebufferBinder {
         auto binder = gawl::internal::FramebufferBinder(0);
@@ -77,7 +75,9 @@ class Window {
             return;
         }
         follow_buffer_scale = flag;
-        on_buffer_resize(0, 0, buffer_size.scale);
+
+        const auto lock = buffer_size.get_lock();
+        on_buffer_resize(0, 0, buffer_size->scale);
     }
     auto get_follow_buffer_scale() const -> bool {
         return follow_buffer_scale;
@@ -87,7 +87,9 @@ class Window {
     }
     auto set_scale(const double scale) -> void {
         specified_scale = scale;
-        on_buffer_resize(std::nullopt, buffer_size.scale);
+
+        const auto lock = buffer_size.get_lock();
+        on_buffer_resize(std::nullopt, buffer_size->scale);
     }
     auto set_event_driven(const bool flag) -> void {
         if(event_driven == flag) {

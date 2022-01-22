@@ -183,7 +183,8 @@ class WindowBackend : public gawl::internal::Window<Impl> {
                     if(obsolete_egl_window_size) {
                         obsolete_egl_window_size = false;
                         const auto& buffer_size  = this->get_buffer_size();
-                        egl_window.resize(buffer_size[0], buffer_size[1]);
+                        const auto  lock         = buffer_size.get_lock();
+                        egl_window.resize(buffer_size->size[0], buffer_size->size[1]);
                     }
                     if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
                         this->impl()->refresh_callback();
@@ -286,7 +287,14 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         init_egl();
 
         // other configuration
-        wlw.xdg_toplevel.on_configure() = [&](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
+        wlw.xdg_toplevel.on_configure() = [this](const int32_t w, const int32_t h, const wayland::array_t /*s*/) {
+            {
+                const auto& buffer_size = this->get_buffer_size();
+                const auto  lock        = buffer_size.get_lock();
+                if(buffer_size->size[0] == static_cast<size_t>(w) * buffer_size->scale && buffer_size->size[1] == static_cast<size_t>(h) * buffer_size->scale) {
+                    return;
+                }
+            }
             resize_buffer(w, h);
         };
 

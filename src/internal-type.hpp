@@ -41,4 +41,9 @@ struct Viewport {
         gl_base = 0;
     }
 };
+
+struct BufferSize {
+    std::array<size_t, 2> size  = {800, 600};
+    size_t                scale = 1;
+};
 } // namespace gawl::internal
