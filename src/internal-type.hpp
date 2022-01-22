@@ -13,7 +13,7 @@ enum class WindowState {
 struct Viewport {
     std::array<size_t, 2> base;
     std::array<size_t, 2> size;
-    size_t                gl_base; // coordinates of the origin of the viewport with the lower right as the coordinate origin
+    size_t                gl_base = 0; // coordinates of the origin of the viewport with the lower right as the coordinate origin
 
     auto set(gawl::Rectangle region, const std::array<size_t, 2>& buffer_size) -> void {
         if(region.a.x < 0) {
