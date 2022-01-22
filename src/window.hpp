@@ -87,7 +87,7 @@ class Window {
     }
     auto set_scale(const double scale) -> void {
         specified_scale = scale;
-        on_buffer_resize(0, 0, buffer_size.scale);
+        on_buffer_resize(std::nullopt, buffer_size.scale);
     }
     auto set_event_driven(const bool flag) -> void {
         if(event_driven == flag) {
