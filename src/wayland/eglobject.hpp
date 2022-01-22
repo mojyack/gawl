@@ -8,7 +8,7 @@
 #include <wayland-client-protocol-extra.hpp>
 #include <wayland-egl.hpp>
 
-#include "../error.hpp"
+#include "../util.hpp"
 
 namespace gawl::internal::wl {
 struct EGLObject {

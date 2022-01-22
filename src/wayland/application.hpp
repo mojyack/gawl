@@ -5,7 +5,7 @@
 #include <poll.h>
 
 #include "../application.hpp"
-#include "../fd.hpp"
+#include "../global.hpp"
 #include "../window-impl-concept.hpp"
 #include "../window.hpp"
 #include "eglobject.hpp"
@@ -19,15 +19,15 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
     using SharedData = SharedData<Impls...>;
     using BufferType = typename SharedData::BufferType;
 
-    BufferType           application_events;
-    WaylandClientObject  wl;
-    EGLObject            egl;
-    bool                 quitted          = false;
-    gawl::Critical<bool> running          = false;
-    wayland::surface_t   keyboard_focused = nullptr;
-    wayland::surface_t   pointer_focused  = nullptr;
-    EventFileDescriptor  wayland_main_suspend_request;
-    EventFileDescriptor  wayland_main_suspend_reply;
+    BufferType          application_events;
+    WaylandClientObject wl;
+    EGLObject           egl;
+    bool                quitted          = false;
+    Critical<bool>      running          = false;
+    wayland::surface_t  keyboard_focused = nullptr;
+    wayland::surface_t  pointer_focused  = nullptr;
+    EventFileDescriptor wayland_main_suspend_request;
+    EventFileDescriptor wayland_main_suspend_reply;
 
   public:
     auto run() -> void {
