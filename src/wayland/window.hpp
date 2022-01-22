@@ -59,13 +59,13 @@ class WindowBackend : public gawl::internal::Window<Impl> {
     wayland::egl_window_t egl_window;
     EGLSurface            eglsurface = nullptr;
 
-    std::atomic_bool            frame_done               = true;
-    std::atomic_bool            latest_frame             = true;
-    std::atomic_bool            obsolete_egl_window_size = true;
-    TimerEvent                  key_delay_timer;
-    gawl::Critical<std::thread> key_repeater;
-    std::atomic_uint32_t        last_pressed_key = -1;
-    int                         buffer_scale     = -1;
+    std::atomic_bool      frame_done               = true;
+    std::atomic_bool      latest_frame             = true;
+    std::atomic_bool      obsolete_egl_window_size = true;
+    TimerEvent            key_delay_timer;
+    Critical<std::thread> key_repeater;
+    std::atomic_uint32_t  last_pressed_key = -1;
+    int                   buffer_scale     = -1;
 
     auto init_egl() -> void {
         eglsurface = eglCreateWindowSurface(egl.display, egl.config, egl_window, nullptr);
