@@ -1,5 +1,4 @@
 #pragma once
-#include "error.hpp"
 #include "graphic-data.hpp"
 
 namespace gawl {
@@ -58,7 +57,7 @@ class Graphic {
             const auto data = new internal::GraphicData(PixelBuffer(file), crop);
             graphic_data.reset(data);
         } catch(const std::exception& e) {
-            warn(file, " is not a valid image file: ", e.what());
+            internal::warn(file, " is not a valid image file: ", e.what());
             return;
         }
     }
@@ -67,7 +66,7 @@ class Graphic {
             const auto data = new internal::GraphicData(PixelBuffer(buffer), crop);
             graphic_data.reset(data);
         } catch(const std::exception&) {
-            warn("invalid buffer");
+            internal::warn("invalid buffer");
             return;
         }
     }

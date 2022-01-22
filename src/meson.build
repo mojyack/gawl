@@ -19,10 +19,8 @@ gawl_headers = files(
   'application.hpp',
   'binder.hpp',
   'earcut.hpp',
-  'error.hpp',
   'empty-texture-data.hpp',
   'empty-texture.hpp',
-  'fd.hpp',
   'global.hpp',
   'globject.hpp',
   'graphic-base.hpp',
@@ -41,16 +39,18 @@ gawl_headers = files(
   'textrender-data.hpp',
   'textrender-globject.hpp',
   'textrender.hpp',
-  'thread.hpp',
   'type.hpp',
+  'util.hpp',
   'variant-buffer.hpp',
-  'variant.hpp',
   'window-creat-hint.hpp',
-  'window.hpp',
   'window-impl-concept.hpp',
+  'window.hpp',
 )
 
 install_headers(gawl_headers, subdir: 'gawl')
+
+subdir('util')
+install_headers(cutil_files, subdir: 'gawl/util')
 
 subdir('wayland')
 

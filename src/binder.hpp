@@ -7,7 +7,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#include "error.hpp"
+#include "util.hpp"
 
 namespace gawl::internal {
 template <typename F>

@@ -1,10 +1,9 @@
 #pragma once
 #include <vector>
 
-#include "thread.hpp"
-#include "variant.hpp"
+#include "util.hpp"
 
-namespace gawl {
+namespace gawl::internal {
 template <class... Ts>
 class VariantBuffer {
   private:
@@ -62,4 +61,4 @@ class VariantEventBuffer {
         return Item::template index_of<T>();
     }
 };
-} // namespace gawl
+} // namespace gawl::internal
