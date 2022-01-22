@@ -2,6 +2,7 @@
 #include <array>
 
 #include "binder.hpp"
+#include "internal-type.hpp"
 
 namespace gawl {
 class NullScreen {
@@ -9,8 +10,8 @@ class NullScreen {
     auto get_scale() const -> double {
         return 1.0;
     }
-    auto get_screen_size() const -> std::array<size_t, 2> {
-        return {0, 0};
+    auto get_viewport() const -> internal::Viewport {
+        return {{0, 0}, {0, 0}};
     }
 };
 } // namespace gawl
