@@ -3,6 +3,7 @@ gawl_wayland_headers = files(
   'eglobject.hpp',
   'gawl.hpp',
   'shared-data.hpp',
+  'towl.hpp',
   'window.hpp',
   'wlobject.hpp',
 )

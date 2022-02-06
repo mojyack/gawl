@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+
 #include "empty-texture-data.hpp"
 
 namespace gawl {

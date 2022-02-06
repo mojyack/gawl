@@ -1,12 +1,11 @@
 wl_deps = [
-    dependency('wayland-client++'), 
-    dependency('wayland-client-extra++'), 
-    dependency('wayland-cursor++'), 
-    dependency('wayland-egl++')]
+    dependency('towl'), 
+]
 egl_deps = [
     dependency('glx'),
     dependency('opengl'),
-    dependency('egl')]
+    dependency('egl')
+]
 freetype_inc = include_directories('/usr/include/freetype2')
 freetype_dep = dependency('freetype2')
 thread_dep = dependency('threads')

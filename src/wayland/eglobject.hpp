@@ -5,18 +5,18 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#include <wayland-client-protocol-extra.hpp>
-#include <wayland-egl.hpp>
+#include <EGL/egl.h>
 
 #include "../util.hpp"
+#include "towl.hpp"
 
 namespace gawl::internal::wl {
 struct EGLObject {
     EGLDisplay display = nullptr;
     EGLConfig  config  = nullptr;
     EGLContext context = nullptr;
-    EGLObject(const wayland::display_t& wl_display) {
-        display = eglGetDisplay(wl_display);
+    EGLObject(towl::Display& wl_display) {
+        display = eglGetDisplay(wl_display.native());
         assert(display != EGL_NO_DISPLAY);
 
         auto major = EGLint(0);

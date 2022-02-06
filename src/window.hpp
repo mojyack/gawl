@@ -14,12 +14,13 @@ class Window {
     bool                 follow_buffer_scale = true;
     double               specified_scale     = 0;
     double               draw_scale          = 1.0;
-    bool                 event_driven        = false;
     Critical<BufferSize> buffer_size;
     std::array<int, 2>   window_size;
     Viewport             viewport = {{0, 0}, {800, 600}};
 
   protected:
+    bool event_driven = false;
+
     auto impl() -> Impl* {
         return reinterpret_cast<Impl*>(this);
     }
@@ -75,9 +76,7 @@ class Window {
             return;
         }
         follow_buffer_scale = flag;
-
-        const auto lock = buffer_size.get_lock();
-        on_buffer_resize(0, 0, buffer_size->scale);
+        on_buffer_resize(std::nullopt, std::nullopt);
     }
     auto get_follow_buffer_scale() const -> bool {
         return follow_buffer_scale;
@@ -87,9 +86,7 @@ class Window {
     }
     auto set_scale(const double scale) -> void {
         specified_scale = scale;
-
-        const auto lock = buffer_size.get_lock();
-        on_buffer_resize(std::nullopt, buffer_size->scale);
+        on_buffer_resize(std::nullopt,std::nullopt);
     }
     auto set_event_driven(const bool flag) -> void {
         if(event_driven == flag) {
