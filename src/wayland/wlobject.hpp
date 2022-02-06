@@ -103,8 +103,6 @@ class SeatGlue {
 
     PointerGlue  pointer_glue;
     KeyboardGlue keyboard_glue;
-    static_assert(std::movable<PointerGlue>);
-    static_assert(std::movable<KeyboardGlue>);
 
     SeatGlue(Parameters parameters) : pointer_glue(&parameters.windows), keyboard_glue(&parameters.windows, &parameters.config) {}
 };

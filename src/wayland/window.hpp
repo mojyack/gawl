@@ -163,15 +163,24 @@ class WindowBackend : public gawl::internal::Window<Impl> {
     }
 
     auto wl_on_key_enter(const towl::Array<uint32_t>& keys) -> void {
+        if(!gawl::concepts::WindowImplWithKeyboardCallback<Impl>) {
+            return;
+        }
         for(auto i = size_t(0); i < keys.size; i += 1) {
             queue_callback(KeyBoardCallbackArgs{keys.data[i], gawl::ButtonState::Enter});
         }
     }
     auto wl_on_key_leave() -> void {
+        if(!gawl::concepts::WindowImplWithKeyboardCallback<Impl>) {
+            return;
+        }
         wait_for_key_repeater_exit();
         queue_callback(KeyBoardCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::Leave});
     }
     auto wl_on_key_input(const uint32_t key, const uint32_t state) -> void {
+        if(!gawl::concepts::WindowImplWithKeyboardCallback<Impl>) {
+            return;
+        }
         const auto s = state == WL_KEYBOARD_KEY_STATE_PRESSED ? gawl::ButtonState::Press : gawl::ButtonState::Release;
         queue_callback(KeyBoardCallbackArgs{key, s});
         if(!wl.repeat_config.has_value()) {
@@ -196,13 +205,22 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         }
     }
     auto wl_on_click(const uint32_t button, const uint32_t state) -> void {
+        if(!gawl::concepts::WindowImplWithKeyboardCallback<Impl>) {
+            return;
+        }
         const auto s = state == WL_POINTER_BUTTON_STATE_PRESSED ? gawl::ButtonState::Press : gawl::ButtonState::Release;
         queue_callback(ClickCallbackArgs{button, s});
     }
     auto wl_on_pointer_motion(const double x, const double y) -> void {
+        if(!gawl::concepts::WindowImplWithPointermoveCallback<Impl>) {
+            return;
+        }
         queue_callback(PointermoveCallbackArgs{gawl::Point{x, y}});
     }
     auto wl_on_pointer_axis(const uint32_t axis, const double value) -> void {
+        if(!gawl::concepts::WindowImplWithScrollCallback<Impl>) {
+            return;
+        }
         const auto w = axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
         queue_callback(ScrollCallbackArgs{w, value});
     }
