@@ -6,10 +6,8 @@ egl_deps = [
     dependency('opengl'),
     dependency('egl')
 ]
-freetype_inc = include_directories('/usr/include/freetype2')
 freetype_dep = dependency('freetype2')
 thread_dep = dependency('threads')
-magick_inc = include_directories('/usr/include/ImageMagick-7')
 magick_dep = dependency('Magick++')
 
 gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep]
@@ -59,5 +57,6 @@ pkgconfig.generate(
     libraries: [cpp.find_library('towl')],
     name: 'gawl',
     filebase: 'gawl',
-    description: 'libgawl'
+    description: 'libgawl',
+    subdirs: ['freetype2', 'ImageMagick-7'],
 )
