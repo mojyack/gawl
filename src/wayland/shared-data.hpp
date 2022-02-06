@@ -1,6 +1,4 @@
 #pragma once
-#include <wayland-client.hpp>
-
 #include "../variant-buffer.hpp"
 #include "eglobject.hpp"
 #include "wlobject.hpp"
