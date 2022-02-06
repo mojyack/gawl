@@ -7,10 +7,9 @@ egl_deps = [
     dependency('egl')
 ]
 freetype_dep = dependency('freetype2')
-thread_dep = dependency('threads')
 magick_dep = dependency('Magick++')
 
-gawl_dep = [wl_deps, egl_deps, freetype_dep, thread_dep, magick_dep]
+gawl_dep = [wl_deps, egl_deps, freetype_dep, magick_dep]
 
 gawl_headers = files(
   'application.hpp',
@@ -54,9 +53,9 @@ subdir('wayland')
 pkgconfig = import('pkgconfig')
 cpp = meson.get_compiler('cpp')
 pkgconfig.generate(
-    libraries: [cpp.find_library('towl')],
+    libraries: [cpp.find_library('wayland-client'), cpp.find_library('wayland-egl')],
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl',
-    subdirs: ['freetype2', 'ImageMagick-7'],
+    subdirs: ['freetype2'],
 )
