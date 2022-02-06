@@ -57,5 +57,4 @@ pkgconfig.generate(
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl',
-    subdirs: ['freetype2'],
 )
