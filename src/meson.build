@@ -54,8 +54,9 @@ install_headers(cutil_files, subdir: 'gawl/util')
 subdir('wayland')
 
 pkgconfig = import('pkgconfig')
+cpp = meson.get_compiler('cpp')
 pkgconfig.generate(
-    libraries: [gawl_dep],
+    libraries: [cpp.find_library('towl')],
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl'
