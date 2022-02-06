@@ -91,7 +91,7 @@ class SeatGlue {
             proc_window(*windows, active, [key, state](auto& impl) -> void { impl.wl_on_key_input(key, state); });
         }
         auto on_repeat_info(const int32_t rate, const int32_t delay) -> void {
-            config->emplace(KeyRepeatConfig{1000 / delay, rate});
+            config->emplace(KeyRepeatConfig{1000 / rate, delay});
         };
         KeyboardGlue(std::list<Variant<Impls...>>* windows, std::optional<KeyRepeatConfig>* config) : windows(windows), config(config) {}
     };
@@ -129,7 +129,7 @@ class OutputGlue {
 using Compositor = towl::Compositor<4>;
 using WMBase     = towl::WMBase<2>;
 template <class... Impls>
-using Seat = towl::Seat<2, SeatGlue<Impls...>>;
+using Seat = towl::Seat<4, SeatGlue<Impls...>>;
 template <class... Impls>
 using Output = towl::Output<2, OutputGlue<Impls...>>;
 
