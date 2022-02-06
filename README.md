@@ -1,5 +1,5 @@
 # gawl
-**GL** + ** **Wa**yland  
+**GL** + **Wa**yland  
 Tiny C++ library for OpenGL on Wayland  
 Written with templates in order to reduce overheads
 
