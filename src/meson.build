@@ -53,7 +53,7 @@ subdir('wayland')
 pkgconfig = import('pkgconfig')
 cpp = meson.get_compiler('cpp')
 pkgconfig.generate(
-    libraries: [cpp.find_library('wayland-client'), cpp.find_library('wayland-egl')],
+    libraries: [gawl_dep, cpp.find_library('wayland-client'), cpp.find_library('wayland-egl')],
     name: 'gawl',
     filebase: 'gawl',
     description: 'libgawl',
