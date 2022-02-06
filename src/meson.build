@@ -1,5 +1,5 @@
 wl_deps = [
-    dependency('towl'), 
+    dependency('towl', version : ['>=1.0', '<1.1']), 
 ]
 egl_deps = [
     dependency('glx'),
