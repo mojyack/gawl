@@ -29,7 +29,7 @@ class PixelBuffer {
         size = {0, 0};
         data.clear();
     }
-    PixelBuffer(){};
+    PixelBuffer() = default;
     PixelBuffer(const size_t width, const size_t height, const uint8_t* const buffer) : size{width, height} {
         const auto len = size_t(size[0] * size[1] * 4);
         data.resize(len);
@@ -40,6 +40,7 @@ class PixelBuffer {
     }
     PixelBuffer(const char* const file);
     PixelBuffer(const std::vector<uint8_t>& buffer);
+    PixelBuffer(const uint8_t* data, size_t size);
 };
 
 namespace internal {
@@ -56,8 +57,9 @@ inline PixelBuffer::PixelBuffer(const char* file) {
         *this = std::move(buf);
     }
 }
-inline PixelBuffer::PixelBuffer(const std::vector<uint8_t>& buffer) {
-    auto blob = Magick::Blob(buffer.data(), buffer.size());
+inline PixelBuffer::PixelBuffer(const std::vector<uint8_t>& buffer) : PixelBuffer(buffer.data(), buffer.size()) {}
+inline PixelBuffer::PixelBuffer(const uint8_t* const data, const size_t size) {
+    auto blob = Magick::Blob(data, size);
     *this     = internal::load_texture_imagemagick(Magick::Image(blob));
 }
 } // namespace gawl

@@ -51,7 +51,7 @@ class Graphic {
         graphic_data = o.graphic_data;
         return *this;
     }
-    Graphic() {}
+    Graphic() = default;
     Graphic(const char* const file, std::optional<std::array<int, 4>> crop = std::nullopt) {
         try {
             const auto data = new internal::GraphicData(PixelBuffer(file), crop);
