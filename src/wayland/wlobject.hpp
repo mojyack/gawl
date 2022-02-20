@@ -13,6 +13,12 @@ struct KeyRepeatConfig {
 };
 
 template <class... Impls>
+struct GlueParameter {
+    std::list<Variant<Impls...>>&   windows;
+    std::optional<KeyRepeatConfig>& config;
+};
+
+template <class... Impls>
 class SeatGlue {
   public:
     static auto proc_window(std::list<Variant<Impls...>>& windows, const towl::SurfaceTag surface, auto&& proc) -> void {
@@ -66,7 +72,7 @@ class SeatGlue {
             }
             proc_window(*windows, active, [axis, value](auto& impl) -> void { impl.wl_on_pointer_axis(axis, value); });
         }
-        PointerGlue(std::list<Variant<Impls...>>* const windows) : windows(windows) {}
+        PointerGlue(GlueParameter<Impls...>& parameter) : windows(&parameter.windows) {}
     };
 
     class KeyboardGlue {
@@ -93,18 +99,13 @@ class SeatGlue {
         auto on_repeat_info(const int32_t rate, const int32_t delay) -> void {
             config->emplace(KeyRepeatConfig{1000 / rate, delay});
         };
-        KeyboardGlue(std::list<Variant<Impls...>>* windows, std::optional<KeyRepeatConfig>* config) : windows(windows), config(config) {}
-    };
-
-    struct Parameters {
-        std::list<Variant<Impls...>>&   windows;
-        std::optional<KeyRepeatConfig>& config;
+        KeyboardGlue(GlueParameter<Impls...>& parameter) : windows(&parameter.windows), config(&parameter.config) {}
     };
 
     PointerGlue  pointer_glue;
     KeyboardGlue keyboard_glue;
 
-    SeatGlue(Parameters parameters) : pointer_glue(&parameters.windows), keyboard_glue(&parameters.windows, &parameters.config) {}
+    SeatGlue(GlueParameter<Impls...>& parameter) : pointer_glue(parameter), keyboard_glue(parameter) {}
 };
 
 template <class... Impls>
@@ -123,7 +124,7 @@ class OutputGlue {
                        w.as_variant());
         }
     }
-    OutputGlue(std::list<Variant<Impls...>>& windows) : windows(&windows) {}
+    OutputGlue(GlueParameter<Impls...>& parameter) : windows(&parameter.windows) {}
 };
 
 using Compositor = towl::Compositor<4>;
@@ -134,51 +135,14 @@ template <class... Impls>
 using Output = towl::Output<2, OutputGlue<Impls...>>;
 
 template <class... Impls>
-class SeatGlueParameter {
-  private:
-    using Parameters = typename SeatGlue<Impls...>::Parameters;
-
-    Parameters parameters;
-
-  public:
-    using Interface = Seat<Impls...>;
-
-    operator Parameters() {
-        return parameters;
-    }
-    SeatGlueParameter(std::list<Variant<Impls...>>& windows, std::optional<KeyRepeatConfig>& config) : parameters({windows, config}) {}
-};
-
-template <class... Impls>
-class OutputGlueParameter {
-  private:
-    std::list<Variant<Impls...>>& windows;
-
-  public:
-    using Interface = Output<Impls...>;
-
-    operator std::list<Variant<Impls...>>&() {
-        return windows;
-    }
-    OutputGlueParameter(std::list<Variant<Impls...>>& windows) : windows(windows) {}
-};
-
-template <class... Impls>
-struct GlueParameterPack {
-    std::tuple<SeatGlueParameter<Impls...>, OutputGlueParameter<Impls...>> value;
-
-    GlueParameterPack(std::list<Variant<Impls...>>& windows, std::optional<KeyRepeatConfig>& config) : value{{windows, config}, {windows}} {}
-};
-
-template <class... Impls>
-using Registry = towl::Registry<GlueParameterPack<Impls...>, Compositor, WMBase, Seat<Impls...>, Output<Impls...>>;
+using Registry = towl::Registry<GlueParameter<Impls...>, Compositor, WMBase, Seat<Impls...>, Output<Impls...>>;
 
 template <class... Impls>
 struct WaylandClientObject {
-    towl::Display      display;
-    Registry<Impls...> registry;
-
+    towl::Display                  display;
+    Registry<Impls...>             registry;
     std::optional<KeyRepeatConfig> repeat_config;
-    WaylandClientObject(std::list<Variant<Impls...>>& windows) : registry(display.get_registry<GlueParameterPack<Impls...>, Compositor, WMBase, Seat<Impls...>, Output<Impls...>>({windows, repeat_config})) {}
+
+    WaylandClientObject(std::list<Variant<Impls...>>& windows) : registry(display.get_registry<GlueParameter<Impls...>, Compositor, WMBase, Seat<Impls...>, Output<Impls...>>({windows, repeat_config})) {}
 };
 } // namespace gawl::internal::wl
