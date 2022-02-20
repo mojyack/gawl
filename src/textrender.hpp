@@ -68,7 +68,8 @@ class TextRender {
         return get_rect(screen, base, uni.data(), size);
     }
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const Point& base, const char32_t* const text, int size = 0) -> Rectangle {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
+
         auto r = Rectangle{base, base};
         size   = size != 0 ? size : default_size;
         if(size <= 0) {
@@ -108,7 +109,7 @@ class TextRender {
         return draw(screen, point, color, uni.data(), size, callback);
     }
     auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char32_t* const text, int size = 0, const Callback callback = nullptr) -> Rectangle {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
 
         size = size != 0 ? size : default_size;
         if(size <= 0) {
@@ -156,7 +157,7 @@ class TextRender {
     }
 
     auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
 
         const auto str   = internal::convert_utf8_to_unicode32(text);
         auto       lines = std::vector<std::u32string>(1);

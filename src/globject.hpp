@@ -1,6 +1,4 @@
 #pragma once
-#include <cassert>
-
 #include "binder.hpp"
 
 namespace gawl::internal {
@@ -41,20 +39,20 @@ class GLObject {
         glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
         glCompileShader(vertex_shader);
         glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
-        assert(status == GL_TRUE);
+        dynamic_assert(status == GL_TRUE);
 
         fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
         glCompileShader(fragment_shader);
         glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
-        assert(status == GL_TRUE);
+        dynamic_assert(status == GL_TRUE);
 
         shader_program = glCreateProgram();
         glAttachShader(shader_program, vertex_shader);
         glAttachShader(shader_program, fragment_shader);
         glLinkProgram(shader_program);
         glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
-        assert(status == GL_TRUE);
+        dynamic_assert(status == GL_TRUE);
         glBindFragDataLocation(shader_program, 0, "color");
     }
     ~GLObject() {
@@ -71,6 +69,6 @@ template <class G>
 concept GLObjectWithParameter = requires(G& m) {
     { m.set_shader_parameters(GLuint()) } -> std::same_as<void>;
 }
-&&std::derived_from<G, gawl::internal::GLObject>;
+&&std::derived_from<G, GLObject>;
 } // namespace concepts
 } // namespace gawl::internal

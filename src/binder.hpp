@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <concepts>
 #include <optional>
 
@@ -28,7 +27,7 @@ class [[nodiscard]] Binder {
 
   public:
     auto get() const -> GLuint {
-        assert(b);
+        dynamic_assert(b.has_value());
         return b.value();
     }
     auto operator=(Binder&& o) -> Binder& {

@@ -57,8 +57,8 @@ class Window {
         const auto lock = buffer_size.get_lock();
         viewport.unset(buffer_size->size);
     }
-    auto prepare() -> gawl::internal::FramebufferBinder {
-        auto binder = gawl::internal::FramebufferBinder(0);
+    auto prepare() -> FramebufferBinder {
+        auto binder = FramebufferBinder(0);
         glViewport(viewport.base[0], viewport.gl_base, viewport.size[0], viewport.size[1]);
         return binder;
     }
@@ -86,7 +86,7 @@ class Window {
     }
     auto set_scale(const double scale) -> void {
         specified_scale = scale;
-        on_buffer_resize(std::nullopt,std::nullopt);
+        on_buffer_resize(std::nullopt, std::nullopt);
     }
     auto set_event_driven(const bool flag) -> void {
         if(event_driven == flag) {

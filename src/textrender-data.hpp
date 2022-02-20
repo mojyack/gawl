@@ -32,8 +32,8 @@ class Character : public gawl::TextRenderCharacterGraphic {
             glyph_index = FT_Get_Char_Index(faces[0], code);
         }
 
-        assert(!FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT));
-        assert(!FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL));
+        dynamic_assert(!FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT));
+        dynamic_assert(!FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL));
 
         this->width  = face->glyph->bitmap.width;
         this->height = face->glyph->bitmap.rows;
@@ -67,7 +67,7 @@ class CharacterCache {
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
             auto face = FT_Face();
-            assert(!FT_New_Face(global->textrender_shader.freetype, path.data(), 0, &(face)));
+            dynamic_assert(!FT_New_Face(global->textrender_shader.freetype, path.data(), 0, &(face)));
             FT_Set_Pixel_Sizes(face, 0, size);
             faces.emplace_back(face);
         }

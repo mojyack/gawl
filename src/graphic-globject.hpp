@@ -77,6 +77,6 @@ class GraphicGLObject : public GLObject {
 
 namespace concepts {
 template <class GL>
-concept GraphicGLObject = std::derived_from<GL, gawl::internal::GraphicGLObject>;
+concept GraphicGLObject = std::derived_from<GL, GraphicGLObject>;
 }
 }; // namespace gawl::internal

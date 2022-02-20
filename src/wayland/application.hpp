@@ -84,8 +84,8 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
         [[maybe_unused]] constexpr auto enable_motion   = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::PointermoveCallback, Impls...>();
         [[maybe_unused]] constexpr auto enable_pointer  = enable_click || enable_motion;
 
-        assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
-        gawl::internal::global = new gawl::internal::GLObjects();
+        dynamic_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
+        global = new GLObjects();
 
         wayland_main = std::thread([this]() {
             auto  fds                    = std::array{pollfd{wl.display.get_fd(), POLLIN, 0}, pollfd{wayland_main_stop, POLLIN, 0}};
@@ -94,7 +94,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
             while(true) {
                 auto read_intent = wl.display.obtain_read_intent();
                 wl.display.flush();
-                assert(poll(fds.data(), fds.size(), -1) != -1);
+                dynamic_assert(poll(fds.data(), fds.size(), -1) != -1);
                 if(wl_display_event_poll.revents & POLLIN) {
                     read_intent.read();
                     wl.display.dispatch_pending();
@@ -109,7 +109,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
     ~ApplicationBackend() {
         wayland_main_stop.notify();
         wayland_main.join();
-        delete gawl::internal::global;
+        delete global;
     }
 };
 }; // namespace gawl::internal::wl

@@ -8,27 +8,27 @@ class Graphic {
 
   public:
     auto get_width(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->get_width(screen);
     }
     auto get_height(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->get_height(screen);
     }
     auto draw(gawl::concepts::Screen auto& screen, const Point& point) -> void {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->draw(screen, point);
     }
     auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->draw_rect(screen, rect);
     }
     auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->draw_fit_rect(screen, rect);
     }
     auto draw_transformed(gawl::concepts::Screen auto& screen, const std::array<Point, 4>& vertices) const -> void {
-        assert(graphic_data);
+        internal::dynamic_assert(static_cast<bool>(graphic_data));
         return graphic_data->draw_transformed(screen, vertices);
     }
     auto clear() -> void {

@@ -1,6 +1,4 @@
 #pragma once
-#include <cassert>
-
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -17,13 +15,13 @@ struct EGLObject {
     EGLContext context = nullptr;
     EGLObject(towl::Display& wl_display) {
         display = eglGetDisplay(wl_display.native());
-        assert(display != EGL_NO_DISPLAY);
+        internal::dynamic_assert(display != EGL_NO_DISPLAY);
 
         auto major = EGLint(0);
         auto minor = EGLint(0);
-        assert(eglInitialize(display, &major, &minor) != EGL_FALSE);
-        assert((major == 1 && minor >= 4) || major >= 2);
-        assert(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
+        internal::dynamic_assert(eglInitialize(display, &major, &minor) != EGL_FALSE);
+        internal::dynamic_assert((major == 1 && minor >= 4) || major >= 2);
+        internal::dynamic_assert(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
 
         constexpr auto config_attribs = std::array<EGLint, 15>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                                                                EGL_RED_SIZE, 8,
@@ -35,17 +33,17 @@ struct EGLObject {
                                                                EGL_NONE};
 
         auto num = EGLint(0);
-        assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
+        internal::dynamic_assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
 
         constexpr auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2,
                                                                EGL_NONE};
 
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
-        assert(context != EGL_NO_CONTEXT);
+        internal::dynamic_assert(context != EGL_NO_CONTEXT);
     }
     ~EGLObject() {
-        assert(eglDestroyContext(display, context) != EGL_FALSE);
-        assert(eglTerminate(display) != EGL_FALSE);
+        internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
+        internal::dynamic_assert(eglTerminate(display) != EGL_FALSE);
     }
 };
 } // namespace gawl::internal::wl

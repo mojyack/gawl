@@ -19,12 +19,12 @@ inline auto choose_surface(const EGLSurface eglsurface, const EGLObject& egl) ->
     if(current_surface == eglsurface) {
         return;
     }
-    assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
+    dynamic_assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
     current_surface = eglsurface;
 }
 
 template <class Impl, class... Impls>
-class WindowBackend : public gawl::internal::Window<Impl> {
+class WindowBackend : public Window<Impl> {
   private:
     class SurfaceGlue {
       private:
@@ -125,12 +125,12 @@ class WindowBackend : public gawl::internal::Window<Impl> {
 
     auto init_egl() -> void {
         eglsurface = eglCreateWindowSurface(egl.display, egl.config, reinterpret_cast<EGLNativeWindowType>(egl_window.native()), nullptr);
-        assert(eglsurface != EGL_NO_SURFACE);
+        dynamic_assert(eglsurface != EGL_NO_SURFACE);
         choose_surface(eglsurface, egl);
-        assert(eglSwapInterval(egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
+        dynamic_assert(eglSwapInterval(egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
     }
     auto swap_buffer() -> void {
-        assert(eglSwapBuffers(egl.display, eglsurface) != EGL_FALSE);
+        dynamic_assert(eglSwapBuffers(egl.display, eglsurface) != EGL_FALSE);
     }
     auto wait_for_key_repeater_exit() -> void {
         last_pressed_key.store(-1);
@@ -144,7 +144,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
     using WindowCreateHintType = WindowCreateHint<internal::wl::SharedData<Impls...>>;
 
     auto queue_callback(auto&& args) -> void {
-        if(this->get_state() == gawl::internal::WindowState::Destructing) {
+        if(this->get_state() == WindowState::Destructing) {
             return;
         }
 
@@ -188,7 +188,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         }
         if(s == gawl::ButtonState::Press) {
             const auto lock = key_repeater.get_lock();
-            if(this->get_state() != gawl::internal::WindowState::Running) {
+            if(this->get_state() != WindowState::Running) {
                 return;
             }
             wait_for_key_repeater_exit();
@@ -334,7 +334,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         }
     }
     auto close_window() -> void {
-        this->set_state(gawl::internal::WindowState::Destructing);
+        this->set_state(WindowState::Destructing);
         application_events.push(typename SharedData::CloseWindowArgs{this->impl()});
     }
     auto quit_application() -> void {
@@ -357,7 +357,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
         wl.display.wait_sync();
 
         this->set_event_driven(hint.manual_refresh);
-        this->set_state(gawl::internal::WindowState::Running);
+        this->set_state(WindowState::Running);
     }
     ~WindowBackend() {
 #ifdef GAWL_DEBUG
@@ -365,7 +365,7 @@ class WindowBackend : public gawl::internal::Window<Impl> {
 #endif
         const auto lock = key_repeater.get_lock();
         wait_for_key_repeater_exit();
-        assert(eglDestroySurface(egl.display, eglsurface) != EGL_FALSE);
+        dynamic_assert(eglDestroySurface(egl.display, eglsurface) != EGL_FALSE);
     }
 };
 } // namespace gawl::internal::wl

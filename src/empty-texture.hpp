@@ -14,18 +14,18 @@ class EmptyTexture {
         return 1.0;
     }
     auto set_viewport(const gawl::Rectangle& region) -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         viewport.set(region, data->get_size());
     }
     auto unset_viewport() -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         viewport.unset(data->get_size());
     }
     auto get_viewport() const -> internal::Viewport {
         return viewport;
     }
     auto prepare() -> internal::FramebufferBinder {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         auto        binder = internal::FramebufferBinder(data->get_frame_buffer_name());
         const auto& size   = data->get_size();
         glViewport(0, 0, size[0], size[1]);
@@ -33,23 +33,23 @@ class EmptyTexture {
     }
 
     auto get_width(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         return data->get_width(screen);
     }
     auto get_height(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         return data->get_height(screen);
     }
     auto draw(gawl::concepts::Screen auto& screen, const Point& point) -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         return data->draw(screen, point);
     }
     auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         return data->draw_rect(screen, rect);
     }
     auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        assert(data);
+        internal::dynamic_assert(static_cast<bool>(data));
         return data->draw_fit_rect(screen, rect);
     }
     auto clear() -> void {
