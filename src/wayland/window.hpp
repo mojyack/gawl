@@ -36,7 +36,7 @@ class WindowBackend : public Window<Impl> {
       public:
         auto on_enter(const towl::OutputTag output) -> void {
             *current_output = output;
-            backend->resize_buffer(-1, -1, Output<Impls...>::from_tag(output).get_scale());
+            backend->resize_buffer(-1, -1, Wl::Output::from_tag(output).get_scale());
         }
         auto on_leave(const towl::OutputTag /*output*/) -> void {
             *current_output = towl::nulltag;
@@ -104,17 +104,18 @@ class WindowBackend : public Window<Impl> {
     using BackendType = WindowBackend;
     using SharedData  = internal::wl::SharedData<Impls...>;
     using BufferType  = typename SharedData::BufferType;
+    using Wl          = Wl<Impls...>;
 
-    WaylandClientObject<Impls...>&       wl;
-    Compositor::Surface<SurfaceGlue>     surface;
-    towl::OutputTag                      output;
-    WMBase::XDGSurface                   xdg_surface;
-    WMBase::XDGToplevel<XDGToplevelGlue> xdg_toplevel;
-    EGLObject&                           egl;
-    towl::EGLWindow                      egl_window;
-    EGLSurface                           eglsurface = nullptr;
-    BufferType&                          application_events;
-    CallbackQueue                        callback_queue;
+    typename Wl::WaylandClientObject&                          wl;
+    typename Wl::Compositor::template Surface<SurfaceGlue>     surface;
+    towl::OutputTag                                            output;
+    typename Wl::WMBase::XDGSurface                            xdg_surface;
+    typename Wl::WMBase::template XDGToplevel<XDGToplevelGlue> xdg_toplevel;
+    EGLObject&                                                 egl;
+    towl::EGLWindow                                            egl_window;
+    EGLSurface                                                 eglsurface = nullptr;
+    BufferType&                                                application_events;
+    CallbackQueue                                              callback_queue;
 
     std::atomic_bool      frame_done               = true;
     std::atomic_bool      latest_frame             = true;
@@ -341,8 +342,8 @@ class WindowBackend : public Window<Impl> {
         application_events.push(typename SharedData::QuitApplicationArgs{});
     }
     WindowBackend(const WindowCreateHintType& hint) : wl(*hint.backend_hint.wl),
-                                                      surface(wl.registry.template interface<Compositor>()[0].create_surface(SurfaceGlue(*this, output, frame_done, latest_frame))),
-                                                      xdg_surface(wl.registry.template interface<WMBase>()[0].create_xdg_surface(surface)),
+                                                      surface(wl.registry.template interface<typename Wl::Compositor>()[0].create_surface(SurfaceGlue(*this, output, frame_done, latest_frame))),
+                                                      xdg_surface(wl.registry.template interface<typename Wl::WMBase>()[0].create_xdg_surface(surface)),
                                                       xdg_toplevel(xdg_surface.create_xdg_toplevel(XDGToplevelGlue(*this))),
                                                       egl(*hint.backend_hint.egl),
                                                       egl_window(surface, hint.width, hint.height),

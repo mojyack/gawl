@@ -6,7 +6,7 @@
 namespace gawl {
 template <class... Impls>
 struct Gawl {
-    using Application = internal::wl::ApplicationBackend<Impls...>;
+    using Application      = internal::wl::ApplicationBackend<Impls...>;
     using WindowCreateHint = internal::WindowCreateHint<internal::wl::SharedData<Impls...>>;
 
     template <class Impl>

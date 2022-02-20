@@ -15,8 +15,10 @@ struct SharedData {
     struct QuitApplicationArgs {};
     using BufferType = VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
 
-    WaylandClientObject<Impls...>* wl;
-    EGLObject*                     egl;
-    BufferType*                    application_events;
+    using Wl = Wl<Impls...>;
+
+    typename Wl::WaylandClientObject* wl;
+    EGLObject*                        egl;
+    BufferType*                       application_events;
 };
 }; // namespace gawl::internal::wl
