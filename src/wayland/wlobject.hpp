@@ -23,15 +23,14 @@ struct Wl {
       public:
         static auto proc_window(std::list<Variant<Impls...>>& windows, const towl::SurfaceTag surface, auto&& proc) -> void {
             for(auto& w : windows) {
-                const auto matched = std::visit(
+                const auto matched = w.visit(
                     [surface, proc](auto& w) -> bool {
                         if(w.wl_get_surface() == surface) {
                             proc(w);
                             return true;
                         }
                         return false;
-                    },
-                    w.as_variant());
+                    });
                 if(matched) {
                     return;
                 }
@@ -115,12 +114,11 @@ struct Wl {
       public:
         auto on_scale(const towl::OutputTag output, const int32_t scale) -> void {
             for(auto& w : *windows) {
-                std::visit([output, scale](auto& w) {
+                w.visit([output, scale](auto& w) {
                     if(w.wl_get_output() == output) {
                         w.resize_buffer(-1, -1, scale);
                     }
-                },
-                           w.as_variant());
+                });
             }
         }
         OutputGlue(GlueParameter& parameter) : windows(&parameter.windows) {}

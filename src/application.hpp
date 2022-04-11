@@ -32,7 +32,6 @@ class Application {
                     return false;
                 }
             });
-            // const auto match = std::visit([&window](auto& w) -> bool { if constexpr(std::is_same_v<decltype(w), Impl&>) return &w == &window; return false; }, i->as_variant());
             if(match) {
                 windows.erase(i);
                 return windows.empty();
@@ -48,7 +47,7 @@ class Application {
     }
     auto close_all_windows() -> void {
         for(auto& w : windows) {
-            std::visit([this](auto& w) { this->close_window(w); }, w.as_variant());
+            w.visit([this](auto& w) { this->close_window(w); });
         }
     }
 };

@@ -38,11 +38,11 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
                     switch(e.index()) {
                     case decltype(application_events)::template index_of<typename Shared::HandleEventArgs>(): {
                         auto& args = e.template get<typename Shared::HandleEventArgs>();
-                        std::visit([](auto& w) { w->handle_event(); }, args.window.as_variant());
+                        args.window.visit([](auto& w) { w->handle_event(); });
                     } break;
                     case decltype(application_events)::template index_of<typename Shared::CloseWindowArgs>(): {
                         auto&      args        = e.template get<typename Shared::CloseWindowArgs>();
-                        const auto last_window = std::visit([this](auto& w) -> bool { return this->destroy_window(*w); }, args.window.as_variant());
+                        const auto last_window = args.window.visit([this](auto& w) -> bool { return this->destroy_window(*w); });
                         if(quitted && last_window) {
                             quitted = false;
                             goto exit;
