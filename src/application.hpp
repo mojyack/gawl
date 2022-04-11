@@ -25,7 +25,14 @@ class Application {
     template <class Impl>
     auto destroy_window(const Impl& window) -> bool {
         for(auto i = windows.begin(); i != windows.end(); i = std::next(i)) {
-            const auto match = std::visit([&window](auto& w) -> bool { if constexpr(std::is_same_v<decltype(w), Impl&>) return &w == &window; return false; }, i->as_variant());
+            const auto match = i->visit([&window](auto& w) -> bool {
+                if constexpr(std::is_same_v<decltype(w), Impl&>) {
+                    return &w == &window;
+                } else {
+                    return false;
+                }
+            });
+            // const auto match = std::visit([&window](auto& w) -> bool { if constexpr(std::is_same_v<decltype(w), Impl&>) return &w == &window; return false; }, i->as_variant());
             if(match) {
                 windows.erase(i);
                 return windows.empty();
