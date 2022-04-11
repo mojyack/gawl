@@ -29,8 +29,8 @@ template <GLenum mode>
 auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
     auto        buffer = std::vector<GLfloat>(vertices.size() * 2);
     auto&       gl     = global->polygon_shader;
-    const auto& s      = screen->get_viewport();
-    const auto  scale  = screen->get_scale();
+    const auto& s      = screen.get_viewport();
+    const auto  scale  = screen.get_scale();
     for(auto i = size_t(0); i < vertices.size(); i += 1) {
         auto x            = vertices[i].x * scale;
         auto y            = vertices[i].y * scale;
@@ -40,7 +40,7 @@ auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& ve
     const auto vabinder = gl.bind_vao();
     const auto shbinder = gl.use_shader();
     const auto vbbinder = gl.bind_vbo();
-    const auto fbbinder = screen->prepare();
+    const auto fbbinder = screen.prepare();
 
     gl.write_buffer(buffer);
 
