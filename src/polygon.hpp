@@ -34,8 +34,8 @@ auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& ve
     for(auto i = size_t(0); i < vertices.size(); i += 1) {
         auto x            = vertices[i].x * scale;
         auto y            = vertices[i].y * scale;
-        buffer[i * 2 + 0] = ((x - s.base[0]) * 2 - s.size[0]) / static_cast<int>(s[0]);
-        buffer[i * 2 + 1] = ((y - s.base[1]) * 2 - s.size[1]) / -static_cast<int>(s[1]);
+        buffer[i * 2 + 0] = ((x - s.base[0]) * 2 - s.size[0]) / static_cast<int>(s.size[0]);
+        buffer[i * 2 + 1] = ((y - s.base[1]) * 2 - s.size[1]) / -static_cast<int>(s.size[1]);
     }
     const auto vabinder = gl.bind_vao();
     const auto shbinder = gl.use_shader();
