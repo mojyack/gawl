@@ -148,9 +148,9 @@ class TextRender {
         const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
         auto x = alignx == Align::Left ? r.a.x - font_area.a.x : alignx == Align::Center ? r.a.x - font_area.a.x + pad[0] / 2
-                                                                                         : r.b.x - font_area.width();
+                                                                                         : r.b.x - font_area.width() - font_area.a.x;
         auto y = aligny == Align::Left ? r.a.y - font_area.a.y : aligny == Align::Center ? r.a.y - font_area.a.y + pad[1] / 2
-                                                                                         : r.b.y - font_area.height();
+                                                                                         : r.b.y - font_area.height() - font_area.a.y;
         x /= scale;
         y /= scale;
         return draw(screen, {x, y}, color, text, size, callback);
