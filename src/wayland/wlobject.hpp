@@ -2,12 +2,14 @@
 #include <list>
 #include <unordered_map>
 
+#include <sys/mman.h>
+
 #include "../util.hpp"
 #include "../window-impl-concept.hpp"
 #include "towl.hpp"
 
 namespace gawl::internal::wl {
-template <class... Impls>
+template <template <class, class...> class Backend, class... Impls>
 struct Wl {
     struct KeyRepeatConfig {
         int32_t interval;
@@ -15,13 +17,13 @@ struct Wl {
     };
 
     struct GlueParameter {
-        std::list<Variant<Impls...>>&   windows;
-        std::optional<KeyRepeatConfig>& config;
+        std::list<Variant<Backend<Impls, Impls...>...>>* windows;
+        std::optional<KeyRepeatConfig>*                  config;
     };
 
     class SeatGlue {
       public:
-        static auto proc_window(std::list<Variant<Impls...>>& windows, const towl::SurfaceTag surface, auto&& proc) -> void {
+        static auto proc_window(std::list<Variant<Backend<Impls, Impls...>...>>& windows, const towl::SurfaceTag surface, auto&& proc) -> void {
             for(auto& w : windows) {
                 const auto matched = w.visit(
                     [surface, proc](auto& w) -> bool {
@@ -42,8 +44,8 @@ struct Wl {
 
         class PointerGlue {
           private:
-            std::list<Variant<Impls...>>* windows;
-            towl::SurfaceTag              active;
+            std::list<Variant<Backend<Impls, Impls...>...>>* windows;
+            towl::SurfaceTag                                 active;
 
           public:
             auto on_enter(const towl::SurfaceTag surface, const double x, const double y) -> void {
@@ -71,34 +73,121 @@ struct Wl {
                 }
                 proc_window(*windows, active, [axis, value](auto& impl) -> void { impl.wl_on_pointer_axis(axis, value); });
             }
-            PointerGlue(GlueParameter& parameter) : windows(&parameter.windows) {}
+            PointerGlue(GlueParameter& parameter) : windows(parameter.windows) {}
         };
 
         class KeyboardGlue {
           private:
-            std::list<Variant<Impls...>>*   windows;
-            std::optional<KeyRepeatConfig>* config;
-            towl::SurfaceTag                active;
+            struct XKB {
+                struct KeymapDeleter {
+                    auto operator()(xkb_keymap* keymap) -> void {
+                        xkb_keymap_unref(keymap);
+                    }
+                };
+                struct StateDeleter {
+                    auto operator()(xkb_state* state) -> void {
+                        xkb_state_unref(state);
+                    }
+                };
+                std::unique_ptr<xkb_keymap, KeymapDeleter> keymap = nullptr;
+                std::unique_ptr<xkb_state, StateDeleter>   state  = nullptr;
+
+                XKB(xkb_keymap* const keymap, xkb_state* const state) : keymap(keymap), state(state) {}
+            };
+
+            std::list<Variant<Backend<Impls, Impls...>...>>* windows;
+            std::optional<KeyRepeatConfig>*                  config;
+            towl::SurfaceTag                                 active;
+
+            [[no_unique_address]] std::conditional_t<Implement<Impls...>::keysym, std::optional<XKB>, towl::Empty> xkb;
+
+            auto calc_modifiers() const -> ModifierFlags {
+                if(xkb) {
+                    return (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_SHIFT, xkb_state_component(1)) ? ModifierFlags::Control : ModifierFlags::None) |
+                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_CAPS, xkb_state_component(1)) ? ModifierFlags::Lock : ModifierFlags::None) |
+                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_CTRL, xkb_state_component(1)) ? ModifierFlags::Control : ModifierFlags::None) |
+                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_ALT, xkb_state_component(1)) ? ModifierFlags::Mod1 : ModifierFlags::None) |
+                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_NUM, xkb_state_component(1)) ? ModifierFlags::Mod2 : ModifierFlags::None) |
+                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_LOGO, xkb_state_component(1)) ? ModifierFlags::Mod4 : ModifierFlags::None);
+                }
+                return ModifierFlags::None;
+            }
 
           public:
+            auto on_keymap(const uint32_t format, const int32_t fd, const uint32_t size) -> void {
+                if constexpr(Implement<Impls...>::keysym) {
+                    auto file = FileDescriptor(fd);
+                    if(format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
+                        return;
+                    }
+
+                    const auto mapstr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+                    if(mapstr == MAP_FAILED) {
+                        return;
+                    }
+
+                    const auto context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+                    if(!context) {
+                        return;
+                    }
+
+                    const auto keymap = xkb_keymap_new_from_string(context, (const char*)mapstr, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
+                    if(!keymap) {
+                        xkb_context_unref(context);
+                        return;
+                    }
+
+                    xkb = XKB(keymap, xkb_state_new(keymap));
+                    xkb_context_unref(context);
+
+                    munmap(mapstr, size);
+                }
+            }
             auto on_enter(const towl::SurfaceTag surface, const towl::Array<uint32_t>& keys) -> void {
                 active = surface;
-                proc_window(*windows, active, [&keys](auto& impl) -> void { impl.wl_on_key_enter(keys); });
+                if constexpr(Implement<Impls...>::keycode) {
+                    proc_window(*windows, active, [&keys](auto& impl) -> void { impl.wl_on_keycode_enter(keys); });
+                }
+                if constexpr(Implement<Impls...>::keysym) {
+                    if(xkb) {
+                        auto syms = std::vector<xkb_keysym_t>(keys.size);
+                        for(auto i = size_t(0); i < keys.size; i += 1) {
+                            syms[i] = xkb_state_key_get_one_sym(xkb->state.get(), keys.data[i] + 8);
+                        }
+                        proc_window(*windows, active, [this, &syms](auto& impl) -> void { impl.wl_on_keysym_enter(syms, calc_modifiers()); });
+                    }
+                }
             }
             auto on_leave(const towl::SurfaceTag surface) -> void {
-                active = towl::nulltag;
                 proc_window(*windows, surface, [](auto& impl) -> void { impl.wl_on_key_leave(); });
+                active = towl::nulltag;
             }
             auto on_key(const uint32_t key, const uint32_t state) -> void {
-                if(!active) {
-                    return;
+                if constexpr(Implement<Impls...>::keyboard) {
+                    if constexpr(Implement<Impls...>::keysym) {
+                        if(xkb) {
+                            proc_window(*windows, active, [this, key, state](auto& impl) -> void {
+                                impl.wl_on_key_input(key, state, xkb_state_key_get_one_sym(xkb->state.get(), key + 8), calc_modifiers(), xkb_keymap_key_repeats(xkb->keymap.get(), key + 8));
+                            });
+                        }
+                    } else {
+                        proc_window(*windows, active, [key, state](auto& impl) -> void {
+                            impl.wl_on_key_input(key, state, 0, ModifierFlags::None, 0);
+                        });
+                    }
                 }
-                proc_window(*windows, active, [key, state](auto& impl) -> void { impl.wl_on_key_input(key, state); });
+            }
+            auto on_modifiers(const uint32_t mods_depressed, const uint32_t mods_latched, const uint32_t mods_locked, const uint32_t group) -> void {
+                if constexpr(Implement<Impls...>::keysym) {
+                    if(xkb) {
+                        xkb_state_update_mask(xkb->state.get(), mods_depressed, mods_latched, mods_locked, group, 0, 0);
+                    }
+                }
             }
             auto on_repeat_info(const int32_t rate, const int32_t delay) -> void {
                 config->emplace(KeyRepeatConfig{1000 / rate, delay});
             };
-            KeyboardGlue(GlueParameter& parameter) : windows(&parameter.windows), config(&parameter.config) {}
+            KeyboardGlue(GlueParameter& parameter) : windows(parameter.windows), config(parameter.config) {}
         };
 
         PointerGlue  pointer_glue;
@@ -109,7 +198,7 @@ struct Wl {
 
     class OutputGlue {
       private:
-        std::list<Variant<Impls...>>* windows;
+        std::list<Variant<Backend<Impls, Impls...>...>>* windows;
 
       public:
         auto on_scale(const towl::OutputTag output, const int32_t scale) -> void {
@@ -121,7 +210,7 @@ struct Wl {
                 });
             }
         }
-        OutputGlue(GlueParameter& parameter) : windows(&parameter.windows) {}
+        OutputGlue(GlueParameter& parameter) : windows(parameter.windows) {}
     };
 
     using Compositor = towl::Compositor<4>;
@@ -135,7 +224,7 @@ struct Wl {
         Registry                       registry;
         std::optional<KeyRepeatConfig> repeat_config;
 
-        WaylandClientObject(std::list<Variant<Impls...>>& windows) : registry(display.get_registry<GlueParameter, Compositor, WMBase, Seat, Output>({windows, repeat_config})) {}
+        WaylandClientObject(std::list<Variant<Backend<Impls, Impls...>...>>& windows) : registry(display.get_registry<GlueParameter, Compositor, WMBase, Seat, Output>({&windows, &repeat_config})) {}
     };
 };
 } // namespace gawl::internal::wl

@@ -1,6 +1,8 @@
 #pragma once
 #include <concepts>
 
+#include <xkbcommon/xkbcommon.h>
+
 #include "type.hpp"
 
 namespace gawl::concepts {
@@ -18,8 +20,13 @@ concept WindowImplWithWindowResizeCallback = requires(Impl& m) {
 };
 
 template <class Impl>
-concept WindowImplWithKeyboardCallback = requires(Impl& m) {
-    { m.keyboard_callback(uint32_t(), gawl::ButtonState()) } -> std::same_as<void>;
+concept WindowImplWithKeycodeCallback = requires(Impl& m, uint32_t keycode, gawl::ButtonState state) {
+    { m.keycode_callback(keycode, state) } -> std::same_as<void>;
+};
+
+template <class Impl>
+concept WindowImplWithKeysymCallback = requires(Impl& m, xkb_keysym_t keysym, gawl::ButtonState state, ModifierFlags modifiers) {
+    { m.keysym_callback(keysym, state, modifiers) } -> std::same_as<void>;
 };
 
 template <class Impl>
@@ -47,35 +54,49 @@ concept WindowImplWithUserCallback = requires(Impl& m) {
     { m.user_callback(nullptr) } -> std::same_as<void>;
 };
 
-namespace impl {
-    template <class Impl>
-    using RefreshCallback = typename std::conditional<WindowImplWithRefreshCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using WindowResizeCallback = typename std::conditional<WindowImplWithWindowResizeCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using KeyboardCallback = typename std::conditional<WindowImplWithKeyboardCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using PointermoveCallback = typename std::conditional<WindowImplWithPointermoveCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using ClickCallback = typename std::conditional<WindowImplWithClickCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using ScrollCallback = typename std::conditional<WindowImplWithScrollCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using CloseCallback = typename std::conditional<WindowImplWithCloseRequestCallback<Impl>, std::true_type, std::false_type>::type;
-    template <class Impl>
-    using UserCallback = typename std::conditional<WindowImplWithUserCallback<Impl>, std::true_type, std::false_type>::type;
-
-    template <template <class> class Concept, class T, class... Ts>
-    constexpr auto not_implemented()->bool {
-        if constexpr(!Concept<T>::value) {
-            if constexpr(sizeof...(Ts) == 0) {
-                return true;
-            } else {
-                return not_implemented<Concept, Ts...>();
-            }
-        } else {
-            return false;
-        }
-    }
-} // namespace impl
 } // namespace gawl::concepts
+
+namespace gawl::internal {
+template <template <class> class Concept, class T, class... Ts>
+constexpr auto not_implemented() -> bool {
+    if constexpr(!Concept<T>()) {
+        if constexpr(sizeof...(Ts) == 0) {
+            return true;
+        } else {
+            return not_implemented<Concept, Ts...>();
+        }
+    } else {
+        return false;
+    }
+}
+
+template <class... Impls>
+struct Implement {
+    template <class Impl>
+    using HasRefreshCallback = typename std::conditional_t<gawl::concepts::WindowImplWithRefreshCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasWindowResizeCallback = typename std::conditional_t<gawl::concepts::WindowImplWithWindowResizeCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasKeycodeCallback = typename std::conditional_t<gawl::concepts::WindowImplWithKeycodeCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasKeysymCallback = typename std::conditional_t<gawl::concepts::WindowImplWithKeysymCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasPointermoveCallback = typename std::conditional_t<gawl::concepts::WindowImplWithPointermoveCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasClickCallback = typename std::conditional_t<gawl::concepts::WindowImplWithClickCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasScrollCallback = typename std::conditional_t<gawl::concepts::WindowImplWithScrollCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasCloseCallback = typename std::conditional_t<gawl::concepts::WindowImplWithCloseRequestCallback<Impl>, std::true_type, std::false_type>;
+    template <class Impl>
+    using HasUserCallback = typename std::conditional_t<gawl::concepts::WindowImplWithUserCallback<Impl>, std::true_type, std::false_type>;
+
+    constexpr static auto keycode2 = !not_implemented<HasKeycodeCallback, Impls...>();
+    constexpr static auto keycode  = !not_implemented<HasKeycodeCallback, Impls...>();
+    constexpr static auto keysym   = !not_implemented<HasKeysymCallback, Impls...>();
+    constexpr static auto keyboard = keycode || keysym;
+    constexpr static auto click    = !not_implemented<HasClickCallback, Impls...>();
+    constexpr static auto motion   = !not_implemented<HasPointermoveCallback, Impls...>();
+    constexpr static auto pointer  = click || motion;
+};
+} // namespace gawl::internal

@@ -10,14 +10,15 @@
 #include "../window.hpp"
 #include "eglobject.hpp"
 #include "shared-data.hpp"
+#include "window.hpp"
 #include "wlobject.hpp"
 
 namespace gawl::internal::wl {
 template <class... Impls>
-class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impls...> {
+class ApplicationBackend : public Application<ApplicationBackend<Impls...>, WindowBackend, Impls...> {
   private:
-    using Shared = SharedData<Impls...>;
-    using Wl     = Wl<Impls...>;
+    using Shared = internal::wl::SharedData<WindowBackend, Impls...>;
+    using Wl     = typename Shared::Wl;
 
     typename Shared::BufferType      application_events;
     typename Wl::WaylandClientObject wl;
@@ -73,17 +74,11 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Impl
     auto get_shared_data() -> Shared {
         return Shared{&wl, &egl, &application_events};
     }
-    ApplicationBackend() : Application<ApplicationBackend<Impls...>, Impls...>(), wl(this->windows), egl(wl.display) {
+    ApplicationBackend() : Application<ApplicationBackend<Impls...>, WindowBackend, Impls...>(), wl(this->windows), egl(wl.display) {
         wl.display.roundtrip();
         if(wl.registry.template interface<typename Wl::Compositor>().empty() || wl.registry.template interface<typename Wl::WMBase>().empty()) {
             panic("wayland server doesn't provide necessary interfaces");
         }
-
-        // get input devices
-        [[maybe_unused]] constexpr auto enable_keyboard = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::KeyboardCallback, Impls...>();
-        [[maybe_unused]] constexpr auto enable_click    = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::ClickCallback, Impls...>();
-        [[maybe_unused]] constexpr auto enable_motion   = !gawl::concepts::impl::not_implemented<gawl::concepts::impl::PointermoveCallback, Impls...>();
-        [[maybe_unused]] constexpr auto enable_pointer  = enable_click || enable_motion;
 
         dynamic_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
         global = new GLObjects();

@@ -4,18 +4,18 @@
 #include "wlobject.hpp"
 
 namespace gawl::internal::wl {
-template <class... Impls>
+template <template <class, class...> class Backend, class... Impls>
 struct SharedData {
     struct HandleEventArgs {
-        Variant<Impls*...> window;
+        Variant<Backend<Impls, Impls...>*...> window;
     };
     struct CloseWindowArgs {
-        Variant<Impls*...> window;
+        Variant<Backend<Impls, Impls...>*...> window;
     };
     struct QuitApplicationArgs {};
     using BufferType = VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
 
-    using Wl = Wl<Impls...>;
+    using Wl = Wl<Backend, Impls...>;
 
     typename Wl::WaylandClientObject* wl;
     EGLObject*                        egl;

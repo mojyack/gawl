@@ -7,7 +7,6 @@
 #include "window-creat-hint.hpp"
 
 namespace gawl::internal {
-template <class Impl>
 class Window {
   private:
     WindowState          state               = WindowState::Constructing;
@@ -21,9 +20,6 @@ class Window {
   protected:
     bool event_driven = false;
 
-    auto impl() -> Impl* {
-        return reinterpret_cast<Impl*>(this);
-    }
     auto on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
         constexpr auto MIN_SCALE = 0.01;
         const auto     lock      = buffer_size.get_lock();
@@ -89,15 +85,7 @@ class Window {
         on_buffer_resize(std::nullopt, std::nullopt);
     }
     auto set_event_driven(const bool flag) -> void {
-        if(event_driven == flag) {
-            return;
-        }
-        if(event_driven) {
-            event_driven = false;
-        } else {
-            event_driven = true;
-            impl()->refresh();
-        }
+        event_driven = flag;
     }
     auto get_event_driven() const -> bool {
         return event_driven;
