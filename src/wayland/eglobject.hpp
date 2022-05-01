@@ -42,8 +42,10 @@ struct EGLObject {
         internal::dynamic_assert(context != EGL_NO_CONTEXT);
     }
     ~EGLObject() {
+        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
         internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
         internal::dynamic_assert(eglTerminate(display) != EGL_FALSE);
+        internal::dynamic_assert(eglReleaseThread() != EGL_FALSE);
     }
 };
 } // namespace gawl::internal::wl
