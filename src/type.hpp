@@ -113,4 +113,8 @@ enum class ModifierFlags {
 constexpr auto operator|(const ModifierFlags a, const ModifierFlags b) -> ModifierFlags {
     return static_cast<ModifierFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
+
+constexpr auto operator&(const ModifierFlags a, const ModifierFlags b) -> ModifierFlags {
+    return static_cast<ModifierFlags>(static_cast<int>(a) & static_cast<int>(b));
+}
 } // namespace gawl
