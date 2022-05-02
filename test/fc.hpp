@@ -38,6 +38,7 @@ inline auto find_fontpath_from_name(const char* const name) -> std::string {
         FcPatternDestroy(font);
     }
     FcPatternDestroy(pattern);
+    FcConfigDestroy(config);
     return path;
 }
 } // namespace fc
