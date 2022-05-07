@@ -42,11 +42,11 @@ class Application {
 
   public:
     template <class Impl, class... Args>
-    auto open_window(typename WindowBackend<Impl, Impls...>::WindowCreateHintType hint, Args&&... args) -> WindowBackend<Impl, Impls...>& {
+    auto open_window(typename WindowBackend<Impl, Impls...>::WindowCreateHintType hint, Args&&... args) -> Impl& {
         static_assert(std::disjunction_v<std::is_same<Impl, Impls>...>);
         hint.backend_hint = backend()->get_shared_data();
         windows.emplace_back(std::in_place_type<WindowBackend<Impl, Impls...>>, hint, std::move(args)...);
-        return windows.back().template get<WindowBackend<Impl, Impls...>>();
+        return windows.back().template get<WindowBackend<Impl, Impls...>>().get_impl();
     }
 
     auto close_all_windows() -> void {

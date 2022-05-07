@@ -212,6 +212,10 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
   public:
     using WindowCreateHintType = WindowCreateHint<Shared>;
 
+    auto get_impl() -> Impl& {
+        return impl;
+    }
+
     auto wl_get_surface() const -> towl::SurfaceTag {
         return surface.as_tag();
     }
