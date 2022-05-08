@@ -19,9 +19,9 @@ struct KeycodeCallbackArgs {
     gawl::ButtonState state;
 };
 struct KeysymCallbackArgs {
-    xkb_keysym_t      key;
+    xkb_keycode_t     key;
     gawl::ButtonState state;
-    ModifierFlags     modifiers;
+    xkb_state*        xkb_state;
 };
 struct PointermoveCallbackArgs {
     gawl::Point point;
@@ -229,10 +229,10 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
         }
     }
-    auto wl_on_keysym_enter(const std::vector<xkb_keysym_t>& keys, const ModifierFlags modifiers) -> void {
+    auto wl_on_keysym_enter(const std::vector<xkb_keycode_t>& keys, xkb_state* const xkb_state) -> void {
         if constexpr(enable_keysym) {
             for(const auto k : keys) {
-                this->queue_callback(KeysymCallbackArgs{k, gawl::ButtonState::Enter, modifiers});
+                this->queue_callback(KeysymCallbackArgs{k, gawl::ButtonState::Enter, xkb_state});
             }
         }
     }
@@ -244,11 +244,11 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             this->queue_callback(KeycodeCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::Leave});
         }
         if constexpr(enable_keysym) {
-            this->queue_callback(KeysymCallbackArgs{XKB_KEY_VoidSymbol, gawl::ButtonState::Leave, ModifierFlags::None});
+            this->queue_callback(KeysymCallbackArgs{XKB_KEYCODE_INVALID, gawl::ButtonState::Leave, nullptr});
         }
     }
     // the third and subsequent arguments are only valid if enable_keysym == true
-    auto wl_on_key_input(const uint32_t keycode, const uint32_t state, const xkb_keysym_t keysym, const ModifierFlags modifiers, const bool enable_repeat) -> void {
+    auto wl_on_key_input(const uint32_t keycode, const uint32_t state, const xkb_keycode_t keysym, const bool enable_repeat, xkb_state* const xkb_state) -> void {
         if constexpr(enable_keyboard) {
             const auto s = state == WL_KEYBOARD_KEY_STATE_PRESSED ? gawl::ButtonState::Press : gawl::ButtonState::Release;
 
@@ -256,7 +256,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 this->queue_callback(KeycodeCallbackArgs{keycode, s});
             }
             if constexpr(enable_keysym) {
-                this->queue_callback(KeysymCallbackArgs{keysym, s, modifiers});
+                this->queue_callback(KeysymCallbackArgs{keysym, s, xkb_state});
             }
             if(!wl.repeat_config.has_value()) {
                 return;
@@ -270,13 +270,13 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 keyboard.last_pressed_key.store(keycode);
 
                 if constexpr(enable_keysym) {
-                    *keyboard.key_repeater = std::thread([this, keycode, keysym, modifiers]() {
+                    *keyboard.key_repeater = std::thread([this, keycode, keysym, xkb_state]() {
                         keyboard.key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->delay_in_milisec));
                         while(keyboard.last_pressed_key.load() == keycode) {
                             if constexpr(enable_keycode) {
                                 this->queue_callback(KeycodeCallbackArgs{keycode, gawl::ButtonState::Repeat});
                             }
-                            this->queue_callback(KeysymCallbackArgs{keysym, gawl::ButtonState::Repeat, modifiers});
+                            this->queue_callback(KeysymCallbackArgs{keysym, gawl::ButtonState::Repeat, xkb_state});
                             keyboard.key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->interval));
                         }
                     });
@@ -377,7 +377,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 case CallbackQueue::template index_of<KeysymCallbackArgs>(): {
                     if constexpr(gawl::concepts::WindowImplWithKeysymCallback<Impl>) {
                         const auto& args = a.template get<KeysymCallbackArgs>();
-                        impl.keysym_callback(args.key, args.state, args.modifiers);
+                        impl.keysym_callback(args.key, args.state, args.xkb_state);
                     }
                 } break;
                 case CallbackQueue::template index_of<PointermoveCallbackArgs>(): {

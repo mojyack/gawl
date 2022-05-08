@@ -25,8 +25,8 @@ concept WindowImplWithKeycodeCallback = requires(Impl& m, uint32_t keycode, gawl
 };
 
 template <class Impl>
-concept WindowImplWithKeysymCallback = requires(Impl& m, xkb_keysym_t keysym, gawl::ButtonState state, ModifierFlags modifiers) {
-    { m.keysym_callback(keysym, state, modifiers) } -> std::same_as<void>;
+concept WindowImplWithKeysymCallback = requires(Impl& m, xkb_keycode_t keycode, gawl::ButtonState state, xkb_state* xkb_state) {
+    { m.keysym_callback(keycode, state, xkb_state) } -> std::same_as<void>;
 };
 
 template <class Impl>
@@ -91,7 +91,6 @@ struct Implement {
     template <class Impl>
     using HasUserCallback = typename std::conditional_t<gawl::concepts::WindowImplWithUserCallback<Impl>, std::true_type, std::false_type>;
 
-    constexpr static auto keycode2 = !not_implemented<HasKeycodeCallback, Impls...>();
     constexpr static auto keycode  = !not_implemented<HasKeycodeCallback, Impls...>();
     constexpr static auto keysym   = !not_implemented<HasKeysymCallback, Impls...>();
     constexpr static auto keyboard = keycode || keysym;

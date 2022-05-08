@@ -98,23 +98,4 @@ enum class Align {
     Center,
     Right,
 };
-
-enum class ModifierFlags {
-    None    = 0,
-    Shift   = 1 << 0,
-    Lock    = 1 << 1,
-    Control = 1 << 2,
-    Mod1    = 1 << 3,
-    Mod2    = 1 << 4,
-    Mod4    = 1 << 5,
-
-};
-
-constexpr auto operator|(const ModifierFlags a, const ModifierFlags b) -> ModifierFlags {
-    return static_cast<ModifierFlags>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr auto operator&(const ModifierFlags a, const ModifierFlags b) -> ModifierFlags {
-    return static_cast<ModifierFlags>(static_cast<int>(a) & static_cast<int>(b));
-}
 } // namespace gawl

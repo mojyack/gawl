@@ -101,18 +101,6 @@ struct Wl {
 
             [[no_unique_address]] std::conditional_t<Implement<Impls...>::keysym, std::optional<XKB>, towl::Empty> xkb;
 
-            auto calc_modifiers() const -> ModifierFlags {
-                if(xkb) {
-                    return (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_SHIFT, xkb_state_component(1)) ? ModifierFlags::Control : ModifierFlags::None) |
-                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_CAPS, xkb_state_component(1)) ? ModifierFlags::Lock : ModifierFlags::None) |
-                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_CTRL, xkb_state_component(1)) ? ModifierFlags::Control : ModifierFlags::None) |
-                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_ALT, xkb_state_component(1)) ? ModifierFlags::Mod1 : ModifierFlags::None) |
-                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_NUM, xkb_state_component(1)) ? ModifierFlags::Mod2 : ModifierFlags::None) |
-                           (xkb_state_mod_name_is_active(xkb->state.get(), XKB_MOD_NAME_LOGO, xkb_state_component(1)) ? ModifierFlags::Mod4 : ModifierFlags::None);
-                }
-                return ModifierFlags::None;
-            }
-
           public:
             auto on_keymap(const uint32_t format, const int32_t fd, const uint32_t size) -> void {
                 if constexpr(Implement<Impls...>::keysym) {
@@ -152,9 +140,9 @@ struct Wl {
                     if(xkb) {
                         auto syms = std::vector<xkb_keysym_t>(keys.size);
                         for(auto i = size_t(0); i < keys.size; i += 1) {
-                            syms[i] = xkb_state_key_get_one_sym(xkb->state.get(), keys.data[i] + 8);
+                            syms[i] = keys.data[i] + 8;
                         }
-                        proc_window(*windows, active, [this, &syms](auto& impl) -> void { impl.wl_on_keysym_enter(syms, calc_modifiers()); });
+                        proc_window(*windows, active, [this, &syms](auto& impl) -> void { impl.wl_on_keysym_enter(syms, xkb->state.get()); });
                     }
                 }
             }
@@ -167,12 +155,12 @@ struct Wl {
                     if constexpr(Implement<Impls...>::keysym) {
                         if(xkb) {
                             proc_window(*windows, active, [this, key, state](auto& impl) -> void {
-                                impl.wl_on_key_input(key, state, xkb_state_key_get_one_sym(xkb->state.get(), key + 8), calc_modifiers(), xkb_keymap_key_repeats(xkb->keymap.get(), key + 8));
+                                impl.wl_on_key_input(key, state, key + 8, xkb_keymap_key_repeats(xkb->keymap.get(), key + 8), xkb->state.get());
                             });
                         }
                     } else {
                         proc_window(*windows, active, [key, state](auto& impl) -> void {
-                            impl.wl_on_key_input(key, state, 0, ModifierFlags::None, 0);
+                            impl.wl_on_key_input(key, state, 0, 0, nullptr);
                         });
                     }
                 }
