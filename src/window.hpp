@@ -25,13 +25,13 @@ class Window {
         const auto     lock      = buffer_size.get_lock();
         if(size) {
             buffer_size->size = *size;
-            viewport.unset(buffer_size->size);
         }
         if(scale) {
             buffer_size->scale = *scale;
             draw_scale         = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size->scale
                                                                                                       : 1;
         }
+        viewport.unset(buffer_size->size);
         window_size[0] = viewport.size[0] / draw_scale;
         window_size[1] = viewport.size[1] / draw_scale;
     }
