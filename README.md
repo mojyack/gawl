@@ -15,4 +15,4 @@ meson build && ninja -C build
 ```
 
 # How to use
-See example/*
+See test/*
