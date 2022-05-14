@@ -75,33 +75,37 @@ class TextRender {
         if(size <= 0) {
             return r;
         }
-        auto       rx1 = 0.0, ry1 = 0.0, rx2 = 0.0, ry2 = 0.0;
+
         const auto scale = screen.get_scale();
+        auto       pen_x = base.x * scale;
+        auto       pen_y = base.y * scale;
+        auto       rx    = Rectangle{{pen_x, pen_y}, {0, 0}};
         auto       c     = text;
 
         while(*c != '\0') {
-            auto       chara = get_chara_graphic(size * scale, *c);
-            const auto xpos  = std::array{static_cast<double>(rx1 + chara->offset[0]), static_cast<double>(rx1 + chara->offset[0] + chara->get_width(screen) * scale)};
+            const auto first = c == text;
 
-            rx1 = rx1 > xpos[0] ? xpos[0] : rx1;
-            rx2 = rx2 < xpos[1] ? xpos[1] : rx2;
+            auto chara = get_chara_graphic(size * scale, *c);
 
-            const auto ypos = std::array{static_cast<double>(-chara->offset[1]), static_cast<double>(-chara->offset[1] + chara->get_height(screen) * scale)};
+            const auto x_a = pen_x + (!first ? chara->offset[0] : 0);
+            const auto x_b = x_a + chara->get_width(screen) * scale;
+            rx.a.x         = rx.a.x > x_a ? x_a : rx.a.x;
+            rx.b.x         = c == text ? x_b : (rx.b.x < x_b ? x_b : rx.b.x);
 
-            ry1 = ry1 > ypos[0] ? ypos[0] : ry1;
-            ry2 = ry2 < ypos[1] ? ypos[1] : ry2;
+            const auto y_a = pen_y - chara->offset[1];
+            const auto y_b = y_a + chara->get_height(screen) * scale;
+            rx.a.y         = rx.a.y > y_a ? y_a : rx.a.y;
+            rx.b.y         = first ? y_b : (rx.b.y < y_b ? y_b : rx.b.y);
+
+            // wprintf(L"%c, {{%f,%f},{%f,%f}}\n", *c, x_a, y_a, x_b, y_b);
 
             c += 1;
 
-            if(*c != '\0') {
-                rx2 += chara->advance;
-            }
+            pen_x += chara->advance;
         }
-        r.a.x += rx1 / scale;
-        r.a.y += ry1 / scale;
-        r.b.x += rx2 / scale;
-        r.b.y += ry2 / scale;
-        return r;
+
+        rx.magnify(1 / scale);
+        return rx;
     }
 
     auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char* const text, const int size = 0, const Callback callback = nullptr) -> Rectangle {
@@ -116,25 +120,33 @@ class TextRender {
             return Rectangle{point, point};
         }
         const auto scale       = screen.get_scale();
-        auto       xpos        = point.x;
+        auto       pen         = point;
         auto       drawed_area = Rectangle{point, point};
 
         set_char_color(color);
 
         auto c = text;
         while(*c != '\0') {
+            const auto first = c == text;
+
             const auto chara = get_chara_graphic(size * scale, *c);
-            const auto p     = std::array{xpos + 1. * chara->offset[0] / scale, point.y - 1. * chara->offset[1] / scale};
-            const auto area  = Rectangle{{p[0], p[1]}, {p[0] + chara->get_width(screen), p[1] + chara->get_height(screen)}};
-            drawed_area.a.x  = drawed_area.a.x < area.a.x ? drawed_area.a.x : area.a.x;
-            drawed_area.a.y  = drawed_area.a.y < area.a.y ? drawed_area.a.y : area.a.y;
-            drawed_area.b.x  = drawed_area.b.x > area.b.x ? drawed_area.b.x : area.b.x;
-            drawed_area.b.y  = drawed_area.b.y > area.b.y ? drawed_area.b.y : area.b.y;
-            if(!callback || !callback(c - text, area, *chara)) {
-                chara->draw_rect(screen, area);
+            const auto x_a   = pen.x + (!first ? chara->offset[0] / scale : 0);
+            const auto x_b   = x_a + chara->get_width(screen);
+            drawed_area.a.x  = drawed_area.a.x < x_a ? drawed_area.a.x : x_a;
+            drawed_area.b.x  = drawed_area.b.x > x_b ? drawed_area.b.x : x_b;
+
+            const auto y_a  = pen.y - chara->offset[1] / scale;
+            const auto y_b  = y_a + chara->get_height(screen);
+            drawed_area.a.y = drawed_area.a.y < y_a ? drawed_area.a.y : y_a;
+            drawed_area.b.y = drawed_area.b.y > y_b ? drawed_area.b.y : y_b;
+
+            if(!callback || !callback(c - text, {{x_a, y_a}, {x_b, y_b}}, *chara)) {
+                chara->draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
             }
-            xpos += 1. * chara->advance / scale;
+
             c += 1;
+
+            pen.x += chara->advance / scale;
         }
         return drawed_area;
     }
@@ -147,10 +159,10 @@ class TextRender {
         font_area.magnify(scale);
         const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
-        auto x = alignx == Align::Left ? r.a.x - font_area.a.x : alignx == Align::Center ? r.a.x - font_area.a.x + pad[0] / 2
-                                                                                         : r.b.x - font_area.width() - font_area.a.x;
+        auto x = alignx == Align::Left ? r.a.x - font_area.a.x : alignx == Align::Center ? r.a.x + pad[0] / 2
+                                                                                         : r.b.x - font_area.width();
         auto y = aligny == Align::Left ? r.a.y - font_area.a.y : aligny == Align::Center ? r.a.y - font_area.a.y + pad[1] / 2
-                                                                                         : r.b.y - font_area.height() - font_area.a.y;
+                                                                                         : r.b.y - font_area.b.y;
         x /= scale;
         y /= scale;
         return draw(screen, {x, y}, color, text, size, callback);
