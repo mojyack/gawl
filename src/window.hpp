@@ -44,10 +44,8 @@ class Window {
         return viewport;
     }
     auto set_viewport(const gawl::Rectangle& region) -> void {
-        auto r = region;
-        r.magnify(draw_scale);
         const auto lock = buffer_size.get_lock();
-        viewport.set(r, buffer_size->size);
+        viewport.set(Rectangle(region).magnify(draw_scale), buffer_size->size);
     }
     auto unset_viewport() -> void {
         const auto lock = buffer_size.get_lock();

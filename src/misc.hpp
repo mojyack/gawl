@@ -48,8 +48,7 @@ inline auto clear_screen(const Color& color = {0, 0, 0, 0}) -> void {
 
 template <concepts::Screen Screen>
 auto draw_rect(Screen& screen, const Rectangle& rect, const Color& color) -> void {
-    auto r = rect;
-    r.magnify(screen.get_scale());
+    auto r = Rectangle(rect).magnify(screen.get_scale());
     gawl::convert_screen_to_viewport(screen, r);
     const auto fbbinder = screen.prepare();
     glColor4f(color[0], color[1], color[2], color[3]);

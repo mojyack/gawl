@@ -43,9 +43,7 @@ class GraphicBase {
         draw_rect(screen, {{point.x, point.y}, {point.x + width, point.y + height}});
     }
     auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        auto r = rect;
-        r.magnify(screen.get_scale());
-        gl.move_vertices(screen, r, invert_top_bottom);
+        gl.move_vertices(screen, Rectangle(rect).magnify(screen.get_scale()), invert_top_bottom);
         do_draw(screen);
     }
     auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
