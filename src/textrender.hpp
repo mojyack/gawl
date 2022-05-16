@@ -63,23 +63,22 @@ class TextRender {
     auto set_char_color(const Color& color) -> void {
         internal::global->textrender_shader.set_text_color(color);
     }
-    auto get_rect(const gawl::concepts::MetaScreen auto& screen, const Point& base, const char* const text, const int size = 0) -> Rectangle {
+    auto get_rect(const gawl::concepts::MetaScreen auto& screen, const char* const text, const int size = 0) -> Rectangle {
         const auto uni = internal::convert_utf8_to_unicode32(text);
-        return get_rect(screen, base, uni.data(), size);
+        return get_rect(screen, uni.data(), size);
     }
-    auto get_rect(const gawl::concepts::MetaScreen auto& screen, const Point& base, const char32_t* const text, int size = 0) -> Rectangle {
+    auto get_rect(const gawl::concepts::MetaScreen auto& screen, const char32_t* const text, int size = 0) -> Rectangle {
         internal::dynamic_assert(static_cast<bool>(data));
 
-        auto r = Rectangle{base, base};
-        size   = size != 0 ? size : default_size;
+        size = size != 0 ? size : default_size;
         if(size <= 0) {
-            return r;
+            return {{0, 0}, {0, 0}};
         }
 
         const auto scale = screen.get_scale();
-        auto       pen_x = base.x * scale;
-        auto       pen_y = base.y * scale;
-        auto       rx    = Rectangle{{pen_x, pen_y}, {0, 0}};
+        auto       pen_x = 0.0;
+        auto       pen_y = 0.0;
+        auto       rx    = Rectangle{{0, 0}, {0, 0}};
         auto       c     = text;
 
         while(*c != '\0') {
@@ -104,8 +103,7 @@ class TextRender {
             pen_x += chara->advance;
         }
 
-        rx.magnify(1 / scale);
-        return rx;
+        return rx.magnify(1 / scale);
     }
 
     auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char* const text, const int size = 0, const Callback callback = nullptr) -> Rectangle {
@@ -152,12 +150,10 @@ class TextRender {
     }
 
     auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect, const Color& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center, const Callback callback = nullptr) -> Rectangle {
-        const auto scale = screen.get_scale();
-        auto       r     = rect;
-        r.magnify(scale);
-        auto font_area = get_rect(screen, {0, 0}, text, size);
-        font_area.magnify(scale);
-        const auto pad = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
+        const auto scale     = screen.get_scale();
+        const auto r         = Rectangle(rect).magnify(scale);
+        const auto font_area = get_rect(screen, text, size).magnify(scale);
+        const auto pad       = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
         auto x = alignx == Align::Left ? r.a.x - font_area.a.x : alignx == Align::Center ? r.a.x + pad[0] / 2
                                                                                          : r.b.x - font_area.width();
@@ -198,7 +194,7 @@ class TextRender {
                 }
             }
             lines.back() += chara;
-            auto area = get_rect(screen, {0, 0}, lines.back().data(), size);
+            auto area = get_rect(screen, lines.back().data(), size);
             if(area.width() > max_width) {
                 lines.back().pop_back();
 
@@ -207,7 +203,7 @@ class TextRender {
                 }
                 lines.emplace_back(1, chara);
 
-                area = get_rect(screen, area.a, lines.back().data(), size);
+                area = get_rect(screen, lines.back().data(), size);
                 if(area.width() > max_width) {
                     lines.pop_back();
                     goto draw;
@@ -221,7 +217,7 @@ class TextRender {
                                                                                        : (max_height - total_height) / 2.0;
         for(auto i = size_t(0); i < lines.size(); i += 1) {
             const auto& line        = lines[i];
-            const auto  area        = get_rect(screen, {0, 0}, line.data(), size);
+            const auto  area        = get_rect(screen, line.data(), size);
             const auto  total_width = area.width();
             const auto  x_offset    = alignx == Align::Left ? 0.0 : alignx == Align::Right ? max_width - total_width
                                                                                            : (max_width - total_width) / 2.0;
