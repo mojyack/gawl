@@ -6,3 +6,4 @@ executable('03-textrender', ['textrender.cpp'], dependencies : [dependency('gawl
 executable('04-keyboard', ['keyboard.cpp'], dependencies : [dependency('gawl'), dependency('gawl-keysym')])
 executable('05-mouse', ['mouse.cpp'], dependencies : [dependency('gawl'), dependency('fontconfig')])
 executable('06-multiwindow', ['multiwindow.cpp'], dependencies : [dependency('gawl')])
+executable('07-mtloading', ['background-texture-loading.cpp'], dependencies : [dependency('gawl')])
