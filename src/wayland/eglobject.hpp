@@ -8,11 +8,42 @@
 #include "../util.hpp"
 #include "towl.hpp"
 
+namespace gawl {
+class EGLSubObject {
+  private:
+    const EGLDisplay display;
+    const EGLContext context;
+
+  public:
+    auto flush() -> void {
+        glFlush();
+    }
+    auto wait() -> void {
+        glFinish();
+    }
+
+    EGLSubObject(const EGLDisplay display, const EGLContext context) : display(display), context(context) {
+        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
+    }
+    ~EGLSubObject() {
+        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+        internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
+    }
+};
+} // namespace gawl
+
 namespace gawl::internal::wl {
 struct EGLObject {
+    constexpr static auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+
     EGLDisplay display = nullptr;
     EGLConfig  config  = nullptr;
     EGLContext context = nullptr;
+
+    auto fork() const -> EGLSubObject {
+        return {display, eglCreateContext(display, config, context, context_attribs.data())};
+    }
+
     EGLObject(towl::Display& wl_display) {
         display = eglGetDisplay(wl_display.native());
         internal::dynamic_assert(display != EGL_NO_DISPLAY);
@@ -34,10 +65,6 @@ struct EGLObject {
 
         auto num = EGLint(0);
         internal::dynamic_assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
-
-        constexpr auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2,
-                                                               EGL_NONE};
-
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
         internal::dynamic_assert(context != EGL_NO_CONTEXT);
     }

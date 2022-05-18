@@ -21,7 +21,7 @@ struct KeycodeCallbackArgs {
 struct KeysymCallbackArgs {
     xkb_keycode_t     key;
     gawl::ButtonState state;
-    xkb_state*        xkb_state;
+    xkb_state*        xkbstate;
 };
 struct PointermoveCallbackArgs {
     gawl::Point point;
@@ -53,6 +53,8 @@ class Window : public internal::Window {
     }
 
   protected:
+    internal::wl::EGLObject& egl;
+
     std::atomic_bool                  frame_done   = true;
     std::atomic_bool                  latest_frame = true;
     gawl::internal::wl::CallbackQueue queue;
@@ -60,7 +62,6 @@ class Window : public internal::Window {
     using SharedData = internal::wl::SharedData<gawl::internal::wl::WindowBackend, Impls...>;
     typename SharedData::BufferType& application_events;
 
-  public:
     auto queue_callback(auto&& args) -> void {
         if(get_state() == internal::WindowState::Destructing) {
             return;
@@ -69,6 +70,8 @@ class Window : public internal::Window {
         queue.push(std::move(args));
         application_events.push(typename SharedData::HandleEventArgs{backend()});
     }
+
+  public:
     auto refresh() -> void {
         latest_frame.store(false);
         if(!frame_done) {
@@ -89,7 +92,11 @@ class Window : public internal::Window {
     auto quit_application() -> void {
         application_events.push(typename SharedData::QuitApplicationArgs{});
     }
-    Window(typename SharedData::BufferType& application_events) : application_events(application_events) {}
+    auto fork_context() -> EGLSubObject {
+        return egl.fork();
+    }
+
+    Window(internal::wl::EGLObject& egl, typename SharedData::BufferType& application_events) : egl(egl), application_events(application_events) {}
 };
 } // namespace gawl::wl
 
@@ -116,7 +123,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
       public:
         auto on_enter(const towl::OutputTag output) -> void {
             *current_output = output;
-            backend->resize_buffer(-1, -1, Wl::Output::from_tag(output).get_scale());
+            backend->resize_buffer(-1, -1, WlType::Output::from_tag(output).get_scale());
         }
         auto on_leave(const towl::OutputTag /*output*/) -> void {
             *current_output = towl::nulltag;
@@ -161,7 +168,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     using BackendType = WindowBackend;
     using Shared      = internal::wl::SharedData<WindowBackend, Impls...>;
     using BufferType  = typename Shared::BufferType;
-    using Wl          = typename Shared::Wl;
+    using WlType      = typename Shared::WlType;
 
     constexpr static auto enable_keycode  = gawl::concepts::WindowImplWithKeycodeCallback<Impl>;
     constexpr static auto enable_keysym   = gawl::concepts::WindowImplWithKeysymCallback<Impl>;
@@ -174,30 +181,29 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     };
 
     // shared with application
-    typename Wl::WaylandClientObject& wl;
-    EGLObject&                        egl;
-    BufferType&                       application_events;
+    typename WlType::WaylandClientObject& wl;
+    BufferType&                           application_events;
 
     // per window objects
-    Impl                                                       impl;
-    typename Wl::Compositor::template Surface<SurfaceGlue>     surface;
-    towl::OutputTag                                            output;
-    typename Wl::WMBase::XDGSurface                            xdg_surface;
-    typename Wl::WMBase::template XDGToplevel<XDGToplevelGlue> xdg_toplevel;
-    towl::EGLWindow                                            egl_window;
-    EGLSurface                                                 eglsurface               = nullptr;
-    std::atomic_bool                                           obsolete_egl_window_size = true;
+    Impl                                                           impl;
+    typename WlType::Compositor::template Surface<SurfaceGlue>     surface;
+    towl::OutputTag                                                output;
+    typename WlType::WMBase::XDGSurface                            xdg_surface;
+    typename WlType::WMBase::template XDGToplevel<XDGToplevelGlue> xdg_toplevel;
+    towl::EGLWindow                                                egl_window;
+    EGLSurface                                                     eglsurface               = nullptr;
+    std::atomic_bool                                               obsolete_egl_window_size = true;
 
     [[no_unique_address]] std::conditional_t<enable_keyboard, Keyboard, towl::Empty> keyboard;
 
     auto init_egl() -> void {
-        eglsurface = eglCreateWindowSurface(egl.display, egl.config, reinterpret_cast<EGLNativeWindowType>(egl_window.native()), nullptr);
+        eglsurface = eglCreateWindowSurface(this->egl.display, this->egl.config, reinterpret_cast<EGLNativeWindowType>(this->egl_window.native()), nullptr);
         dynamic_assert(eglsurface != EGL_NO_SURFACE);
-        choose_surface(eglsurface, egl);
-        dynamic_assert(eglSwapInterval(egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
+        choose_surface(eglsurface, this->egl);
+        dynamic_assert(eglSwapInterval(this->egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
     }
     auto swap_buffer() -> void {
-        dynamic_assert(eglSwapBuffers(egl.display, eglsurface) != EGL_FALSE);
+        dynamic_assert(eglSwapBuffers(this->egl.display, this->eglsurface) != EGL_FALSE);
     }
     auto wait_for_key_repeater_exit() -> void {
         if constexpr(enable_keyboard) {
@@ -350,7 +356,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             for(const auto& a : queue) {
                 switch(a.index()) {
                 case CallbackQueue::template index_of<RefreshCallbackArgs>(): {
-                    choose_surface(eglsurface, egl);
+                    choose_surface(eglsurface, this->egl);
                     if(obsolete_egl_window_size) {
                         obsolete_egl_window_size = false;
                         const auto& buffer_size  = this->get_buffer_size();
@@ -377,7 +383,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 case CallbackQueue::template index_of<KeysymCallbackArgs>(): {
                     if constexpr(gawl::concepts::WindowImplWithKeysymCallback<Impl>) {
                         const auto& args = a.template get<KeysymCallbackArgs>();
-                        impl.keysym_callback(args.key, args.state, args.xkb_state);
+                        impl.keysym_callback(args.key, args.state, args.xkbstate);
                     }
                 } break;
                 case CallbackQueue::template index_of<PointermoveCallbackArgs>(): {
@@ -414,13 +420,12 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         } while(!(queue = this->queue.exchange()).empty());
     }
     template <class... Args>
-    WindowBackend(const WindowCreateHintType& hint, Args&&... args) : gawl::wl::Window<Impl, Impls...>(*hint.backend_hint.application_events),
+    WindowBackend(const WindowCreateHintType& hint, Args&&... args) : gawl::wl::Window<Impl, Impls...>(*hint.backend_hint.egl, *hint.backend_hint.application_events),
                                                                       wl(*hint.backend_hint.wl),
-                                                                      egl(*hint.backend_hint.egl),
                                                                       application_events(*hint.backend_hint.application_events),
                                                                       impl(*this, args...),
-                                                                      surface(wl.registry.template interface<typename Wl::Compositor>()[0].create_surface(SurfaceGlue(*this, output, this->frame_done, this->latest_frame))),
-                                                                      xdg_surface(wl.registry.template interface<typename Wl::WMBase>()[0].create_xdg_surface(surface)),
+                                                                      surface(wl.registry.template interface<typename WlType::Compositor>()[0].create_surface(SurfaceGlue(*this, output, this->frame_done, this->latest_frame))),
+                                                                      xdg_surface(wl.registry.template interface<typename WlType::WMBase>()[0].create_xdg_surface(surface)),
                                                                       xdg_toplevel(xdg_surface.create_xdg_toplevel(XDGToplevelGlue(*this))),
                                                                       egl_window(surface, hint.width, hint.height) {
         surface.commit();
@@ -440,7 +445,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             const auto lock = keyboard.key_repeater.get_lock();
             wait_for_key_repeater_exit();
         }
-        dynamic_assert(eglDestroySurface(egl.display, eglsurface) != EGL_FALSE);
+        dynamic_assert(eglDestroySurface(this->egl.display, this->eglsurface) != EGL_FALSE);
     }
 };
 } // namespace gawl::internal::wl

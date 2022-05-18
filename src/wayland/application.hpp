@@ -18,15 +18,15 @@ template <class... Impls>
 class ApplicationBackend : public Application<ApplicationBackend<Impls...>, WindowBackend, Impls...> {
   private:
     using Shared = internal::wl::SharedData<WindowBackend, Impls...>;
-    using Wl     = typename Shared::Wl;
+    using WlType = typename Shared::WlType;
 
-    typename Shared::BufferType      application_events;
-    typename Wl::WaylandClientObject wl;
-    EGLObject                        egl;
-    bool                             quitted = false;
-    Critical<bool>                   running = false;
-    std::thread                      wayland_main;
-    EventFileDescriptor              wayland_main_stop;
+    typename Shared::BufferType          application_events;
+    typename WlType::WaylandClientObject wl;
+    EGLObject                            egl;
+    bool                                 quitted = false;
+    Critical<bool>                       running = false;
+    std::thread                          wayland_main;
+    EventFileDescriptor                  wayland_main_stop;
 
   public:
     auto run() -> void {
@@ -76,7 +76,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
     }
     ApplicationBackend() : Application<ApplicationBackend<Impls...>, WindowBackend, Impls...>(), wl(this->windows), egl(wl.display) {
         wl.display.roundtrip();
-        if(wl.registry.template interface<typename Wl::Compositor>().empty() || wl.registry.template interface<typename Wl::WMBase>().empty()) {
+        if(wl.registry.template interface<typename WlType::Compositor>().empty() || wl.registry.template interface<typename WlType::WMBase>().empty()) {
             panic("wayland server doesn't provide necessary interfaces");
         }
 
