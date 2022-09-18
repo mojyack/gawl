@@ -148,8 +148,8 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         auto on_configure(const int32_t width, const int32_t height) -> void {
             {
                 const auto& buffer_size = backend->get_buffer_size();
-                const auto  lock        = buffer_size.get_lock();
-                if(buffer_size->size[0] == static_cast<size_t>(width) * buffer_size->scale && buffer_size->size[1] == static_cast<size_t>(height) * buffer_size->scale) {
+                const auto [lock, data] = buffer_size.access();
+                if(data.size[0] == static_cast<size_t>(width) * data.scale && data.size[1] == static_cast<size_t>(height) * data.scale) {
                     return;
                 }
             }
@@ -205,12 +205,12 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     auto swap_buffer() -> void {
         dynamic_assert(eglSwapBuffers(this->egl.display, this->eglsurface) != EGL_FALSE);
     }
-    auto wait_for_key_repeater_exit() -> void {
+    auto wait_for_key_repeater_exit(std::thread& repeater) -> void {
         if constexpr(enable_keyboard) {
             keyboard.last_pressed_key.store(-1);
             keyboard.key_delay_timer.wakeup();
-            if(keyboard.key_repeater->joinable()) {
-                keyboard.key_repeater->join();
+            if(repeater.joinable()) {
+                repeater.join();
             }
         }
     }
@@ -244,7 +244,8 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     }
     auto wl_on_key_leave() -> void {
         if constexpr(enable_keyboard) {
-            wait_for_key_repeater_exit();
+            auto [lock, repeater] = keyboard.key_repeater.access();
+            wait_for_key_repeater_exit(repeater);
         }
         if constexpr(enable_keycode) {
             this->queue_callback(KeycodeCallbackArgs{static_cast<uint32_t>(-1), gawl::ButtonState::Leave});
@@ -267,16 +268,16 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             if(!wl.repeat_config.has_value()) {
                 return;
             }
+            auto [lock, repeater] = keyboard.key_repeater.access();
             if(s == gawl::ButtonState::Press && (!enable_keysym || enable_repeat)) {
-                const auto lock = keyboard.key_repeater.get_lock();
                 if(this->get_state() != WindowState::Running) {
                     return;
                 }
-                wait_for_key_repeater_exit();
+                wait_for_key_repeater_exit(repeater);
                 keyboard.last_pressed_key.store(keycode);
 
                 if constexpr(enable_keysym) {
-                    *keyboard.key_repeater = std::thread([this, keycode, keysym, xkb_state]() {
+                    repeater = std::thread([this, keycode, keysym, xkb_state]() {
                         keyboard.key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->delay_in_milisec));
                         while(keyboard.last_pressed_key.load() == keycode) {
                             if constexpr(enable_keycode) {
@@ -287,7 +288,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                         }
                     });
                 } else if constexpr(enable_keycode) {
-                    *keyboard.key_repeater = std::thread([this, keycode]() {
+                    repeater = std::thread([this, keycode]() {
                         keyboard.key_delay_timer.wait_for(std::chrono::milliseconds(wl.repeat_config->delay_in_milisec));
                         while(keyboard.last_pressed_key.load() == keycode) {
                             this->queue_callback(KeycodeCallbackArgs{keycode, gawl::ButtonState::Repeat});
@@ -297,7 +298,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 }
 
             } else if(keyboard.last_pressed_key.load() == keycode) {
-                wait_for_key_repeater_exit();
+                wait_for_key_repeater_exit(repeater);
             }
         }
     }
@@ -323,19 +324,19 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         auto new_width  = size_t();
         auto new_height = size_t();
         {
-            const auto& buffer = this->get_buffer_size();
-            const auto  lock   = buffer.get_lock();
+            const auto& buffer      = this->get_buffer_size();
+            const auto [lock, data] = buffer.access();
             if(width != -1 && height != -1) {
                 // update buffer size
-                new_scale  = buffer->scale;
+                new_scale  = data.scale;
                 new_width  = width;
                 new_height = height;
             }
             if(scale != -1) {
                 // update scale
                 new_scale  = scale;
-                new_width  = buffer->size[0];
-                new_height = buffer->size[1];
+                new_width  = data.size[0];
+                new_height = data.size[1];
 
                 surface.set_buffer_scale(scale);
             }
@@ -360,8 +361,8 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                     if(obsolete_egl_window_size) {
                         obsolete_egl_window_size = false;
                         const auto& buffer_size  = this->get_buffer_size();
-                        const auto  lock         = buffer_size.get_lock();
-                        egl_window.resize(buffer_size->size[0], buffer_size->size[1], 0, 0);
+                        const auto [lock, data]  = buffer_size.access();
+                        egl_window.resize(data.size[0], data.size[1], 0, 0);
                     }
                     if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
                         impl.refresh_callback();
@@ -442,8 +443,8 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     }
     ~WindowBackend() {
         if constexpr(enable_keyboard) {
-            const auto lock = keyboard.key_repeater.get_lock();
-            wait_for_key_repeater_exit();
+            const auto [lock, data] = keyboard.key_repeater.access();
+            wait_for_key_repeater_exit(data);
         }
         dynamic_assert(eglDestroySurface(this->egl.display, this->eglsurface) != EGL_FALSE);
     }

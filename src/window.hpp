@@ -22,16 +22,16 @@ class Window {
 
     auto on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
         constexpr auto MIN_SCALE = 0.01;
-        const auto     lock      = buffer_size.get_lock();
+        const auto [lock, data]  = buffer_size.access();
         if(size) {
-            buffer_size->size = *size;
+            data.size = *size;
         }
         if(scale) {
-            buffer_size->scale = *scale;
-            draw_scale         = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? buffer_size->scale
-                                                                                                      : 1;
+            data.scale = *scale;
+            draw_scale = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? data.scale
+                                                                                              : 1;
         }
-        viewport.unset(buffer_size->size);
+        viewport.unset(data.size);
         window_size[0] = viewport.size[0] / draw_scale;
         window_size[1] = viewport.size[1] / draw_scale;
     }
@@ -44,12 +44,12 @@ class Window {
         return viewport;
     }
     auto set_viewport(const gawl::Rectangle& region) -> void {
-        const auto lock = buffer_size.get_lock();
-        viewport.set(Rectangle(region).magnify(draw_scale), buffer_size->size);
+        const auto [lock, data] = buffer_size.access();
+        viewport.set(Rectangle(region).magnify(draw_scale), data.size);
     }
     auto unset_viewport() -> void {
-        const auto lock = buffer_size.get_lock();
-        viewport.unset(buffer_size->size);
+        const auto [lock, data] = buffer_size.access();
+        viewport.unset(data.size);
     }
     auto prepare() -> FramebufferBinder {
         auto binder = FramebufferBinder(0);

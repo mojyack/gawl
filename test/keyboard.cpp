@@ -1,3 +1,4 @@
+#include <bitset>
 #include <iostream>
 
 #include <gawl/wayland/gawl.hpp>

@@ -10,6 +10,6 @@ struct WindowCreateHint {
     bool        manual_refresh = false;
 
     // internal use
-    BackendHint backend_hint;
+    BackendHint backend_hint = BackendHint{};
 };
 } // namespace gawl::internal

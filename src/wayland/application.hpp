@@ -30,7 +30,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
 
   public:
     auto run() -> void {
-        *running = true;
+        running.unsafe_access() = true;
         wl.display.wait_sync();
         while(true) {
             auto events = application_events.exchange();
@@ -60,7 +60,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
         }
 
     exit:
-        *running = false;
+        running.unsafe_access() = false;
     }
     auto close_window(auto& window) -> void {
         application_events.push(typename Shared::CloseWindowArgs{&window});
@@ -69,7 +69,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
         application_events.push(typename Shared::QuitApplicationArgs{});
     }
     auto is_running() const -> bool {
-        return running.load();
+        return running.access().second;
     }
     auto get_shared_data() -> Shared {
         return Shared{&wl, &egl, &application_events};

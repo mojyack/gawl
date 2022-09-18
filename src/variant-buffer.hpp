@@ -14,15 +14,16 @@ class VariantBuffer {
   public:
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
-        const auto lock = buffer.get_lock();
-        buffer->emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
+        auto [lock, data] = buffer.access();
+        data.emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
     }
     auto push(auto&& args) -> void {
-        const auto lock = buffer.get_lock();
-        buffer->emplace_back(Item(std::move(args)));
+        auto [lock, data] = buffer.access();
+        data.emplace_back(Item(std::move(args)));
     }
     auto exchange() -> std::vector<Item> {
-        return buffer.replace();
+        auto [lock, data] = buffer.access();
+        return std::move(data);
     }
     template <class T>
     constexpr static auto index_of() -> size_t {
@@ -41,17 +42,18 @@ class VariantEventBuffer {
   public:
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
-        const auto lock = buffer.get_lock();
-        buffer->emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
+        auto [lock, data] = buffer.access();
+        data.emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
         event.wakeup();
     }
     auto push(auto&& args) -> void {
-        const auto lock = buffer.get_lock();
-        buffer->emplace_back(Item(std::move(args)));
+        auto [lock, data] = buffer.access();
+        data.emplace_back(Item(std::move(args)));
         event.wakeup();
     }
     auto exchange() -> std::vector<Item> {
-        return buffer.replace();
+        auto [lock, data] = buffer.access();
+        return std::move(data);
     }
     auto wait() -> void {
         event.wait();
