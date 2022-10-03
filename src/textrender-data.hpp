@@ -8,6 +8,7 @@
 namespace gawl {
 using TextRenderCharacterGraphic = internal::GraphicBase<internal::TextRenderGLObject>;
 }
+
 namespace gawl::internal {
 class Character : public gawl::TextRenderCharacterGraphic {
   public:
@@ -64,6 +65,7 @@ class CharacterCache {
             return chara;
         }
     }
+
     CharacterCache(const std::vector<std::string>& font_names, const int size) {
         for(const auto& path : font_names) {
             auto face = FT_Face();
@@ -72,6 +74,7 @@ class CharacterCache {
             faces.emplace_back(face);
         }
     }
+
     ~CharacterCache() {
         for(auto f : faces) {
             FT_Done_Face(f);
@@ -94,13 +97,16 @@ class TextRenderData {
         }
         caches.clear();
     }
+
     auto operator[](int size) -> CharacterCache& {
         if(!caches.contains(size)) {
             caches.insert(std::make_pair(size, new CharacterCache(font_names, size)));
         }
         return *caches.find(size)->second;
     }
+
     TextRenderData(const std::vector<std::string>&& font_names) : font_names(font_names) {}
+
     ~TextRenderData() {
         clear();
     }

@@ -16,6 +16,7 @@ struct Point {
         x *= scale;
         y *= scale;
     }
+
     auto rotate(const Point& origin, const double angle) -> void {
         const auto a  = angle * 2 * std::numbers::pi;
         const auto s  = std::sin(a);
@@ -25,6 +26,7 @@ struct Point {
         x             = origin.x + rx * c - ry * s;
         y             = origin.y + rx * s + ry * c;
     }
+
     auto operator+=(const Point& o) -> Point& {
         x += o.x;
         y += o.y;
@@ -41,6 +43,7 @@ struct Rectangle {
         b.magnify(scale);
         return *this;
     }
+
     auto expand(const double w, const double h) -> Rectangle& {
         a.x -= w;
         a.y -= h;
@@ -48,15 +51,19 @@ struct Rectangle {
         b.y += h;
         return *this;
     }
+
     auto to_points() const -> std::array<Point, 4> {
         return {a, {b.x, a.y}, b, {a.x, b.y}};
     }
+
     auto width() const -> double {
         return b.x - a.x;
     }
+
     auto height() const -> double {
         return b.y - a.y;
     }
+
     auto operator+=(const Point& o) -> Rectangle& {
         a += o;
         b += o;

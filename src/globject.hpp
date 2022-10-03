@@ -16,18 +16,23 @@ class GLObject {
     auto bind_vao() const -> VArrayBinder {
         return vao;
     }
+
     auto bind_vbo() const -> VertexBufferBinder {
         return vbo;
     }
+
     auto bind_ebo() const -> ElementBufferBinder {
         return ebo;
     }
+
     auto use_shader() const -> ShaderBinder {
         return shader_program;
     }
+
     auto get_shader() const -> GLuint {
         return shader_program;
     }
+
     GLObject(const char* vertex_shader_source, const char* fragment_shader_source) {
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
@@ -55,6 +60,7 @@ class GLObject {
         dynamic_assert(status == GL_TRUE);
         glBindFragDataLocation(shader_program, 0, "color");
     }
+
     ~GLObject() {
         glDeleteBuffers(1, &ebo);
         glDeleteBuffers(1, &vbo);

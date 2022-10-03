@@ -62,18 +62,23 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
     exit:
         running.unsafe_access() = false;
     }
+
     auto close_window(auto& window) -> void {
         application_events.push(typename Shared::CloseWindowArgs{&window});
     }
+
     auto quit() -> void {
         application_events.push(typename Shared::QuitApplicationArgs{});
     }
+
     auto is_running() const -> bool {
         return running.access().second;
     }
+
     auto get_shared_data() -> Shared {
         return Shared{&wl, &egl, &application_events};
     }
+
     ApplicationBackend() : Application<ApplicationBackend<Impls...>, WindowBackend, Impls...>(), wl(this->windows), egl(wl.display) {
         wl.display.roundtrip();
         if(wl.registry.template interface<typename WlType::Compositor>().empty() || wl.registry.template interface<typename WlType::WMBase>().empty()) {
@@ -102,6 +107,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
             }
         });
     }
+
     ~ApplicationBackend() {
         wayland_main_stop.notify();
         wayland_main.join();

@@ -10,6 +10,7 @@ constexpr auto graphic_vertex_shader_source      = R"glsl(
         tex_coordinate = texcoord;
     }
 )glsl";
+
 constexpr auto graphic_fragment_shader_source    = R"glsl(
     #version 330 core
     in vec2           tex_coordinate;
@@ -19,7 +20,9 @@ constexpr auto graphic_fragment_shader_source    = R"glsl(
         color = texture(tex, tex_coordinate);
     }
 )glsl";
+
 constexpr auto textrender_vertex_shader_source   = graphic_vertex_shader_source;
+
 constexpr auto textrender_fragment_shader_source = R"glsl(
     #version 330 core
     in vec2           tex_coordinate;
@@ -32,6 +35,7 @@ constexpr auto textrender_fragment_shader_source = R"glsl(
         color        = vec4(text_color) * sampled;
     }
 )glsl";
+
 constexpr auto polygon_vertex_shader_source      = R"glsl(
     #version 330 core
     in vec2 position;
@@ -39,6 +43,7 @@ constexpr auto polygon_vertex_shader_source      = R"glsl(
         gl_Position = vec4(position, 0.0, 1.0);
     }
 )glsl";
+
 constexpr auto polygon_fragment_shader_source    = R"glsl(
     #version 330 core
     out vec4     color;

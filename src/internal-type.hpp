@@ -35,6 +35,7 @@ struct Viewport {
         size[0] = region.width();
         size[1] = region.height();
     }
+
     auto unset(const std::array<size_t, 2>& buffer_size) -> void {
         base    = {0, 0};
         size    = buffer_size;

@@ -11,9 +11,11 @@ class EmptyTextureData : public GraphicBase<GraphicGLObject> {
     auto get_size() const -> const std::array<size_t, 2>& {
         return size;
     }
+
     auto get_frame_buffer_name() const -> GLuint {
         return frame_buffer;
     }
+
     EmptyTextureData(const size_t width, const size_t height) : GraphicBase<GraphicGLObject>(global->graphic_shader), size{width, height} {
         const auto txbinder = bind_texture();
 
@@ -30,6 +32,7 @@ class EmptyTextureData : public GraphicBase<GraphicGLObject> {
         GLenum buffers[1] = {GL_COLOR_ATTACHMENT0};
         glDrawBuffers(1, buffers);
     }
+
     ~EmptyTextureData() {
         glDeleteFramebuffers(1, &frame_buffer);
     }

@@ -35,6 +35,5 @@ class GraphicData : public GraphicBase<GraphicGLObject> {
         glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.get_width());
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
     }
-    ~GraphicData() {}
 };
 } // namespace gawl::internal

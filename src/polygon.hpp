@@ -15,6 +15,7 @@ struct nth<0, gawl::Point> {
         return t.x;
     };
 };
+
 template <>
 struct nth<1, gawl::Point> {
     inline static auto get(const gawl::Point& t) {
@@ -48,20 +49,25 @@ auto generic_draw(gawl::concepts::Screen auto& screen, const PointArray auto& ve
     glDrawArrays(mode, 0, buffer.size() / 2);
 }
 } // namespace internal
+
 auto draw_polygon(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
     internal::generic_draw<GL_TRIANGLES>(screen, vertices, color);
 }
+
 auto draw_polygon_fan(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color) -> void {
     internal::generic_draw<GL_TRIANGLE_FAN>(screen, vertices, color);
 }
+
 auto draw_lines(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color, const GLfloat width) -> void {
     glLineWidth(width * screen.get_scale());
     internal::generic_draw<GL_LINE_STRIP>(screen, vertices, color);
 }
+
 auto draw_outlines(gawl::concepts::Screen auto& screen, const PointArray auto& vertices, const Color& color, const GLfloat width) -> void {
     glLineWidth(width * screen.get_scale());
     internal::generic_draw<GL_LINE_LOOP>(screen, vertices, color);
 }
+
 template <PointArray T>
 auto triangulate(const std::vector<T>& vertices) -> std::vector<Point> {
     const auto indices = mapbox::earcut<size_t>(vertices);
@@ -78,6 +84,7 @@ auto triangulate(const std::vector<T>& vertices) -> std::vector<Point> {
     }
     return r;
 }
+
 inline auto trianglate_circle_angle(const Point& point, const double radius, const std::pair<double, double>& angle) -> std::vector<Point> {
     const auto n = size_t((1 + radius * 2) * angle.second);
     auto       r = std::vector<Point>(n + 1);
@@ -88,6 +95,7 @@ inline auto trianglate_circle_angle(const Point& point, const double radius, con
     }
     return r;
 }
+
 inline auto trianglate_circle(const Point& point, const double radius) -> std::vector<Point> {
     return trianglate_circle_angle(point, radius, {0, 1});
 }

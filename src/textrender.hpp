@@ -63,10 +63,12 @@ class TextRender {
     auto set_char_color(const Color& color) -> void {
         internal::global->textrender_shader.set_text_color(color);
     }
+
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const char* const text, const int size = 0) -> Rectangle {
         const auto uni = internal::convert_utf8_to_unicode32(text);
         return get_rect(screen, uni.data(), size);
     }
+
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const char32_t* const text, int size = 0) -> Rectangle {
         internal::dynamic_assert(static_cast<bool>(data));
 
@@ -110,6 +112,7 @@ class TextRender {
         const auto uni = internal::convert_utf8_to_unicode32(text);
         return draw(screen, point, color, uni.data(), size, callback);
     }
+
     auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char32_t* const text, int size = 0, const Callback callback = nullptr) -> Rectangle {
         internal::dynamic_assert(static_cast<bool>(data));
 
@@ -228,7 +231,9 @@ class TextRender {
     operator bool() const {
         return static_cast<bool>(data);
     }
-    TextRender() {}
+
+    TextRender() = default;
+
     TextRender(const std::vector<const char*>& font_names, int default_size) : default_size(default_size) {
         auto fonts = std::vector<std::string>();
         for(auto path : font_names) {

@@ -30,19 +30,24 @@ class [[nodiscard]] Binder {
         dynamic_assert(b.has_value());
         return b.value();
     }
+
     auto operator=(Binder&& o) -> Binder& {
         unbind();
         b = std::move(o.b);
         o.b.reset();
         return *this;
     }
-    Binder() {}
+
+    Binder() = default;
+
     Binder(const GLuint b) : b(b) {
         F::bind(E, b);
     }
+
     Binder(Binder& o) : b(o.b) {
         o.b.reset();
     }
+
     ~Binder() {
         unbind();
     }

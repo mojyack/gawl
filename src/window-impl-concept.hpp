@@ -74,20 +74,28 @@ template <class... Impls>
 struct Implement {
     template <class Impl>
     using HasRefreshCallback = typename std::conditional_t<gawl::concepts::WindowImplWithRefreshCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasWindowResizeCallback = typename std::conditional_t<gawl::concepts::WindowImplWithWindowResizeCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasKeycodeCallback = typename std::conditional_t<gawl::concepts::WindowImplWithKeycodeCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasKeysymCallback = typename std::conditional_t<gawl::concepts::WindowImplWithKeysymCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasPointermoveCallback = typename std::conditional_t<gawl::concepts::WindowImplWithPointermoveCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasClickCallback = typename std::conditional_t<gawl::concepts::WindowImplWithClickCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasScrollCallback = typename std::conditional_t<gawl::concepts::WindowImplWithScrollCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasCloseCallback = typename std::conditional_t<gawl::concepts::WindowImplWithCloseRequestCallback<Impl>, std::true_type, std::false_type>;
+
     template <class Impl>
     using HasUserCallback = typename std::conditional_t<gawl::concepts::WindowImplWithUserCallback<Impl>, std::true_type, std::false_type>;
 

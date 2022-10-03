@@ -19,6 +19,7 @@ class PolygonGLObject : public GLObject {
             glBufferSubData(GL_ARRAY_BUFFER, 0, copy_size, buffer.data());
         }
     }
+
     PolygonGLObject() : GLObject(polygon_vertex_shader_source, polygon_fragment_shader_source) {
         auto vabinder = bind_vao();
         auto vbbinder = bind_vbo();

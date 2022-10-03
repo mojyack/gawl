@@ -9,10 +9,13 @@ struct SharedData {
     struct HandleEventArgs {
         Variant<Backend<Impls, Impls...>*...> window;
     };
+
     struct CloseWindowArgs {
         Variant<Backend<Impls, Impls...>*...> window;
     };
+
     struct QuitApplicationArgs {};
+
     using BufferType = VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
     using WlType     = Wl<Backend, Impls...>;
 

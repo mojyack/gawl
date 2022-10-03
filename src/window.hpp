@@ -35,6 +35,7 @@ class Window {
         window_size[0] = viewport.size[0] / draw_scale;
         window_size[1] = viewport.size[1] / draw_scale;
     }
+
     auto get_buffer_size() const -> const Critical<BufferSize>& {
         return buffer_size;
     }
@@ -43,28 +44,35 @@ class Window {
     auto get_viewport() const -> const Viewport& {
         return viewport;
     }
+
     auto set_viewport(const gawl::Rectangle& region) -> void {
         const auto [lock, data] = buffer_size.access();
         viewport.set(Rectangle(region).magnify(draw_scale), data.size);
     }
+
     auto unset_viewport() -> void {
         const auto [lock, data] = buffer_size.access();
         viewport.unset(data.size);
     }
+
     auto prepare() -> FramebufferBinder {
         auto binder = FramebufferBinder(0);
         glViewport(viewport.base[0], viewport.gl_base, viewport.size[0], viewport.size[1]);
         return binder;
     }
+
     auto get_state() const -> internal::WindowState {
         return state;
     }
+
     auto set_state(const internal::WindowState new_state) -> void {
         state = new_state;
     }
+
     auto get_window_size() const -> const std::array<int, 2>& {
         return window_size;
     }
+
     auto set_follow_buffer_scale(const bool flag) -> void {
         if(flag == follow_buffer_scale) {
             return;
@@ -72,19 +80,24 @@ class Window {
         follow_buffer_scale = flag;
         on_buffer_resize(std::nullopt, std::nullopt);
     }
+
     auto get_follow_buffer_scale() const -> bool {
         return follow_buffer_scale;
     }
+
     auto get_scale() const -> double {
         return draw_scale;
     }
+
     auto set_scale(const double scale) -> void {
         specified_scale = scale;
         on_buffer_resize(std::nullopt, std::nullopt);
     }
+
     auto set_event_driven(const bool flag) -> void {
         event_driven = flag;
     }
+
     auto get_event_driven() const -> bool {
         return event_driven;
     }

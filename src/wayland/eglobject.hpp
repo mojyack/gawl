@@ -18,6 +18,7 @@ class EGLSubObject {
     auto flush() -> void {
         glFlush();
     }
+
     auto wait() -> void {
         glFinish();
     }
@@ -25,6 +26,7 @@ class EGLSubObject {
     EGLSubObject(const EGLDisplay display, const EGLContext context) : display(display), context(context) {
         internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
     }
+
     ~EGLSubObject() {
         internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
         internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
@@ -68,6 +70,7 @@ struct EGLObject {
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
         internal::dynamic_assert(context != EGL_NO_CONTEXT);
     }
+
     ~EGLObject() {
         internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
         internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);

@@ -80,18 +80,22 @@ class Window : public internal::Window {
         frame_done = false;
         queue_callback(internal::wl::RefreshCallbackArgs{});
     }
+
     auto invoke_user_callback(void* const data = nullptr) -> void {
         if constexpr(gawl::concepts::WindowImplWithUserCallback<Impl>) {
             queue_callback(internal::wl::UserCallbackArgs{data});
         }
     }
+
     auto close_window() -> void {
         set_state(internal::WindowState::Destructing);
         application_events.push(typename SharedData::CloseWindowArgs{backend()});
     }
+
     auto quit_application() -> void {
         application_events.push(typename SharedData::QuitApplicationArgs{});
     }
+
     auto fork_context() -> EGLSubObject {
         return egl.fork();
     }
@@ -125,15 +129,18 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             *current_output = output;
             backend->resize_buffer(-1, -1, WlType::Output::from_tag(output).get_scale());
         }
+
         auto on_leave(const towl::OutputTag /*output*/) -> void {
             *current_output = towl::nulltag;
         }
+
         auto on_frame() -> void {
             *frame_done = true;
             if(!latest_frame->exchange(true) || !backend->get_event_driven()) {
                 backend->queue_callback(RefreshCallbackArgs{});
             }
         }
+
         SurfaceGlue(WindowBackend& backend, towl::OutputTag& output, std::atomic_bool& frame_done, std::atomic_bool& latest_frame) : backend(&backend),
                                                                                                                                      current_output(&output),
                                                                                                                                      frame_done(&frame_done),
@@ -155,6 +162,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
             backend->resize_buffer(width, height, -1);
         }
+
         auto on_close() -> void {
             if constexpr(gawl::concepts::WindowImplWithCloseRequestCallback<Impl>) {
                 backend->queue_callback(CloseRequestCallbackArgs{});
@@ -162,6 +170,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 backend->quit_application();
             }
         }
+
         XDGToplevelGlue(WindowBackend& backend) : backend(&backend) {}
     };
 
@@ -202,9 +211,11 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         choose_surface(eglsurface, this->egl);
         dynamic_assert(eglSwapInterval(this->egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
     }
+
     auto swap_buffer() -> void {
         dynamic_assert(eglSwapBuffers(this->egl.display, this->eglsurface) != EGL_FALSE);
     }
+
     auto wait_for_key_repeater_exit(std::thread& repeater) -> void {
         if constexpr(enable_keyboard) {
             keyboard.last_pressed_key.store(-1);
@@ -225,9 +236,11 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     auto wl_get_surface() const -> towl::SurfaceTag {
         return surface.as_tag();
     }
+
     auto wl_get_output() const -> towl::OutputTag {
         return output;
     }
+
     auto wl_on_keycode_enter(const towl::Array<uint32_t>& keys) -> void {
         if constexpr(enable_keycode) {
             for(auto i = size_t(0); i < keys.size; i += 1) {
@@ -235,6 +248,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
         }
     }
+
     auto wl_on_keysym_enter(const std::vector<xkb_keycode_t>& keys, xkb_state* const xkb_state) -> void {
         if constexpr(enable_keysym) {
             for(const auto k : keys) {
@@ -242,6 +256,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
         }
     }
+
     auto wl_on_key_leave() -> void {
         if constexpr(enable_keyboard) {
             auto [lock, repeater] = keyboard.key_repeater.access();
@@ -254,6 +269,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             this->queue_callback(KeysymCallbackArgs{XKB_KEYCODE_INVALID, gawl::ButtonState::Leave, nullptr});
         }
     }
+
     // the third and subsequent arguments are only valid if enable_keysym == true
     auto wl_on_key_input(const uint32_t keycode, const uint32_t state, const xkb_keycode_t keysym, const bool enable_repeat, xkb_state* const xkb_state) -> void {
         if constexpr(enable_keyboard) {
@@ -302,23 +318,27 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
         }
     }
+
     auto wl_on_click(const uint32_t button, const uint32_t state) -> void {
         if constexpr(gawl::concepts::WindowImplWithClickCallback<Impl>) {
             const auto s = state == WL_POINTER_BUTTON_STATE_PRESSED ? gawl::ButtonState::Press : gawl::ButtonState::Release;
             this->queue_callback(ClickCallbackArgs{button, s});
         }
     }
+
     auto wl_on_pointer_motion(const double x, const double y) -> void {
         if constexpr(gawl::concepts::WindowImplWithPointermoveCallback<Impl>) {
             this->queue_callback(PointermoveCallbackArgs{gawl::Point{x, y}});
         }
     }
+
     auto wl_on_pointer_axis(const uint32_t axis, const double value) -> void {
         if constexpr(gawl::concepts::WindowImplWithScrollCallback<Impl>) {
             const auto w = axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
             this->queue_callback(ScrollCallbackArgs{w, value});
         }
     }
+
     auto resize_buffer(const int width, const int height, const int scale) -> void {
         auto new_scale  = size_t();
         auto new_width  = size_t();
@@ -351,6 +371,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         }
         this->refresh();
     }
+
     auto handle_event() -> void {
         auto queue = this->queue.exchange();
         do {
@@ -420,6 +441,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
             }
         } while(!(queue = this->queue.exchange()).empty());
     }
+
     template <class... Args>
     WindowBackend(const WindowCreateHintType& hint, Args&&... args) : gawl::wl::Window<Impl, Impls...>(*hint.backend_hint.egl, *hint.backend_hint.application_events),
                                                                       wl(*hint.backend_hint.wl),
@@ -441,6 +463,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         this->set_event_driven(hint.manual_refresh);
         this->set_state(WindowState::Running);
     }
+
     ~WindowBackend() {
         if constexpr(enable_keyboard) {
             const auto [lock, data] = keyboard.key_repeater.access();

@@ -16,30 +16,40 @@ class PixelBuffer {
     auto empty() const -> bool {
         return data.empty();
     }
+
     auto get_width() const -> size_t {
         return size[0];
     }
+
     auto get_height() const -> size_t {
         return size[1];
     }
+
     auto get_buffer() const -> const uint8_t* {
         return data.data();
     }
+
     auto clear() -> void {
         size = {0, 0};
         data.clear();
     }
+
     PixelBuffer() = default;
+
     PixelBuffer(const size_t width, const size_t height, const uint8_t* const buffer) : size{width, height} {
         const auto len = size_t(size[0] * size[1] * 4);
         data.resize(len);
         std::memcpy(data.data(), buffer, len);
     }
+
     PixelBuffer(const size_t width, const size_t height, std::vector<uint8_t>& buffer) : size{width, height} {
         data = std::move(buffer);
     }
+
     PixelBuffer(const char* const file);
+
     PixelBuffer(const std::vector<uint8_t>& buffer);
+
     PixelBuffer(const uint8_t* data, size_t size);
 };
 
@@ -57,7 +67,9 @@ inline PixelBuffer::PixelBuffer(const char* file) {
         *this = std::move(buf);
     }
 }
+
 inline PixelBuffer::PixelBuffer(const std::vector<uint8_t>& buffer) : PixelBuffer(buffer.data(), buffer.size()) {}
+
 inline PixelBuffer::PixelBuffer(const uint8_t* const data, const size_t size) {
     auto blob = Magick::Blob(data, size);
     *this     = internal::load_texture_imagemagick(Magick::Image(blob));

@@ -52,27 +52,32 @@ struct Wl {
                 active = surface;
                 on_motion(x, y);
             }
+
             auto on_leave(const towl::SurfaceTag /*surface*/) -> void {
                 active = towl::nulltag;
             }
+
             auto on_motion(const double x, const double y) -> void {
                 if(!active) {
                     return;
                 }
                 proc_window(*windows, active, [x, y](auto& impl) -> void { impl.wl_on_pointer_motion(x, y); });
             }
+
             auto on_button(const uint32_t button, const uint32_t state) -> void {
                 if(!active) {
                     return;
                 }
                 proc_window(*windows, active, [button, state](auto& impl) -> void { impl.wl_on_click(button, state); });
             }
+
             auto on_axis(const uint32_t axis, const double value) -> void {
                 if(!active) {
                     return;
                 }
                 proc_window(*windows, active, [axis, value](auto& impl) -> void { impl.wl_on_pointer_axis(axis, value); });
             }
+
             PointerGlue(GlueParameter& parameter) : windows(parameter.windows) {}
         };
 
@@ -131,6 +136,7 @@ struct Wl {
                     munmap(mapstr, size);
                 }
             }
+
             auto on_enter(const towl::SurfaceTag surface, const towl::Array<uint32_t>& keys) -> void {
                 active = surface;
                 if constexpr(Implement<Impls...>::keycode) {
@@ -146,10 +152,12 @@ struct Wl {
                     }
                 }
             }
+
             auto on_leave(const towl::SurfaceTag surface) -> void {
                 proc_window(*windows, surface, [](auto& impl) -> void { impl.wl_on_key_leave(); });
                 active = towl::nulltag;
             }
+
             auto on_key(const uint32_t key, const uint32_t state) -> void {
                 if constexpr(Implement<Impls...>::keyboard) {
                     if constexpr(Implement<Impls...>::keysym) {
@@ -165,6 +173,7 @@ struct Wl {
                     }
                 }
             }
+
             auto on_modifiers(const uint32_t mods_depressed, const uint32_t mods_latched, const uint32_t mods_locked, const uint32_t group) -> void {
                 if constexpr(Implement<Impls...>::keysym) {
                     if(xkb) {
@@ -172,9 +181,11 @@ struct Wl {
                     }
                 }
             }
+
             auto on_repeat_info(const int32_t rate, const int32_t delay) -> void {
                 config->emplace(KeyRepeatConfig{1000 / rate, delay});
-            };
+            }
+
             KeyboardGlue(GlueParameter& parameter) : windows(parameter.windows), config(parameter.config) {}
         };
 
@@ -198,6 +209,7 @@ struct Wl {
                 });
             }
         }
+
         OutputGlue(GlueParameter& parameter) : windows(parameter.windows) {}
     };
 
