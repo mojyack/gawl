@@ -46,7 +46,12 @@ class Keysym {
     }
 
   public:
-    auto keysym_callback(const xkb_keycode_t keysym, const gawl::ButtonState state, xkb_state* const xkb_state) -> void {
+    auto keysym_callback(const xkb_keycode_t keycode, const gawl::ButtonState state, xkb_state* const xkb_state) -> void {
+        if(state == gawl::ButtonState::Leave) {
+            return;
+        }
+
+        const auto keysym = xkb_state_key_get_one_sym(xkb_state, keycode);
         static auto buffer = std::array<char, 128>();
         xkb_keysym_get_name(keysym, buffer.data(), buffer.size());
         std::cout << buffer.data() << "(" << keysym << ")"
