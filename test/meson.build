@@ -1,4 +1,5 @@
 project('gawltest', 'cpp', version : '1.0.0', default_options : ['warning_level=3', 'werror=true', 'cpp_std=c++20'])
+add_project_arguments('-Wno-missing-field-initializers', language: 'cpp')
 
 executable('01-polygon', ['polygon.cpp'], dependencies : [dependency('gawl')])
 executable('02-graphics', ['graphics.cpp'], dependencies : [dependency('gawl')])
