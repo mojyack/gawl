@@ -9,8 +9,9 @@ egl_deps = [
 freetype_dep = dependency('freetype2')
 magick_dep = dependency('Magick++')
 xkbcommon_dep = dependency('xkbcommon')
+jxl_dep = dependency('libjxl')
 
-gawl_dep = [wl_deps, egl_deps, freetype_dep, magick_dep]
+gawl_dep = [wl_deps, egl_deps, freetype_dep, magick_dep, jxl_dep]
 
 gawl_headers = files(
   'application.hpp',
@@ -26,6 +27,7 @@ gawl_headers = files(
   'graphic.hpp',
   'include.hpp',
   'internal-type.hpp',
+  'jxl-decoder.hpp',
   'misc.hpp',
   'null-screen.hpp',
   'pixelbuffer.hpp',

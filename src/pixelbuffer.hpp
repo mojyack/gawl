@@ -6,6 +6,8 @@
 
 #include <ImageMagick-7/Magick++.h>
 
+#include "jxl-decoder.hpp"
+
 namespace gawl {
 class PixelBuffer {
   private:
@@ -59,9 +61,23 @@ inline auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
     image.write(0, 0, image.columns(), image.rows(), "RGBA", Magick::CharPixel, buffer.data());
     return PixelBuffer(image.columns(), image.rows(), buffer);
 }
+
 } // namespace internal
 
-inline PixelBuffer::PixelBuffer(const char* file) {
+inline PixelBuffer::PixelBuffer(const char* const file) {
+    // ImageMagick 7.1.0-44 can't decode grayscale jxl image properly
+    // hook and decode it by hand
+    if(std::string_view(file).ends_with(".jxl")) {
+        auto jxl_result = jxl::decode_jxl(file);
+        if(!jxl_result) {
+            throw std::runtime_error(jxl_result.as_error().cstr());
+        }
+        auto& jxl = jxl_result.as_value();
+        size      = {jxl.width, jxl.height};
+        data      = std::move(jxl.buffer);
+        return;
+    }
+
     auto buf = internal::load_texture_imagemagick(Magick::Image(file));
     if(!buf.empty()) {
         *this = std::move(buf);
