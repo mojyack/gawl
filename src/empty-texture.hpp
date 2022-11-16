@@ -1,13 +1,20 @@
 #pragma once
-#include <memory>
-
-#include "empty-texture-data.hpp"
+#include "graphic-base.hpp"
 
 namespace gawl {
-class EmptyTexture {
+class EmptyTexture : public internal::GraphicBase<internal::GraphicGLObject> {
   private:
-    std::shared_ptr<internal::EmptyTextureData> data;
-    internal::Viewport                          viewport;
+    GLuint                frame_buffer;
+    std::array<size_t, 2> size;
+    internal::Viewport    viewport;
+
+    auto get_size() const -> const std::array<size_t, 2>& {
+        return size;
+    }
+
+    auto get_frame_buffer_name() const -> GLuint {
+        return frame_buffer;
+    }
 
   public:
     auto get_scale() const -> double {
@@ -15,13 +22,11 @@ class EmptyTexture {
     }
 
     auto set_viewport(const gawl::Rectangle& region) -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-        viewport.set(region, data->get_size());
+        viewport.set(region, get_size());
     }
 
     auto unset_viewport() -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-        viewport.unset(data->get_size());
+        viewport.unset(get_size());
     }
 
     auto get_viewport() const -> internal::Viewport {
@@ -29,50 +34,32 @@ class EmptyTexture {
     }
 
     auto prepare() -> internal::FramebufferBinder {
-        internal::dynamic_assert(static_cast<bool>(data));
-        auto        binder = internal::FramebufferBinder(data->get_frame_buffer_name());
-        const auto& size   = data->get_size();
+        auto        binder = internal::FramebufferBinder(get_frame_buffer_name());
+        const auto& size   = get_size();
         glViewport(0, 0, size[0], size[1]);
         return binder;
     }
 
-    auto get_width(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        internal::dynamic_assert(static_cast<bool>(data));
-        return data->get_width(screen);
+    EmptyTexture(const size_t width, const size_t height) : internal::GraphicBase<internal::GraphicGLObject>(internal::global->graphic_shader), size{width, height} {
+        const auto txbinder = bind_texture();
+
+        this->width             = width;
+        this->height            = height;
+        this->invert_top_bottom = true;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+        glGenFramebuffers(1, &frame_buffer);
+        const auto fbbinder = internal::FramebufferBinder(frame_buffer);
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, get_texture(), 0);
+        GLenum buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, buffers);
     }
 
-    auto get_height(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        internal::dynamic_assert(static_cast<bool>(data));
-        return data->get_height(screen);
-    }
-
-    auto draw(gawl::concepts::Screen auto& screen, const Point& point) -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-        return data->draw(screen, point);
-    }
-
-    auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-        return data->draw_rect(screen, rect);
-    }
-
-    auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-        return data->draw_fit_rect(screen, rect);
-    }
-
-    auto clear() -> void {
-        data.reset();
-    }
-
-    operator bool() const {
-        return static_cast<bool>(data);
-    }
-
-    EmptyTexture() = default;
-
-    EmptyTexture(const int width, const int height) {
-        data.reset(new internal::EmptyTextureData(width, height));
+    ~EmptyTexture() {
+        glDeleteFramebuffers(1, &frame_buffer);
     }
 };
+
 } // namespace gawl

@@ -7,9 +7,8 @@
 
 namespace gawl {
 using TextRenderCharacterGraphic = internal::GraphicBase<internal::TextRenderGLObject>;
-}
 
-namespace gawl::internal {
+namespace internal {
 class Character : public gawl::TextRenderCharacterGraphic {
   public:
     int offset[2];
@@ -53,16 +52,14 @@ class Character : public gawl::TextRenderCharacterGraphic {
 
 class CharacterCache {
   public:
-    std::vector<FT_Face>                     faces;
-    std::unordered_map<char32_t, Character*> cache;
+    std::vector<FT_Face>                                     faces;
+    std::unordered_map<char32_t, std::unique_ptr<Character>> cache;
 
-    auto get_character(const char32_t c) -> Character* {
+    auto get_character(const char32_t c) -> Character& {
         if(const auto f = cache.find(c); f != cache.end()) {
-            return f->second;
+            return *f->second.get();
         } else {
-            const auto chara = new Character(c, faces);
-            cache.insert(std::make_pair(c, chara));
-            return chara;
+            return *cache.insert(std::make_pair(c, new Character(c, faces))).first->second.get();
         }
     }
 
@@ -81,34 +78,5 @@ class CharacterCache {
         }
     }
 };
-
-class TextRenderData {
-  private:
-    std::unordered_map<int, std::shared_ptr<CharacterCache>> caches;
-
-    const std::vector<std::string> font_names;
-
-  public:
-    auto clear() -> void {
-        for(auto& s : caches) {
-            for(auto& c : s.second->cache) {
-                delete c.second;
-            }
-        }
-        caches.clear();
-    }
-
-    auto operator[](int size) -> CharacterCache& {
-        if(!caches.contains(size)) {
-            caches.insert(std::make_pair(size, new CharacterCache(font_names, size)));
-        }
-        return *caches.find(size)->second;
-    }
-
-    TextRenderData(const std::vector<std::string>&& font_names) : font_names(font_names) {}
-
-    ~TextRenderData() {
-        clear();
-    }
-};
-} // namespace gawl::internal
+} // namespace internal
+} // namespace gawl

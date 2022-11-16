@@ -24,12 +24,12 @@ class EGLSubObject {
     }
 
     EGLSubObject(const EGLDisplay display, const EGLContext context) : display(display), context(context) {
-        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
+        dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
     }
 
     ~EGLSubObject() {
-        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
-        internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
+        dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+        dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
     }
 };
 } // namespace gawl
@@ -48,13 +48,13 @@ struct EGLObject {
 
     EGLObject(towl::Display& wl_display) {
         display = eglGetDisplay(wl_display.native());
-        internal::dynamic_assert(display != EGL_NO_DISPLAY);
+        dynamic_assert(display != EGL_NO_DISPLAY);
 
         auto major = EGLint(0);
         auto minor = EGLint(0);
-        internal::dynamic_assert(eglInitialize(display, &major, &minor) != EGL_FALSE);
-        internal::dynamic_assert((major == 1 && minor >= 4) || major >= 2);
-        internal::dynamic_assert(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
+        dynamic_assert(eglInitialize(display, &major, &minor) != EGL_FALSE);
+        dynamic_assert((major == 1 && minor >= 4) || major >= 2);
+        dynamic_assert(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
 
         constexpr auto config_attribs = std::array<EGLint, 15>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                                                                EGL_RED_SIZE, 8,
@@ -66,16 +66,16 @@ struct EGLObject {
                                                                EGL_NONE};
 
         auto num = EGLint(0);
-        internal::dynamic_assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
+        dynamic_assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
-        internal::dynamic_assert(context != EGL_NO_CONTEXT);
+        dynamic_assert(context != EGL_NO_CONTEXT);
     }
 
     ~EGLObject() {
-        internal::dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
-        internal::dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
-        internal::dynamic_assert(eglTerminate(display) != EGL_FALSE);
-        internal::dynamic_assert(eglReleaseThread() != EGL_FALSE);
+        dynamic_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+        dynamic_assert(eglDestroyContext(display, context) != EGL_FALSE);
+        dynamic_assert(eglTerminate(display) != EGL_FALSE);
+        dynamic_assert(eglReleaseThread() != EGL_FALSE);
     }
 };
 } // namespace gawl::internal::wl

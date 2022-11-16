@@ -4,7 +4,7 @@
 
 namespace gawl::internal {
 template <class GL>
-requires concepts::GraphicGLObject<GL>
+    requires concepts::GraphicGLObject<GL>
 class GraphicBase {
   private:
     GL&    gl;
@@ -23,7 +23,8 @@ class GraphicBase {
     }
 
   protected:
-    int  width, height;
+    int  width;
+    int  height;
     bool invert_top_bottom = false;
 
     auto get_texture() const -> GLuint {

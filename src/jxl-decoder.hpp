@@ -7,16 +7,14 @@
 
 #include "util.hpp"
 
-namespace gawl::jxl {
+namespace gawl::internal::jxl {
 struct JxlImage {
     size_t               width;
     size_t               height;
     std::vector<uint8_t> buffer;
 };
 
-inline auto decode_jxl(const std::string_view path) -> internal::Result<JxlImage> {
-    using Error = internal::Error;
-
+inline auto decode_jxl(const std::string_view path) -> Result<JxlImage> {
     auto in = std::ifstream();
     try {
         in.open(path, std::ios::binary);

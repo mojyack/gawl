@@ -73,8 +73,7 @@ class GLObject {
 namespace concepts {
 template <class G>
 concept GLObjectWithParameter = requires(G& m) {
-    { m.set_shader_parameters(GLuint()) } -> std::same_as<void>;
-}
-&&std::derived_from<G, GLObject>;
+                                    { m.set_shader_parameters(GLuint()) } -> std::same_as<void>;
+                                } && std::derived_from<G, GLObject>;
 } // namespace concepts
 } // namespace gawl::internal

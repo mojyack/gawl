@@ -1,5 +1,5 @@
 #pragma once
-#include "textrender-data.hpp"
+#include "textrender-internal.hpp"
 
 namespace gawl {
 namespace internal {
@@ -50,11 +50,23 @@ inline auto convert_utf8_to_unicode32(const char* const str) -> std::u32string {
 
 class TextRender {
   private:
-    int                                       default_size;
-    std::shared_ptr<internal::TextRenderData> data;
+    std::unordered_map<int, std::unique_ptr<internal::CharacterCache>> caches;
+    const std::vector<std::string>                                     font_names;
+    int                                                                default_size;
 
-    internal::Character* get_chara_graphic(const int size, const char32_t c) {
-        return (*data)[size].get_character(c);
+    auto clear() -> void {
+        caches.clear();
+    }
+
+    auto get_chara(const int size) -> internal::CharacterCache& {
+        if(const auto p = caches.find(size); p != caches.end()) {
+            return *p->second.get();
+        }
+        return *caches.insert(std::make_pair(size, new internal::CharacterCache(font_names, size))).first->second.get();
+    }
+
+    auto get_chara_graphic(const int size, const char32_t chara) -> internal::Character& {
+        return get_chara(size).get_character(chara);
     }
 
   public:
@@ -70,8 +82,6 @@ class TextRender {
     }
 
     auto get_rect(const gawl::concepts::MetaScreen auto& screen, const char32_t* const text, int size = 0) -> Rectangle {
-        internal::dynamic_assert(static_cast<bool>(data));
-
         size = size != 0 ? size : default_size;
         if(size <= 0) {
             return {{0, 0}, {0, 0}};
@@ -86,15 +96,15 @@ class TextRender {
         while(*c != '\0') {
             const auto first = c == text;
 
-            auto chara = get_chara_graphic(size * scale, *c);
+            const auto& chara = get_chara_graphic(size * scale, *c);
 
-            const auto x_a = pen_x + (!first ? chara->offset[0] : 0);
-            const auto x_b = x_a + chara->get_width(screen) * scale;
+            const auto x_a = pen_x + (!first ? chara.offset[0] : 0);
+            const auto x_b = x_a + chara.get_width(screen) * scale;
             rx.a.x         = rx.a.x > x_a ? x_a : rx.a.x;
             rx.b.x         = c == text ? x_b : (rx.b.x < x_b ? x_b : rx.b.x);
 
-            const auto y_a = pen_y - chara->offset[1];
-            const auto y_b = y_a + chara->get_height(screen) * scale;
+            const auto y_a = pen_y - chara.offset[1];
+            const auto y_b = y_a + chara.get_height(screen) * scale;
             rx.a.y         = rx.a.y > y_a ? y_a : rx.a.y;
             rx.b.y         = first ? y_b : (rx.b.y < y_b ? y_b : rx.b.y);
 
@@ -102,7 +112,7 @@ class TextRender {
 
             c += 1;
 
-            pen_x += chara->advance;
+            pen_x += chara.advance;
         }
 
         return rx.magnify(1 / scale);
@@ -114,8 +124,6 @@ class TextRender {
     }
 
     auto draw(gawl::concepts::Screen auto& screen, const Point& point, const Color& color, const char32_t* const text, int size = 0, const Callback callback = nullptr) -> Rectangle {
-        internal::dynamic_assert(static_cast<bool>(data));
-
         size = size != 0 ? size : default_size;
         if(size <= 0) {
             return Rectangle{point, point};
@@ -130,24 +138,24 @@ class TextRender {
         while(*c != '\0') {
             const auto first = c == text;
 
-            const auto chara = get_chara_graphic(size * scale, *c);
-            const auto x_a   = pen.x + (!first ? chara->offset[0] / scale : 0);
-            const auto x_b   = x_a + chara->get_width(screen);
+            auto&      chara = get_chara_graphic(size * scale, *c);
+            const auto x_a   = pen.x + (!first ? chara.offset[0] / scale : 0);
+            const auto x_b   = x_a + chara.get_width(screen);
             drawed_area.a.x  = drawed_area.a.x < x_a ? drawed_area.a.x : x_a;
             drawed_area.b.x  = drawed_area.b.x > x_b ? drawed_area.b.x : x_b;
 
-            const auto y_a  = pen.y - chara->offset[1] / scale;
-            const auto y_b  = y_a + chara->get_height(screen);
+            const auto y_a  = pen.y - chara.offset[1] / scale;
+            const auto y_b  = y_a + chara.get_height(screen);
             drawed_area.a.y = drawed_area.a.y < y_a ? drawed_area.a.y : y_a;
             drawed_area.b.y = drawed_area.b.y > y_b ? drawed_area.b.y : y_b;
 
-            if(!callback || !callback(c - text, {{x_a, y_a}, {x_b, y_b}}, *chara)) {
-                chara->draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
+            if(!callback || !callback(c - text, {{x_a, y_a}, {x_b, y_b}}, chara)) {
+                chara.draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
             }
 
             c += 1;
 
-            pen.x += chara->advance / scale;
+            pen.x += chara.advance / scale;
         }
         return drawed_area;
     }
@@ -168,8 +176,6 @@ class TextRender {
     }
 
     auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const char* const text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
-        internal::dynamic_assert(static_cast<bool>(data));
-
         const auto str   = internal::convert_utf8_to_unicode32(text);
         auto       lines = std::vector<std::u32string>(1);
 
@@ -228,18 +234,6 @@ class TextRender {
         }
     }
 
-    operator bool() const {
-        return static_cast<bool>(data);
-    }
-
-    TextRender() = default;
-
-    TextRender(const std::vector<const char*>& font_names, int default_size) : default_size(default_size) {
-        auto fonts = std::vector<std::string>();
-        for(auto path : font_names) {
-            fonts.emplace_back(path);
-        }
-        data.reset(new internal::TextRenderData(std::move(fonts)));
-    }
+    TextRender(std::vector<std::string> font_names, const int default_size) : font_names(std::move(font_names)), default_size(default_size) {}
 };
 } // namespace gawl

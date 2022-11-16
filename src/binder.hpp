@@ -11,8 +11,8 @@
 namespace gawl::internal {
 template <typename F>
 concept BindCaller = requires(F f) {
-    f.bind(GLenum(), GLuint());
-};
+                         f.bind(GLenum(), GLuint());
+                     };
 
 template <GLenum E, BindCaller F>
 class [[nodiscard]] Binder {
@@ -33,8 +33,7 @@ class [[nodiscard]] Binder {
 
     auto operator=(Binder&& o) -> Binder& {
         unbind();
-        b = std::move(o.b);
-        o.b.reset();
+        b = std::exchange(o.b, decltype(b)());
         return *this;
     }
 
@@ -55,31 +54,31 @@ class [[nodiscard]] Binder {
 
 namespace bindcaller {
 struct FramebufferBindCaller {
-    static auto bind(const GLenum e, const GLuint b) {
+    static auto bind(const GLenum e, const GLuint b) -> void {
         glBindFramebuffer(e, b);
     }
 };
 
 struct BufferBindCaller {
-    static auto bind(const GLenum e, const GLuint b) {
+    static auto bind(const GLenum e, const GLuint b) -> void {
         glBindBuffer(e, b);
     }
 };
 
 struct VArrayBindCaller {
-    static auto bind(const GLenum /* e */, const GLuint b) {
+    static auto bind(const GLenum /* e */, const GLuint b) -> void {
         glBindVertexArray(b);
     }
 };
 
 struct ShaderBindCaller {
-    static auto bind(const GLenum /* e */, const GLuint b) {
+    static auto bind(const GLenum /* e */, const GLuint b) -> void {
         glUseProgram(b);
     }
 };
 
 struct TextureBindCaller {
-    static auto bind(const GLenum e, const GLuint b) {
+    static auto bind(const GLenum e, const GLuint b) -> void {
         glBindTexture(e, b);
     }
 };

@@ -62,12 +62,12 @@ class Window : public internal::Window {
     using SharedData = internal::wl::SharedData<gawl::internal::wl::WindowBackend, Impls...>;
     typename SharedData::BufferType& application_events;
 
-    auto queue_callback(auto&& args) -> void {
+    auto queue_callback(typename gawl::internal::wl::CallbackQueue::Item data) -> void {
         if(get_state() == internal::WindowState::Destructing) {
             return;
         }
 
-        queue.push(std::move(args));
+        queue.push(std::move(data));
         application_events.push(typename SharedData::HandleEventArgs{backend()});
     }
 

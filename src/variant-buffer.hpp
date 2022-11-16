@@ -6,8 +6,10 @@
 namespace gawl::internal {
 template <class... Ts>
 class VariantBuffer {
-  private:
+  public:
     using Item = Variant<Ts...>;
+
+  private:
 
     Critical<std::vector<Item>> buffer;
 
@@ -18,9 +20,9 @@ class VariantBuffer {
         data.emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
     }
 
-    auto push(auto&& args) -> void {
+    auto push(Item item) -> void {
         auto [lock, data] = buffer.access();
-        data.emplace_back(Item(std::move(args)));
+        data.emplace_back(std::move(item));
     }
 
     auto exchange() -> std::vector<Item> {
@@ -50,9 +52,9 @@ class VariantEventBuffer {
         event.wakeup();
     }
 
-    auto push(auto&& args) -> void {
+    auto push(Item item) -> void {
         auto [lock, data] = buffer.access();
-        data.emplace_back(Item(std::move(args)));
+        data.emplace_back(std::move(item));
         event.wakeup();
     }
 

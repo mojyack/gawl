@@ -6,14 +6,13 @@
 
 namespace gawl::internal {
 struct GLObjects {
-    internal::GraphicGLObject    graphic_shader;
-    internal::TextRenderGLObject textrender_shader;
-    internal::PolygonGLObject    polygon_shader;
+    GraphicGLObject    graphic_shader;
+    TextRenderGLObject textrender_shader;
+    PolygonGLObject    polygon_shader;
 
     GLObjects() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     }
 };
 

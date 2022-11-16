@@ -1,5 +1,5 @@
 #pragma once
-#define CUTIL_NS gawl::internal
+#define CUTIL_NS gawl
 #include "util/error.hpp"
 #include "util/fd.hpp"
 #include "util/thread.hpp"

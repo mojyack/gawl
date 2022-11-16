@@ -14,6 +14,15 @@ class PixelBuffer {
     std::array<size_t, 2> size;
     std::vector<uint8_t>  data;
 
+    auto load_texture_imagemagick(Magick::Image&& image) -> void {
+        size = {image.columns(), image.rows()};
+        data.resize(size[0] * size[1] * 4);
+        image.write(0, 0, image.columns(), image.rows(), "RGBA", Magick::CharPixel, data.data());
+        return;
+    }
+
+    PixelBuffer(std::array<size_t, 2> size, std::vector<uint8_t> data) : size(std::move(size)), data(std::move(data)) {}
+
   public:
     auto empty() const -> bool {
         return data.empty();
@@ -38,56 +47,51 @@ class PixelBuffer {
 
     PixelBuffer() = default;
 
-    PixelBuffer(const size_t width, const size_t height, const uint8_t* const buffer) : size{width, height} {
-        const auto len = size_t(size[0] * size[1] * 4);
-        data.resize(len);
+    static auto from_raw(const size_t width, const size_t height, const uint8_t* const buffer) -> PixelBuffer {
+        const auto len  = size_t(width * height * 4);
+        auto       data = std::vector<uint8_t>(len);
         std::memcpy(data.data(), buffer, len);
+        return PixelBuffer({width, height}, std::move(data));
     }
 
-    PixelBuffer(const size_t width, const size_t height, std::vector<uint8_t>& buffer) : size{width, height} {
-        data = std::move(buffer);
+    static auto from_raw(const size_t width, const size_t height, std::vector<uint8_t> buffer) -> PixelBuffer {
+        return PixelBuffer({width, height}, std::move(buffer));
     }
 
-    PixelBuffer(const char* const file);
-
-    PixelBuffer(const std::vector<uint8_t>& buffer);
-
-    PixelBuffer(const uint8_t* data, size_t size);
-};
-
-namespace internal {
-inline auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
-    auto buffer = std::vector<uint8_t>(image.columns() * image.rows() * 4);
-    image.write(0, 0, image.columns(), image.rows(), "RGBA", Magick::CharPixel, buffer.data());
-    return PixelBuffer(image.columns(), image.rows(), buffer);
-}
-
-} // namespace internal
-
-inline PixelBuffer::PixelBuffer(const char* const file) {
-    // ImageMagick 7.1.0-44 can't decode grayscale jxl image properly
-    // hook and decode it by hand
-    if(std::string_view(file).ends_with(".jxl")) {
-        auto jxl_result = jxl::decode_jxl(file);
-        if(!jxl_result) {
-            throw std::runtime_error(jxl_result.as_error().cstr());
+    static auto from_file(const char* const file) -> Result<PixelBuffer> {
+        // ImageMagick 7.1.0-44 can't decode grayscale jxl image properly
+        // hook and decode it by hand
+        if(std::string_view(file).ends_with(".jxl")) {
+            auto jxl_result = internal::jxl::decode_jxl(file);
+            if(!jxl_result) {
+                return Error("failed to load jxl file");
+            }
+            auto& jxl = jxl_result.as_value();
+            return PixelBuffer({jxl.width, jxl.height}, std::move(jxl.buffer));
         }
-        auto& jxl = jxl_result.as_value();
-        size      = {jxl.width, jxl.height};
-        data      = std::move(jxl.buffer);
-        return;
+
+        try {
+            auto result = PixelBuffer();
+            result.load_texture_imagemagick(Magick::Image(file));
+            return result;
+        } catch(const Magick::Exception& e) {
+            return Error(e.what());
+        }
     }
 
-    auto buf = internal::load_texture_imagemagick(Magick::Image(file));
-    if(!buf.empty()) {
-        *this = std::move(buf);
+    static auto from_blob(const uint8_t* const data, const size_t size) -> Result<PixelBuffer> {
+        try {
+            auto blob   = Magick::Blob(data, size);
+            auto result = PixelBuffer();
+            result.load_texture_imagemagick(Magick::Image(blob));
+            return result;
+        } catch(const Magick::Exception& e) {
+            return Error(e.what());
+        }
     }
-}
 
-inline PixelBuffer::PixelBuffer(const std::vector<uint8_t>& buffer) : PixelBuffer(buffer.data(), buffer.size()) {}
-
-inline PixelBuffer::PixelBuffer(const uint8_t* const data, const size_t size) {
-    auto blob = Magick::Blob(data, size);
-    *this     = internal::load_texture_imagemagick(Magick::Image(blob));
-}
+    static auto from_blob(const std::vector<uint8_t>& buffer) -> Result<PixelBuffer> {
+        return from_blob(buffer.data(), buffer.size());
+    }
+};
 } // namespace gawl

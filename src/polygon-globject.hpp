@@ -21,9 +21,9 @@ class PolygonGLObject : public GLObject {
     }
 
     PolygonGLObject() : GLObject(polygon_vertex_shader_source, polygon_fragment_shader_source) {
-        auto vabinder = bind_vao();
-        auto vbbinder = bind_vbo();
-        auto ebbinder = bind_ebo();
+        const auto vabinder = bind_vao();
+        const auto vbbinder = bind_vbo();
+        const auto ebbinder = bind_ebo();
 
         const auto pos_attrib = glGetAttribLocation(shader_program, "position");
         glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, 0);

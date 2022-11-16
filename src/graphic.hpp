@@ -1,92 +1,39 @@
 #pragma once
-#include "graphic-data.hpp"
+#include "graphic-base.hpp"
+#include "pixelbuffer.hpp"
 
 namespace gawl {
-class Graphic {
-  private:
-    std::shared_ptr<internal::GraphicData> graphic_data;
-
+class Graphic : public internal::GraphicBase<internal::GraphicGLObject> {
   public:
-    auto get_width(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->get_width(screen);
-    }
-
-    auto get_height(const gawl::concepts::MetaScreen auto& screen) const -> int {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->get_height(screen);
-    }
-
-    auto draw(gawl::concepts::Screen auto& screen, const Point& point) -> void {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->draw(screen, point);
-    }
-
-    auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->draw_rect(screen, rect);
-    }
-
-    auto draw_fit_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->draw_fit_rect(screen, rect);
-    }
-
-    auto draw_transformed(gawl::concepts::Screen auto& screen, const std::array<Point, 4>& vertices) const -> void {
-        internal::dynamic_assert(static_cast<bool>(graphic_data));
-        return graphic_data->draw_transformed(screen, vertices);
-    }
-
-    auto clear() -> void {
-        *this = Graphic();
-    }
-
-    operator bool() const {
-        return static_cast<bool>(graphic_data);
-    }
-
-    Graphic(const Graphic& o) {
-        *this = o;
-    }
-
-    Graphic(Graphic&& o) {
-        *this = o;
-    }
-
-    Graphic& operator=(const Graphic& o) {
-        graphic_data = o.graphic_data;
-        return *this;
-    }
-
-    Graphic& operator=(Graphic&& o) {
-        graphic_data = o.graphic_data;
-        return *this;
-    }
-
-    Graphic() = default;
-
-    Graphic(const char* const file, std::optional<std::array<int, 4>> crop = std::nullopt) {
-        try {
-            const auto data = new internal::GraphicData(PixelBuffer(file), crop);
-            graphic_data.reset(data);
-        } catch(const std::exception& e) {
-            internal::warn(file, " is not a valid image file: ", e.what());
-            return;
+    Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) : GraphicBase<internal::GraphicGLObject>(internal::global->graphic_shader) {
+        const auto txbinder = this->bind_texture();
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        if(crop) {
+            if((*crop)[0] < 0) {
+                (*crop)[0] += buffer.get_width();
+            }
+            if((*crop)[1] < 0) {
+                (*crop)[1] += buffer.get_height();
+            }
+            if((*crop)[2] < 0) {
+                (*crop)[2] += buffer.get_width();
+            }
+            if((*crop)[3] < 0) {
+                (*crop)[3] += buffer.get_height();
+            }
         }
-    }
 
-    Graphic(std::vector<uint8_t>& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) {
-        try {
-            const auto data = new internal::GraphicData(PixelBuffer(buffer), crop);
-            graphic_data.reset(data);
-        } catch(const std::exception&) {
-            internal::warn("invalid buffer");
-            return;
+        if(crop) {
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, crop.value()[0]);
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, crop.value()[1]);
+        } else {
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
         }
-    }
-
-    Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) {
-        graphic_data.reset(new internal::GraphicData(buffer, crop));
+        this->width  = crop ? (*crop)[2] : buffer.get_width();
+        this->height = crop ? (*crop)[3] : buffer.get_height();
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.get_width());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
     }
 };
-} // namespace gawl
+} // namespace gawl::internal
