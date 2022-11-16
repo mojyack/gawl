@@ -7,11 +7,11 @@ class Impl;
 using Gawl = gawl::Gawl<Impl>;
 class Impl {
   private:
-    Gawl::Window<Impl>& window;
-    std::mutex          mutex;
-    gawl::Graphic       graphic1;
-    gawl::Graphic       graphic2;
-    gawl::Graphic       graphic3;
+    Gawl::Window<Impl>&            window;
+    std::mutex                     mutex;
+    std::unique_ptr<gawl::Graphic> graphic1;
+    std::unique_ptr<gawl::Graphic> graphic2;
+    std::unique_ptr<gawl::Graphic> graphic3;
 
     std::thread worker;
 
@@ -21,13 +21,13 @@ class Impl {
 
         const auto lock = std::lock_guard(mutex);
         if(graphic1) {
-            graphic1.draw(window, {170 * 0, 0});
+            graphic1->draw(window, {170 * 0, 0});
         }
         if(graphic2) {
-            graphic2.draw(window, {170 * 1, 0});
+            graphic2->draw(window, {170 * 1, 0});
         }
         if(graphic3) {
-            graphic3.draw(window, {170 * 2, 0});
+            graphic3->draw(window, {170 * 2, 0});
         }
     }
     Impl(Gawl::Window<Impl>& window) : window(window) {
@@ -36,26 +36,26 @@ class Impl {
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
             {
-                auto graphic = gawl::Graphic("image.png");
+                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
-                graphic1        = graphic;
+                graphic1        = std::unique_ptr<gawl::Graphic>(graphic);
             }
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
             {
-                auto graphic = gawl::Graphic("image.png");
+                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
-                graphic2        = graphic;
+                graphic2        = std::unique_ptr<gawl::Graphic>(graphic);
             }
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
             {
-                auto graphic = gawl::Graphic("image.png");
+                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
-                graphic3        = graphic;
+                graphic3        = std::unique_ptr<gawl::Graphic>(graphic);
             }
         });
     }
