@@ -38,8 +38,6 @@ class Graphic : public internal::GraphicBase<internal::GraphicGLObject> {
 };
 
 // static checks
-static_assert(std::is_move_assignable_v<Graphic>);
-static_assert(!std::is_copy_assignable_v<Graphic>);
-static_assert(std::is_move_constructible_v<Graphic>);
-static_assert(!std::is_copy_constructible_v<Graphic>);
+static_assert(std::movable<Graphic>);
+static_assert(!std::copyable<Graphic>);
 } // namespace gawl
