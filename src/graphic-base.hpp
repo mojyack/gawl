@@ -7,17 +7,17 @@ template <class GL>
     requires concepts::GraphicGLObject<GL>
 class GraphicBase {
   private:
-    GL&    gl;
-    GLuint texture;
+    GL*    gl;
+    GLuint texture = 0;
 
     auto do_draw(gawl::concepts::Screen auto& screen) const -> void {
-        const auto vabinder = gl.bind_vao();
-        const auto ebbinder = gl.bind_ebo();
-        const auto shbinder = gl.use_shader();
+        const auto vabinder = gl->bind_vao();
+        const auto ebbinder = gl->bind_ebo();
+        const auto shbinder = gl->use_shader();
         const auto fbbinder = screen.prepare();
         const auto txbinder = bind_texture();
         if constexpr(concepts::GLObjectWithParameter<GL>) {
-            gl.set_shader_parameters(shbinder.get());
+            gl->set_shader_parameters(shbinder.get());
         }
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
@@ -35,6 +35,12 @@ class GraphicBase {
         return texture;
     }
 
+    auto release_texture() -> void {
+        if(texture != 0) {
+            glDeleteTextures(1, &texture);
+        }
+    }
+
   public:
     auto get_width(const gawl::concepts::MetaScreen auto& screen) const -> int {
         return width / screen.get_scale();
@@ -49,7 +55,7 @@ class GraphicBase {
     }
 
     auto draw_rect(gawl::concepts::Screen auto& screen, const Rectangle& rect) -> void {
-        gl.move_vertices(screen, Rectangle(rect).magnify(screen.get_scale()), invert_top_bottom);
+        gl->move_vertices(screen, Rectangle(rect).magnify(screen.get_scale()), invert_top_bottom);
         do_draw(screen);
     }
 
@@ -63,11 +69,21 @@ class GraphicBase {
         for(auto& p : v) {
             p.magnify(s);
         }
-        gl.move_vertices(screen, v, invert_top_bottom);
+        gl->move_vertices(screen, v, invert_top_bottom);
         do_draw(screen);
     }
 
-    GraphicBase(GL& gl) : gl(gl) {
+    auto operator=(GraphicBase&& o) -> GraphicBase& {
+        release_texture();
+        gl                = o.gl;
+        texture           = std::exchange(o.texture, 0);
+        width             = o.width;
+        height            = o.height;
+        invert_top_bottom = o.invert_top_bottom;
+        return *this;
+    }
+
+    GraphicBase(GL& gl) : gl(&gl) {
         glGenTextures(1, &texture);
         const auto txbinder = bind_texture();
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -76,8 +92,12 @@ class GraphicBase {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     }
 
+    GraphicBase(GraphicBase&& o) {
+        *this = std::move(o);
+    }
+
     ~GraphicBase() {
-        glDeleteTextures(1, &texture);
+        release_texture();
     }
 };
 } // namespace gawl::internal

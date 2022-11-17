@@ -36,4 +36,10 @@ class Graphic : public internal::GraphicBase<internal::GraphicGLObject> {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
     }
 };
-} // namespace gawl::internal
+
+// static checks
+static_assert(std::is_move_assignable_v<Graphic>);
+static_assert(!std::is_copy_assignable_v<Graphic>);
+static_assert(std::is_move_constructible_v<Graphic>);
+static_assert(!std::is_copy_constructible_v<Graphic>);
+} // namespace gawl

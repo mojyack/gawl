@@ -70,6 +70,7 @@ class GLObject {
         glDeleteShader(vertex_shader);
     }
 };
+
 namespace concepts {
 template <class G>
 concept GLObjectWithParameter = requires(G& m) {
