@@ -241,7 +241,7 @@ class TextRender {
         return draw(screen, {x, y}, color, text, size, callback);
     }
 
-    auto draw_wrapped2(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const std::string_view text, WrappedText& wrapped_text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
+    auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const std::string_view text, WrappedText& wrapped_text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
         const auto rect_width  = rect.width();
         const auto rect_height = rect.height();
 
@@ -260,65 +260,6 @@ class TextRender {
             const auto  total_width = area.width();
             const auto  x_offset    = alignx == Align::Left ? 0.0 : alignx == Align::Right ? rect_width - total_width
                                                                                            : (rect_width - total_width) / 2.0;
-            draw(screen, {rect.a.x + x_offset, rect.a.y + y_offset + i * line_spacing - area.a.y}, color, line.data(), size);
-        }
-    }
-
-    auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const std::string_view text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
-        const auto str   = internal::convert_utf8_to_unicode32(text);
-        auto       lines = std::vector<std::u32string>(1);
-
-        const auto max_width  = rect.width();
-        const auto max_height = rect.height();
-        const auto len        = str.size();
-        for(auto i = size_t(0); i < len; i += 1) {
-            const auto last  = i + 1 == len;
-            auto       chara = str[i];
-            if(str[i] == U'\\' && !last) {
-                i += 1;
-                const auto following = str[i];
-                if(following == U'\\') {
-                    chara = following;
-                } else {
-                    switch(following) {
-                    case U'n':
-                        if((lines.size() + 1) * line_spacing > max_height) {
-                            goto draw;
-                        }
-                        lines.emplace_back();
-                        break;
-                    }
-                    continue;
-                }
-            }
-            lines.back() += chara;
-            auto area = get_rect(screen, lines.back(), size);
-            if(area.width() > max_width) {
-                lines.back().pop_back();
-
-                if((lines.size() + 1) * line_spacing > max_height) {
-                    goto draw;
-                }
-                lines.emplace_back(1, chara);
-
-                area = get_rect(screen, lines.back(), size);
-                if(area.width() > max_width) {
-                    lines.pop_back();
-                    goto draw;
-                }
-            }
-        }
-
-    draw:
-        const auto total_height = size_t(lines.size() * line_spacing);
-        const auto y_offset     = aligny == Align::Left ? 0.0 : aligny == Align::Right ? max_height - total_height
-                                                                                       : (max_height - total_height) / 2.0;
-        for(auto i = size_t(0); i < lines.size(); i += 1) {
-            const auto& line        = lines[i];
-            const auto  area        = get_rect(screen, line, size);
-            const auto  total_width = area.width();
-            const auto  x_offset    = alignx == Align::Left ? 0.0 : alignx == Align::Right ? max_width - total_width
-                                                                                           : (max_width - total_width) / 2.0;
             draw(screen, {rect.a.x + x_offset, rect.a.y + y_offset + i * line_spacing - area.a.y}, color, line.data(), size);
         }
     }
