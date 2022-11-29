@@ -21,6 +21,7 @@ inline auto list_fonts() -> void {
     FcFontSetDestroy(fonts);
     FcFini();
 }
+
 inline auto find_fontpath_from_name(const char* const name) -> std::string {
     const auto config  = FcInitLoadConfigAndFonts();
     const auto pattern = FcNameParse((const FcChar8*)(name));

@@ -30,6 +30,7 @@ class Impl {
 
         count += 1;
     }
+
     Impl(Gawl::Window<Impl>& window) : window(window) {}
 };
 

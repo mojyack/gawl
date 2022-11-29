@@ -27,10 +27,12 @@ class Impl {
         gawl::draw_rect(window, {{pointer.x - 10 - scroll[1], pointer.y - 10 - scroll[0]}, {pointer.x + 10 + scroll[1], pointer.y + 10 + scroll[0]}}, {click[0] ? 0.0 : 1.0, click[1] ? 0.0 : 1.0, click[2] ? 0.0 : 1.0, 1});
         font.draw_fit_rect(window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, build_string(static_cast<int>(pointer.x), ",", static_cast<int>(pointer.y)).data());
     }
+
     auto pointermove_callback(const gawl::Point& point) -> void {
         pointer = point;
         window.refresh();
     }
+
     auto click_callback(const uint32_t button, const gawl::ButtonState state) -> void {
         if(button < BTN_LEFT && button > BTN_MIDDLE) {
             return;
@@ -38,6 +40,7 @@ class Impl {
         click[button - BTN_LEFT] = state == gawl::ButtonState::Press;
         window.refresh();
     }
+
     auto scroll_callback(const gawl::WheelAxis axis, const double value) -> void {
         auto& s = scroll[axis == gawl::WheelAxis::Horizontal];
         s += value;
@@ -45,6 +48,7 @@ class Impl {
             s = 0;
         }
     }
+
     Impl(Gawl::Window<Impl>& window) : window(window), font({fc::find_fontpath_from_name("Noto Sans CJK JP").data()}, 16) {}
 };
 

@@ -12,6 +12,7 @@ class Keycode {
     auto keycode_callback(const uint32_t keycode, const gawl::ButtonState state) -> void {
         std::cout << keycode << " " << static_cast<int>(state) << std::endl;
     }
+
     Keycode(GawlKeycode::Window<Keycode>& /*window*/) {}
 };
 
@@ -57,6 +58,7 @@ class Keysym {
         std::cout << buffer.data() << "(" << keysym << ")"
                   << " " << static_cast<int>(state) << " " << std::bitset<8>(static_cast<int>(calc_modifiers(xkb_state))) << std::endl;
     }
+
     Keysym(GawlKeysym::Window<Keysym>& /*window*/) {}
 };
 

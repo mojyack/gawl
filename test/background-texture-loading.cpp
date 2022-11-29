@@ -30,6 +30,7 @@ class Impl {
             graphic3->draw(window, {170 * 2, 0});
         }
     }
+
     Impl(Gawl::Window<Impl>& window) : window(window) {
         worker = std::thread([this]() {
             auto context = this->window.fork_context();
@@ -59,6 +60,7 @@ class Impl {
             }
         });
     }
+
     ~Impl() {
         worker.join();
     }

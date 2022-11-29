@@ -21,6 +21,7 @@ class Color {
         gawl::clear_screen({red ? 1 : color, green ? 1 : color, blue ? 1 : color, 1});
         count += 1;
     }
+
     auto keycode_callback(const uint32_t key, const gawl::ButtonState state) -> void {
         if(state != gawl::ButtonState::Press) {
             return;
@@ -37,6 +38,7 @@ class Color {
             break;
         }
     }
+
     Color(Gawl::Window<T>& window, void* const app) : window(window), app(app) {}
 };
 
@@ -54,6 +56,8 @@ class Blue : public Color<Blue, 1, false, false, true> {
   public:
     Blue(Gawl::Window<Blue>& window, void* const app) : Color(window, app) {}
 };
+
+static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Red>);
 
 auto open_window(void* const app, const int number) -> void {
     auto& a = *reinterpret_cast<Gawl::Application*>(app);
@@ -73,7 +77,6 @@ auto open_window(void* const app, const int number) -> void {
 auto main() -> int {
     auto app = Gawl::Application();
     open_window(&app, 1);
-    static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Red>);
     app.run();
     return 0;
 }

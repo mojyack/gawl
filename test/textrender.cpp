@@ -35,6 +35,7 @@ class Impl {
         gawl::draw_rect(window, {{310, 0}, {610, 640}}, {1, 1, 1, 1});
         font.draw_wrapped(window, {{310, 0}, {610, 640}}, 18, {0, 0, 0, 1}, poem, wrapped_text, 16);
     }
+
     Impl(Gawl::Window<Impl>& window) : window(window), font({fc::find_fontpath_from_name("Noto Sans CJK JP").data()}, 32) {}
 };
 
