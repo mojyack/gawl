@@ -36,19 +36,19 @@ class Impl {
         {
             const auto area = gawl::Rectangle{{310, 0}, {610, 640}};
             gawl::draw_rect(window, area, {1, 1, 1, 1});
-            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Left);
+            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Left, gawl::Align::Left);
         }
 
         {
             const auto area = gawl::Rectangle{{620, 0}, {920, 640}};
             gawl::draw_rect(window, area, {1, 1, 1, 1});
-            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Center);
+            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Center, gawl::Align::Center);
         }
 
         {
             const auto area = gawl::Rectangle{{930, 0}, {1230, 640}};
             gawl::draw_rect(window, area, {1, 1, 1, 1});
-            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Right);
+            font.draw_wrapped(window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Right, gawl::Align::Right);
         }
     }
 

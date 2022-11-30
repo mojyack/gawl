@@ -49,18 +49,18 @@ inline auto convert_utf8_to_unicode32(const std::string_view utf8) -> std::u32st
 
 class WrappedText {
   private:
-    double                      width = 0;
-    double                      height;
-    double                      screen_scale;
+    double                      width        = 0;
+    double                      screen_scale = 0;
     std::vector<std::u32string> lines;
 
   public:
-    auto is_changed(const double width, const double height, const double screen_scale) const -> bool {
-        return this->width != width || this->height != height || this->screen_scale != screen_scale;
+    auto is_changed(const double width, const double screen_scale) const -> bool {
+        return this->width != width || this->screen_scale != screen_scale;
     }
 
     auto reset() -> void {
-        width = 0;
+        width        = 0;
+        screen_scale = 0;
     }
 
     auto get_lines() const -> const std::vector<std::u32string>& {
@@ -69,10 +69,9 @@ class WrappedText {
 
     WrappedText() = default;
 
-    WrappedText(const double width, const double height, const double screen_scale, const std::vector<std::u32string> lines) : width(width),
-                                                                                                                               height(height),
-                                                                                                                               screen_scale(screen_scale),
-                                                                                                                               lines(std::move(lines)) {}
+    WrappedText(const double width, const double screen_scale, const std::vector<std::u32string> lines) : width(width),
+                                                                                                          screen_scale(screen_scale),
+                                                                                                          lines(std::move(lines)) {}
 };
 
 class TextRender {
@@ -96,23 +95,16 @@ class TextRender {
         return get_chara(size).get_character(chara);
     }
 
-    auto create_wrapped_text(const gawl::concepts::MetaScreen auto& screen, const Rectangle& rect, const std::string_view text, const double line_spacing, const int size) -> WrappedText {
+    auto create_wrapped_text(const gawl::concepts::MetaScreen auto& screen, const double width, const std::string_view text, const int size) -> WrappedText {
         const auto str   = internal::convert_utf8_to_unicode32(text);
         auto       lines = std::vector<std::u32string>(1);
-
-        const auto max_width  = rect.width();
-        const auto max_height = rect.height();
-        const auto len        = str.size();
+        const auto len   = str.size();
 
         auto line = &lines.back();
-
         for(auto i = size_t(0); i < len; i += 1) {
             auto chara = str[i];
             switch(chara) {
             case U'\n':
-                if((lines.size() + 1) * line_spacing > max_height) {
-                    goto done;
-                }
                 line = &lines.emplace_back();
                 break;
             default:
@@ -120,23 +112,18 @@ class TextRender {
                 break;
             }
             auto area = get_rect(screen, *line, size);
-            if(area.width() > max_width) {
+            if(area.width() > width) {
                 line->pop_back();
-
-                if((lines.size() + 1) * line_spacing > max_height) {
-                    goto done;
-                }
                 line = &lines.emplace_back(1, chara);
-
                 area = get_rect(screen, *line, size);
-                if(area.width() > max_width) {
+                if(area.width() > width) {
                     lines.pop_back();
                     goto done;
                 }
             }
         }
     done:
-        return WrappedText(max_width, max_height, screen.get_scale(), std::move(lines));
+        return WrappedText(width, screen.get_scale(), std::move(lines));
     }
 
   public:
@@ -241,17 +228,28 @@ class TextRender {
         return draw(screen, {x, y}, color, text, size, callback);
     }
 
-    auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_spacing, const Color& color, const std::string_view text, WrappedText& wrapped_text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
+    auto calc_wrapped_text_height(gawl::concepts::Screen auto& screen, const double width, const double line_height, const std::string_view text, WrappedText& wrapped_text, const int size = 0) -> double {
+        if(wrapped_text.is_changed(width, screen.get_scale())) {
+            wrapped_text = create_wrapped_text(screen, width, text, size);
+        }
+
+        const auto& lines        = wrapped_text.get_lines();
+        const auto  total_height = lines.size() * line_height;
+
+        return total_height;
+    }
+
+    auto draw_wrapped(gawl::concepts::Screen auto& screen, const Rectangle& rect, const double line_height, const Color& color, const std::string_view text, WrappedText& wrapped_text, const int size = 0, const gawl::Align alignx = gawl::Align::Center, const gawl::Align aligny = gawl::Align::Center) -> void {
         const auto rect_width  = rect.width();
         const auto rect_height = rect.height();
 
-        if(wrapped_text.is_changed(rect_width, rect_height, screen.get_scale())) {
-            wrapped_text = create_wrapped_text(screen, rect, text, line_spacing, size);
+        if(wrapped_text.is_changed(rect_width, screen.get_scale())) {
+            wrapped_text = create_wrapped_text(screen, rect_width, text, size);
         }
 
         const auto& lines = wrapped_text.get_lines();
 
-        const auto total_height = lines.size() * line_spacing;
+        const auto total_height = lines.size() * line_height;
         const auto y_offset     = aligny == Align::Left ? 0.0 : aligny == Align::Right ? rect_height - total_height
                                                                                        : (rect_height - total_height) / 2.0;
         for(auto i = size_t(0); i < lines.size(); i += 1) {
@@ -259,7 +257,7 @@ class TextRender {
             const auto  area        = get_rect(screen, line, size);
             const auto  total_width = area.width();
 
-            const auto y_baseline = rect.a.y + y_offset + i * line_spacing;
+            const auto y_baseline = rect.a.y + y_offset + i * line_height;
             if(y_baseline + area.b.y < rect.a.y) {
                 continue;
             } else if(y_baseline + area.a.y >= rect.b.y) {
