@@ -258,9 +258,17 @@ class TextRender {
             const auto& line        = lines[i];
             const auto  area        = get_rect(screen, line, size);
             const auto  total_width = area.width();
-            const auto  x_offset    = alignx == Align::Left ? 0.0 : alignx == Align::Right ? rect_width - total_width
-                                                                                           : (rect_width - total_width) / 2.0;
-            draw(screen, {rect.a.x + x_offset, rect.a.y + y_offset + i * line_spacing - area.a.y}, color, line.data(), size);
+
+            const auto y_baseline = rect.a.y + y_offset + i * line_spacing;
+            if(y_baseline + area.b.y < rect.a.y) {
+                continue;
+            } else if(y_baseline + area.a.y >= rect.b.y) {
+                break;
+            }
+
+            const auto x_offset = alignx == Align::Left ? -area.a.x : alignx == Align::Right ? rect_width - total_width
+                                                                                             : (rect_width - total_width) / 2.0;
+            draw(screen, {rect.a.x + x_offset, y_baseline - area.a.y}, color, line.data(), size);
         }
     }
 
