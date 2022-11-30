@@ -252,21 +252,19 @@ class TextRender {
         const auto total_height = lines.size() * line_height;
         const auto y_offset     = aligny == Align::Left ? 0.0 : aligny == Align::Right ? rect_height - total_height
                                                                                        : (rect_height - total_height) / 2.0;
-        for(auto i = size_t(0); i < lines.size(); i += 1) {
+
+        const auto visible_rect = internal::Viewport(screen.get_viewport()).to_rectangle().magnify(1.0 / screen.get_scale()) &= rect;
+        const auto y_pos_begin  = rect.a.y + y_offset;
+        const auto index_begin  = int(std::max(0.0, -(y_pos_begin - visible_rect.a.y) / line_height));
+        const auto index_end    = int(std::min(double(lines.size()), index_begin + (visible_rect.height() + line_height - 1) / line_height));
+        for(auto i = index_begin; i < index_end; i += 1) {
             const auto& line        = lines[i];
             const auto  area        = get_rect(screen, line, size);
             const auto  total_width = area.width();
 
-            const auto y_baseline = rect.a.y + y_offset + i * line_height;
-            if(y_baseline + area.b.y < rect.a.y) {
-                continue;
-            } else if(y_baseline + area.a.y >= rect.b.y) {
-                break;
-            }
-
             const auto x_offset = alignx == Align::Left ? -area.a.x : alignx == Align::Right ? rect_width - total_width
                                                                                              : (rect_width - total_width) / 2.0;
-            draw(screen, {rect.a.x + x_offset, y_baseline - area.a.y}, color, line.data(), size);
+            draw(screen, {rect.a.x + x_offset, y_pos_begin + i * line_height - area.a.y}, color, line.data(), size);
         }
     }
 

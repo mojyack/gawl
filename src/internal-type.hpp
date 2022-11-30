@@ -41,6 +41,10 @@ struct Viewport {
         size    = buffer_size;
         gl_base = 0;
     }
+
+    auto to_rectangle() -> Rectangle {
+        return Rectangle{{1. * base[0], 1. * base[1]}, {1. + base[0] + size[0], 1. + base[1] + size[1]}};
+    }
 };
 
 struct BufferSize {

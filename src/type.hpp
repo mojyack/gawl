@@ -69,14 +69,21 @@ struct Rectangle {
         b += o;
         return *this;
     }
+
+    auto operator&=(const Rectangle& o) -> Rectangle& {
+        a.x = std::max(a.x, o.a.x);
+        a.y = std::max(a.y, o.a.y);
+        b.x = std::min(b.x, o.b.x);
+        b.y = std::min(b.y, o.b.y);
+        return *this;
+    }
 };
 
 template <typename T>
 concept PointArray = requires(T c) {
-    std::same_as<typename T::value_type, Point>;
-    c[0];
-}
-&&std::ranges::range<T>;
+                         std::same_as<typename T::value_type, Point>;
+                         c[0];
+                     } && std::ranges::range<T>;
 
 template <PointArray T>
 auto rotate(T& points, const Point& origin, const double angle) -> void {
