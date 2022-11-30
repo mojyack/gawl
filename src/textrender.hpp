@@ -206,7 +206,7 @@ class TextRender {
             const auto c = text[i];
 
             auto&      chara = get_chara_graphic(size * scale, c);
-            const auto x_a   = pen.x + (i != 0 ? chara.offset[0] / scale : 0);
+            const auto x_a   = pen.x + chara.offset[0] / scale;
             const auto x_b   = x_a + chara.get_width(screen);
             drawed_area.a.x  = drawed_area.a.x < x_a ? drawed_area.a.x : x_a;
             drawed_area.b.x  = drawed_area.b.x > x_b ? drawed_area.b.x : x_b;
