@@ -11,7 +11,7 @@ class VariantBuffer {
 
   private:
     Critical<std::vector<Item>> buffer[2];
-    std::atomic_bool            flip = false;
+    std::atomic_int             flip = 0;
 
   public:
     template <class T, class... Args>
@@ -27,7 +27,7 @@ class VariantBuffer {
 
     auto swap() -> std::vector<Item>& {
         buffer[!flip].unsafe_access().clear();
-        flip              = !flip;
+        flip ^= 1;
         auto [lock, data] = buffer[!flip].access();
         return data;
     }
@@ -45,7 +45,7 @@ class VariantEventBuffer {
 
   private:
     Critical<std::vector<Item>> buffer[2];
-    std::atomic_bool            flip = false;
+    std::atomic_int             flip = 0;
     Event                       event;
 
   public:
@@ -64,7 +64,7 @@ class VariantEventBuffer {
 
     auto swap() -> std::vector<Item>& {
         buffer[!flip].unsafe_access().clear();
-        flip              = !flip;
+        flip ^= 1;
         auto [lock, data] = buffer[!flip].access();
         return data;
     }
