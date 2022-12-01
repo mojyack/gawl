@@ -33,30 +33,31 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
         running.unsafe_access() = true;
         wl.display.wait_sync();
         while(true) {
-            auto events = application_events.exchange();
-            do {
-                for(auto& e : events) {
-                    switch(e.index()) {
-                    case decltype(application_events)::template index_of<typename Shared::HandleEventArgs>(): {
-                        auto& args = e.template get<typename Shared::HandleEventArgs>();
-                        args.window.visit([](auto& w) { w->handle_event(); });
-                    } break;
-                    case decltype(application_events)::template index_of<typename Shared::CloseWindowArgs>(): {
-                        auto&      args        = e.template get<typename Shared::CloseWindowArgs>();
-                        const auto last_window = args.window.visit([this](auto& w) -> bool { return this->destroy_window(*w); });
-                        if(quitted && last_window) {
-                            quitted = false;
-                            goto exit;
-                        }
-                    } break;
-                    case decltype(application_events)::template index_of<typename Shared::QuitApplicationArgs>():
-                        quitted = true;
-                        this->close_all_windows();
-                        break;
+            auto& events = application_events.swap();
+            if(events.empty()) {
+                application_events.wait();
+                continue;
+            }
+            for(auto& e : events) {
+                switch(e.index()) {
+                case decltype(application_events)::template index_of<typename Shared::HandleEventArgs>(): {
+                    auto& args = e.template get<typename Shared::HandleEventArgs>();
+                    args.window.visit([](auto& w) { w->handle_event(); });
+                } break;
+                case decltype(application_events)::template index_of<typename Shared::CloseWindowArgs>(): {
+                    auto&      args        = e.template get<typename Shared::CloseWindowArgs>();
+                    const auto last_window = args.window.visit([this](auto& w) -> bool { return this->destroy_window(*w); });
+                    if(quitted && last_window) {
+                        quitted = false;
+                        goto exit;
                     }
+                } break;
+                case decltype(application_events)::template index_of<typename Shared::QuitApplicationArgs>():
+                    quitted = true;
+                    this->close_all_windows();
+                    break;
                 }
-            } while(!(events = application_events.exchange()).empty());
-            application_events.wait();
+            }
         }
 
     exit:

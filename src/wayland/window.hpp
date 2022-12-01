@@ -373,73 +373,70 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     }
 
     auto handle_event() -> void {
-        auto queue = this->queue.exchange();
-        do {
-            for(const auto& a : queue) {
-                switch(a.index()) {
-                case CallbackQueue::template index_of<RefreshCallbackArgs>(): {
-                    choose_surface(eglsurface, this->egl);
-                    if(obsolete_egl_window_size) {
-                        obsolete_egl_window_size = false;
-                        const auto& buffer_size  = this->get_buffer_size();
-                        const auto [lock, data]  = buffer_size.access();
-                        egl_window.resize(data.size[0], data.size[1], 0, 0);
-                    }
-                    if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
-                        impl.refresh_callback();
-                    }
-                    surface.set_frame();
-                    swap_buffer();
-                } break;
-                case CallbackQueue::template index_of<WindowResizeCallbackArgs>():
-                    if constexpr(gawl::concepts::WindowImplWithWindowResizeCallback<Impl>) {
-                        impl.window_resize_callback();
-                    }
-                    break;
-                case CallbackQueue::template index_of<KeycodeCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithKeycodeCallback<Impl>) {
-                        const auto& args = a.template get<KeycodeCallbackArgs>();
-                        impl.keycode_callback(args.key, args.state);
-                    }
-                } break;
-                case CallbackQueue::template index_of<KeysymCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithKeysymCallback<Impl>) {
-                        const auto& args = a.template get<KeysymCallbackArgs>();
-                        impl.keysym_callback(args.key, args.state, args.xkbstate);
-                    }
-                } break;
-                case CallbackQueue::template index_of<PointermoveCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithPointermoveCallback<Impl>) {
-                        const auto& args = a.template get<PointermoveCallbackArgs>();
-                        impl.pointermove_callback(args.point);
-                    }
-                } break;
-                case CallbackQueue::template index_of<ClickCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithClickCallback<Impl>) {
-                        const auto& args = a.template get<ClickCallbackArgs>();
-                        impl.click_callback(args.key, args.state);
-                    }
-                } break;
-                case CallbackQueue::template index_of<ScrollCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithScrollCallback<Impl>) {
-                        const auto& args = a.template get<ScrollCallbackArgs>();
-                        impl.scroll_callback(args.axis, args.value);
-                    }
-                } break;
-                case CallbackQueue::template index_of<CloseRequestCallbackArgs>():
-                    if constexpr(gawl::concepts::WindowImplWithCloseRequestCallback<Impl>) {
-                        impl.close_request_callback();
-                    }
-                    break;
-                case CallbackQueue::template index_of<UserCallbackArgs>(): {
-                    if constexpr(gawl::concepts::WindowImplWithUserCallback<Impl>) {
-                        const auto& args = a.template get<UserCallbackArgs>();
-                        impl.user_callback(args.data);
-                    }
-                } break;
+        for(const auto& a : this->queue.swap()) {
+            switch(a.index()) {
+            case CallbackQueue::template index_of<RefreshCallbackArgs>(): {
+                choose_surface(eglsurface, this->egl);
+                if(obsolete_egl_window_size) {
+                    obsolete_egl_window_size = false;
+                    const auto& buffer_size  = this->get_buffer_size();
+                    const auto [lock, data]  = buffer_size.access();
+                    egl_window.resize(data.size[0], data.size[1], 0, 0);
                 }
+                if constexpr(gawl::concepts::WindowImplWithRefreshCallback<Impl>) {
+                    impl.refresh_callback();
+                }
+                surface.set_frame();
+                swap_buffer();
+            } break;
+            case CallbackQueue::template index_of<WindowResizeCallbackArgs>():
+                if constexpr(gawl::concepts::WindowImplWithWindowResizeCallback<Impl>) {
+                    impl.window_resize_callback();
+                }
+                break;
+            case CallbackQueue::template index_of<KeycodeCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithKeycodeCallback<Impl>) {
+                    const auto& args = a.template get<KeycodeCallbackArgs>();
+                    impl.keycode_callback(args.key, args.state);
+                }
+            } break;
+            case CallbackQueue::template index_of<KeysymCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithKeysymCallback<Impl>) {
+                    const auto& args = a.template get<KeysymCallbackArgs>();
+                    impl.keysym_callback(args.key, args.state, args.xkbstate);
+                }
+            } break;
+            case CallbackQueue::template index_of<PointermoveCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithPointermoveCallback<Impl>) {
+                    const auto& args = a.template get<PointermoveCallbackArgs>();
+                    impl.pointermove_callback(args.point);
+                }
+            } break;
+            case CallbackQueue::template index_of<ClickCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithClickCallback<Impl>) {
+                    const auto& args = a.template get<ClickCallbackArgs>();
+                    impl.click_callback(args.key, args.state);
+                }
+            } break;
+            case CallbackQueue::template index_of<ScrollCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithScrollCallback<Impl>) {
+                    const auto& args = a.template get<ScrollCallbackArgs>();
+                    impl.scroll_callback(args.axis, args.value);
+                }
+            } break;
+            case CallbackQueue::template index_of<CloseRequestCallbackArgs>():
+                if constexpr(gawl::concepts::WindowImplWithCloseRequestCallback<Impl>) {
+                    impl.close_request_callback();
+                }
+                break;
+            case CallbackQueue::template index_of<UserCallbackArgs>(): {
+                if constexpr(gawl::concepts::WindowImplWithUserCallback<Impl>) {
+                    const auto& args = a.template get<UserCallbackArgs>();
+                    impl.user_callback(args.data);
+                }
+            } break;
             }
-        } while(!(queue = this->queue.exchange()).empty());
+        }
     }
 
     template <class... Args>
@@ -457,7 +454,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
         init_egl();
         resize_buffer(hint.width, hint.height, -1);
 
-        swap_buffer();
+        // swap_buffer();
         wl.display.wait_sync();
 
         this->set_event_driven(hint.manual_refresh);

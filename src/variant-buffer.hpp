@@ -10,24 +10,26 @@ class VariantBuffer {
     using Item = Variant<Ts...>;
 
   private:
-
-    Critical<std::vector<Item>> buffer;
+    Critical<std::vector<Item>> buffer[2];
+    std::atomic_bool            flip = false;
 
   public:
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
-        auto [lock, data] = buffer.access();
+        auto [lock, data] = buffer[flip].access();
         data.emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
     }
 
     auto push(Item item) -> void {
-        auto [lock, data] = buffer.access();
+        auto [lock, data] = buffer[flip].access();
         data.emplace_back(std::move(item));
     }
 
-    auto exchange() -> std::vector<Item> {
-        auto [lock, data] = buffer.access();
-        return std::move(data);
+    auto swap() -> std::vector<Item>& {
+        buffer[!flip].unsafe_access().clear();
+        flip              = !flip;
+        auto [lock, data] = buffer[!flip].access();
+        return data;
     }
 
     template <class T>
@@ -38,29 +40,33 @@ class VariantBuffer {
 
 template <class... Ts>
 class VariantEventBuffer {
-  private:
+  public:
     using Item = Variant<Ts...>;
 
-    Critical<std::vector<Item>> buffer;
+  private:
+    Critical<std::vector<Item>> buffer[2];
+    std::atomic_bool            flip = false;
     Event                       event;
 
   public:
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
-        auto [lock, data] = buffer.access();
+        auto [lock, data] = buffer[flip].access();
         data.emplace_back(Item(std::in_place_type<T>, std::forward<Args>(args)...));
         event.wakeup();
     }
 
     auto push(Item item) -> void {
-        auto [lock, data] = buffer.access();
+        auto [lock, data] = buffer[flip].access();
         data.emplace_back(std::move(item));
         event.wakeup();
     }
 
-    auto exchange() -> std::vector<Item> {
-        auto [lock, data] = buffer.access();
-        return std::move(data);
+    auto swap() -> std::vector<Item>& {
+        buffer[!flip].unsafe_access().clear();
+        flip              = !flip;
+        auto [lock, data] = buffer[!flip].access();
+        return data;
     }
 
     auto wait() -> void {
