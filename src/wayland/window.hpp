@@ -49,7 +49,7 @@ template <class Impl, class... Impls>
 class Window : public internal::Window {
   private:
     auto backend() -> gawl::internal::wl::WindowBackend<Impl, Impls...>* {
-        return reinterpret_cast<gawl::internal::wl::WindowBackend<Impl, Impls...>*>(this);
+        return std::bit_cast<gawl::internal::wl::WindowBackend<Impl, Impls...>*>(this);
     }
 
   protected:
@@ -206,7 +206,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     [[no_unique_address]] std::conditional_t<enable_keyboard, Keyboard, towl::Empty> keyboard;
 
     auto init_egl() -> void {
-        eglsurface = eglCreateWindowSurface(this->egl.display, this->egl.config, reinterpret_cast<EGLNativeWindowType>(this->egl_window.native()), nullptr);
+        eglsurface = eglCreateWindowSurface(this->egl.display, this->egl.config, std::bit_cast<EGLNativeWindowType>(this->egl_window.native()), nullptr);
         dynamic_assert(eglsurface != EGL_NO_SURFACE);
         choose_surface(eglsurface, this->egl);
         dynamic_assert(eglSwapInterval(this->egl.display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking

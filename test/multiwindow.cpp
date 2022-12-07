@@ -60,7 +60,7 @@ class Blue : public Color<Blue, 1, false, false, true> {
 static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Red>);
 
 auto open_window(void* const app, const int number) -> void {
-    auto& a = *reinterpret_cast<Gawl::Application*>(app);
+    auto& a = *std::bit_cast<Gawl::Application*>(app);
     switch(number) {
     case 1:
         a.open_window<Red>({.title = "Red"}, app);

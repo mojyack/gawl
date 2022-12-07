@@ -12,7 +12,7 @@ class Application {
     std::list<Variant<WindowBackend<Impls, Impls...>...>> windows;
 
     auto backend() -> Backend* {
-        return reinterpret_cast<Backend*>(this);
+        return std::bit_cast<Backend*>(this);
     }
 
     template <class Window>
