@@ -11,27 +11,25 @@ namespace gawl::internal::jxl {
 struct JxlImage {
     size_t               width;
     size_t               height;
-    std::vector<uint8_t> buffer;
+    std::vector<std::byte> buffer;
 };
 
 inline auto decode_jxl(const std::string_view path) -> Result<JxlImage> {
-    auto in = std::ifstream();
-    try {
-        in.open(path, std::ios::binary);
-    } catch(const std::runtime_error& e) {
-        return Error(e.what());
+    const auto file_result = read_binary(path);
+    if(!file_result) {
+        return file_result.as_error();
     }
+    const auto& file = file_result.as_value();
 
-    auto       file    = std::vector<uint8_t>(std::istreambuf_iterator<char>(in), {});
     const auto decoder = JxlDecoderMake(NULL);
 
-    if(JxlDecoderSetInput(decoder.get(), file.data(), file.size()) != JXL_DEC_SUCCESS) {
+    if(JxlDecoderSetInput(decoder.get(), std::bit_cast<uint8_t*>(file.data()), file.size()) != JXL_DEC_SUCCESS) {
         return Error("jxl: failed to set input");
     }
 
     auto              info   = JxlBasicInfo();
     const static auto format = JxlPixelFormat{.num_channels = 4, .data_type = JxlDataType::JXL_TYPE_UINT8, .endianness = JxlEndianness::JXL_NATIVE_ENDIAN, .align = 1};
-    auto              buffer = std::vector<uint8_t>();
+    auto              buffer = std::vector<std::byte>();
 
     if(JxlDecoderSubscribeEvents(decoder.get(), JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE) != JXL_DEC_SUCCESS) {
         return Error("jxl: failed to subscribe events");

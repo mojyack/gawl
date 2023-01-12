@@ -11,8 +11,8 @@
 namespace gawl {
 class PixelBuffer {
   private:
-    std::array<size_t, 2> size;
-    std::vector<uint8_t>  data;
+    std::array<size_t, 2>  size;
+    std::vector<std::byte> data;
 
     auto load_texture_imagemagick(Magick::Image&& image) -> void {
         size = {image.columns(), image.rows()};
@@ -21,7 +21,7 @@ class PixelBuffer {
         return;
     }
 
-    PixelBuffer(std::array<size_t, 2> size, std::vector<uint8_t> data) : size(std::move(size)), data(std::move(data)) {}
+    PixelBuffer(std::array<size_t, 2> size, std::vector<std::byte> data) : size(std::move(size)), data(std::move(data)) {}
 
   public:
     auto empty() const -> bool {
@@ -36,7 +36,7 @@ class PixelBuffer {
         return size[1];
     }
 
-    auto get_buffer() const -> const uint8_t* {
+    auto get_buffer() const -> const std::byte* {
         return data.data();
     }
 
@@ -47,14 +47,14 @@ class PixelBuffer {
 
     PixelBuffer() = default;
 
-    static auto from_raw(const size_t width, const size_t height, const uint8_t* const buffer) -> PixelBuffer {
+    static auto from_raw(const size_t width, const size_t height, const std::byte* const buffer) -> PixelBuffer {
         const auto len  = size_t(width * height * 4);
-        auto       data = std::vector<uint8_t>(len);
+        auto       data = std::vector<std::byte>(len);
         std::memcpy(data.data(), buffer, len);
         return PixelBuffer({width, height}, std::move(data));
     }
 
-    static auto from_raw(const size_t width, const size_t height, std::vector<uint8_t> buffer) -> PixelBuffer {
+    static auto from_raw(const size_t width, const size_t height, std::vector<std::byte> buffer) -> PixelBuffer {
         return PixelBuffer({width, height}, std::move(buffer));
     }
 
@@ -79,7 +79,7 @@ class PixelBuffer {
         }
     }
 
-    static auto from_blob(const uint8_t* const data, const size_t size) -> Result<PixelBuffer> {
+    static auto from_blob(const std::byte* const data, const size_t size) -> Result<PixelBuffer> {
         try {
             auto blob   = Magick::Blob(data, size);
             auto result = PixelBuffer();
@@ -90,7 +90,7 @@ class PixelBuffer {
         }
     }
 
-    static auto from_blob(const std::vector<uint8_t>& buffer) -> Result<PixelBuffer> {
+    static auto from_blob(const std::vector<std::byte>& buffer) -> Result<PixelBuffer> {
         return from_blob(buffer.data(), buffer.size());
     }
 };
