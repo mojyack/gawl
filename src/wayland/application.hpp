@@ -47,6 +47,7 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
                 case decltype(application_events)::template index_of<typename Shared::CloseWindowArgs>(): {
                     auto&      args        = e.template get<typename Shared::CloseWindowArgs>();
                     const auto last_window = args.window.visit([this](auto& w) -> bool { return this->destroy_window(*w); });
+                    wl.display.flush();
                     if(quitted && last_window) {
                         quitted = false;
                         goto exit;
