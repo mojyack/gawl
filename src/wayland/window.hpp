@@ -201,6 +201,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
     typename WlType::WMBase::template XDGToplevel<XDGToplevelGlue> xdg_toplevel;
     towl::EGLWindow                                                egl_window;
     EGLSurface                                                     eglsurface               = nullptr;
+    int                                                            buffer_scale             = 1;
     std::atomic_bool                                               obsolete_egl_window_size = true;
 
     [[no_unique_address]] std::conditional_t<enable_keyboard, Keyboard, towl::Empty> keyboard;
@@ -358,7 +359,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 new_width  = data.size[0];
                 new_height = data.size[1];
 
-                surface.set_buffer_scale(scale);
+                buffer_scale = new_scale;
             }
         }
         new_width *= new_scale;
@@ -379,6 +380,7 @@ class WindowBackend : public gawl::wl::Window<Impl, Impls...> {
                 choose_surface(eglsurface, this->egl);
                 if(obsolete_egl_window_size) {
                     obsolete_egl_window_size = false;
+                    surface.set_buffer_scale(buffer_scale);
                     const auto& buffer_size  = this->get_buffer_size();
                     const auto [lock, data]  = buffer_size.access();
                     egl_window.resize(data.size[0], data.size[1], 0, 0);
