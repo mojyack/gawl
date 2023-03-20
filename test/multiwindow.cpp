@@ -58,6 +58,8 @@ class Blue : public Color<Blue, 1, false, false, true> {
 };
 
 static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Red>);
+static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Green>);
+static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Blue>);
 
 auto open_window(void* const app, const int number) -> void {
     auto& a = *std::bit_cast<Gawl::Application*>(app);

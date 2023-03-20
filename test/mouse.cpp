@@ -1,6 +1,5 @@
+#include <gawl/fc.hpp>
 #include <gawl/wayland/gawl.hpp>
-
-#include "fc.hpp"
 
 class Impl;
 
@@ -49,7 +48,9 @@ class Impl {
         }
     }
 
-    Impl(Gawl::Window<Impl>& window) : window(window), font({fc::find_fontpath_from_name("Noto Sans CJK JP").data()}, 16) {}
+    Impl(Gawl::Window<Impl>& window)
+        : window(window),
+          font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 16) {}
 };
 
 auto main() -> int {
