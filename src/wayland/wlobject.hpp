@@ -25,7 +25,7 @@ struct Wl {
       public:
         static auto proc_window(std::list<Variant<Backend<Impls, Impls...>...>>& windows, const towl::SurfaceTag surface, auto&& proc) -> void {
             for(auto& w : windows) {
-                const auto matched = w.visit(
+                const auto r = w.apply(
                     [surface, proc](auto& w) -> bool {
                         if(w.wl_get_surface() == surface) {
                             proc(w);
@@ -33,7 +33,8 @@ struct Wl {
                         }
                         return false;
                     });
-                if(matched) {
+                dynamic_assert(r.has_value(), "variant error");
+                if(r.value()) {
                     return;
                 }
             }
@@ -202,7 +203,7 @@ struct Wl {
       public:
         auto on_scale(const towl::OutputTag output, const int32_t scale) -> void {
             for(auto& w : *windows) {
-                w.visit([output, scale](auto& w) {
+                w.apply([output, scale](auto& w) {
                     if(w.wl_get_output() == output) {
                         w.resize_buffer(-1, -1, scale);
                     }

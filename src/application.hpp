@@ -25,14 +25,15 @@ class Application {
     auto destroy_window(const Window& window) -> bool {
         static_assert(std::disjunction_v<std::is_same<Window, WindowBackend<Impls, Impls...>>...>);
         for(auto i = windows.begin(); i != windows.end(); i = std::next(i)) {
-            const auto match = i->visit([&window](auto& w) -> bool {
+            const auto match = i->apply([&window](auto& w) -> bool {
                 if constexpr(std::is_same_v<decltype(w), Window&>) {
                     return &w == &window;
                 } else {
                     return false;
                 }
             });
-            if(match) {
+            dynamic_assert(match.has_value(), "variant error");
+            if(match.value()) {
                 windows.erase(i);
                 return windows.empty();
             }
@@ -43,15 +44,15 @@ class Application {
   public:
     template <class Impl, class... Args>
     auto open_window(typename WindowBackend<Impl, Impls...>::WindowCreateHintType hint, Args&&... args) -> Impl& {
-        static_assert(std::disjunction_v<std::is_same<Impl, Impls>...>);
+        using T = WindowBackend<Impl, Impls...>;
+
         hint.backend_hint = backend()->get_shared_data();
-        auto& impl        = windows.emplace_back(std::in_place_type<WindowBackend<Impl, Impls...>>, hint, std::forward<Args>(args)...);
-        return impl.template get<WindowBackend<Impl, Impls...>>().get_impl();
+        return windows.emplace_back(Tag<T>(), hint, std::forward<Args>(args)...).template as<T>().get_impl();
     }
 
     auto close_all_windows() -> void {
         for(auto& w : windows) {
-            w.visit([this](auto& w) { this->close_window_backend(w); });
+            w.apply([this](auto& w) { this->close_window_backend(w); });
         }
     }
 };

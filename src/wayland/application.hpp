@@ -39,21 +39,26 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
                 continue;
             }
             for(auto& e : events) {
-                switch(e.index()) {
-                case decltype(application_events)::template index_of<typename Shared::HandleEventArgs>(): {
-                    auto& args = e.template get<typename Shared::HandleEventArgs>();
-                    args.window.visit([](auto& w) { w->handle_event(); });
+                using E = decltype(application_events);
+                switch(e.get_index()) {
+                case E::template index_of<typename Shared::HandleEventArgs>: {
+                    auto& args = e.template as<typename Shared::HandleEventArgs>();
+                    args.window.apply([](auto& w) { w->handle_event(); });
                 } break;
-                case decltype(application_events)::template index_of<typename Shared::CloseWindowArgs>(): {
-                    auto&      args        = e.template get<typename Shared::CloseWindowArgs>();
-                    const auto last_window = args.window.visit([this](auto& w) -> bool { return this->destroy_window(*w); });
+                case E::template index_of<typename Shared::CloseWindowArgs>: {
+                    auto& args = e.template as<typename Shared::CloseWindowArgs>();
+
+                    const auto last_window_r = args.window.apply([this](auto& w) -> bool { return this->destroy_window(*w); });
+                    dynamic_assert(last_window_r.has_value(), "variant error");
+                    const auto last_window = last_window_r.value();
+
                     wl.display.flush();
                     if(quitted && last_window) {
                         quitted = false;
                         goto exit;
                     }
                 } break;
-                case decltype(application_events)::template index_of<typename Shared::QuitApplicationArgs>():
+                case E::template index_of<typename Shared::QuitApplicationArgs>:
                     quitted = true;
                     this->close_all_windows();
                     break;
@@ -66,11 +71,12 @@ class ApplicationBackend : public Application<ApplicationBackend<Impls...>, Wind
     }
 
     auto close_window(auto& window) -> void {
-        application_events.push(typename Shared::CloseWindowArgs{&window});
+        using Arg = decltype(Shared::CloseWindowArgs::window);
+        application_events.template push<typename Shared::CloseWindowArgs>(Arg(Tag<decltype(&window)>(), &window));
     }
 
     auto quit() -> void {
-        application_events.push(typename Shared::QuitApplicationArgs{});
+        application_events.template push<typename Shared::QuitApplicationArgs>();
     }
 
     auto is_running() const -> bool {

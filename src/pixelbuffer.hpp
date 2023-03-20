@@ -67,7 +67,7 @@ class PixelBuffer {
                 return Error("failed to load jxl file");
             }
             auto& jxl = jxl_result.as_value();
-            return PixelBuffer({jxl.width, jxl.height}, std::move(jxl.buffer));
+            return PixelBuffer({jxl.width, jxl.height}, std::move(jxl.frames[0].buffer));
         }
 
         try {

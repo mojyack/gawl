@@ -3,7 +3,7 @@
 
 #include <fontconfig/fontconfig.h>
 
-#include "util/error.hpp"
+#include "util.hpp"
 
 namespace gawl {
 inline auto find_fontpath_from_name(const char* const name) -> Result<std::string> {
@@ -12,10 +12,9 @@ inline auto find_fontpath_from_name(const char* const name) -> Result<std::strin
     FcConfigSubstitute(config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
 
-    auto       result = FcResult();
-    const auto font   = FcFontMatch(config, pattern, &result);
-    auto       path   = Result<std::string>(Error("failed to find font"));
-    if(font) {
+    auto result = FcResult();
+    auto path   = std::string();
+    if(const auto font = FcFontMatch(config, pattern, &result)) {
         auto file = (FcChar8*)(nullptr);
         if(FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch) {
             path = std::string((char*)file);
@@ -24,6 +23,10 @@ inline auto find_fontpath_from_name(const char* const name) -> Result<std::strin
     }
     FcPatternDestroy(pattern);
     FcConfigDestroy(config);
-    return path;
+    if(path.empty()) {
+        return Error("failed to find font");
+    } else {
+        return path;
+    }
 }
 } // namespace gawl
