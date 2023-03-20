@@ -9,6 +9,7 @@ egl_deps = [
 freetype_dep = dependency('freetype2')
 magick_dep = dependency('Magick++')
 xkbcommon_dep = dependency('xkbcommon')
+fc_dep = dependency('fontconfig')
 jxl_dep = dependency('libjxl')
 
 gawl_dep = [wl_deps, egl_deps, freetype_dep, magick_dep, jxl_dep]
@@ -18,6 +19,7 @@ gawl_headers = files(
   'binder.hpp',
   'earcut.hpp',
   'empty-texture.hpp',
+  'fc.hpp',
   'global.hpp',
   'globject.hpp',
   'graphic-base.hpp',
@@ -63,4 +65,10 @@ pkgconfig.generate(
     name: 'gawl-keysym',
     filebase: 'gawl-keysym',
     description: 'libgawl keysym dependency',
+)
+pkgconfig.generate(
+    requires: [fc_dep],
+    name: 'gawl-fc',
+    filebase: 'gawl-fc',
+    description: 'libgawl fontconfig dependency',
 )
