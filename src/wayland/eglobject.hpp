@@ -34,7 +34,7 @@ class EGLSubObject {
 };
 } // namespace gawl
 
-namespace gawl::internal::wl {
+namespace gawl::wl::internal {
 struct EGLObject {
     constexpr static auto context_attribs = std::array<EGLint, 3>{EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
 

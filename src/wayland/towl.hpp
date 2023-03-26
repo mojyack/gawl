@@ -1,4 +1,4 @@
 #pragma once
-#define TOWL_NS gawl::internal::wl::towl
+#define TOWL_NS gawl::wl::internal::towl
 #include <towl/towl.hpp>
 #undef TOWL_NS

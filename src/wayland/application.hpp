@@ -13,113 +13,124 @@
 #include "window.hpp"
 #include "wlobject.hpp"
 
-namespace gawl::internal::wl {
-template <class... Impls>
-class ApplicationBackend : public Application<ApplicationBackend<Impls...>, WindowBackend, Impls...> {
+namespace gawl::wl {
+class Application : public ::gawl::internal::Application {
   private:
-    using Shared = internal::wl::SharedData<WindowBackend, Impls...>;
-    using WlType = typename Shared::WlType;
+    internal::app_event::Queue    app_queue;
+    internal::WaylandClientObject wl;
+    internal::EGLObject           egl;
+    std::thread                   wayland_thread;
+    EventFileDescriptor           wayland_thread_stop;
+    std::atomic_bool              running;
+    bool                          quitted = false;
 
-    typename Shared::BufferType          application_events;
-    typename WlType::WaylandClientObject wl;
-    EGLObject                            egl;
-    bool                                 quitted = false;
-    Critical<bool>                       running = false;
-    std::thread                          wayland_main;
-    EventFileDescriptor                  wayland_main_stop;
-
-  public:
-    auto run() -> void {
-        running.unsafe_access() = true;
-        wl.display.wait_sync();
-        while(true) {
-            auto& events = application_events.swap();
-            if(events.empty()) {
-                application_events.wait();
-                continue;
-            }
-            for(auto& e : events) {
-                using E = decltype(application_events);
-                switch(e.get_index()) {
-                case E::template index_of<typename Shared::HandleEventArgs>: {
-                    auto& args = e.template as<typename Shared::HandleEventArgs>();
-                    args.window.apply([](auto& w) { w->handle_event(); });
-                } break;
-                case E::template index_of<typename Shared::CloseWindowArgs>: {
-                    auto& args = e.template as<typename Shared::CloseWindowArgs>();
-
-                    const auto last_window_r = args.window.apply([this](auto& w) -> bool { return this->destroy_window(*w); });
-                    dynamic_assert(last_window_r.has_value(), "variant error");
-                    const auto last_window = last_window_r.value();
-
-                    wl.display.flush();
-                    if(quitted && last_window) {
-                        quitted = false;
-                        goto exit;
-                    }
-                } break;
-                case E::template index_of<typename Shared::QuitApplicationArgs>:
-                    quitted = true;
-                    this->close_all_windows();
-                    break;
-                }
-            }
-        }
-
-    exit:
-        running.unsafe_access() = false;
+    auto backend_get_window_create_hint() -> void* override {
+        static auto hint = internal::SharedData();
+        hint             = internal::SharedData{&wl, &egl, &app_queue};
+        return &hint;
     }
 
-    auto close_window(auto& window) -> void {
-        using Arg = decltype(Shared::CloseWindowArgs::window);
-        application_events.template push<typename Shared::CloseWindowArgs>(Arg(Tag<decltype(&window)>(), &window));
+    auto backend_close_window(::gawl::internal::Window* const window) -> void override {
+        app_queue.push<internal::app_event::CloseWindowArgs>(internal::downcast<internal::WindowBase>(window));
+    }
+
+    auto wayland_main() -> void {
+        auto  fds                    = std::array{pollfd{wl.display.get_fd(), POLLIN, 0}, pollfd{wayland_thread_stop, POLLIN, 0}};
+        auto& wl_display_event_poll  = fds[0];
+        auto& wayland_main_stop_poll = fds[1];
+
+    loop:
+        auto read_intent = wl.display.obtain_read_intent();
+        wl.display.flush();
+        dynamic_assert(poll(fds.data(), fds.size(), -1) != -1);
+        if(wl_display_event_poll.revents & POLLIN) {
+            read_intent.read();
+            wl.display.dispatch_pending();
+        }
+        if(wayland_main_stop_poll.revents & POLLIN) {
+            wayland_thread_stop.consume();
+            return;
+        }
+        goto loop;
+    }
+
+  public:
+    template <class T, class... Args>
+    auto open_window(const WindowCreateHint hint, Args&&... args) -> T& {
+        const auto ptr       = new Window<T>(hint, backend_get_window_create_hint(), std::forward<Args>(args)...);
+        auto [lock, windows] = critical_windows.access();
+        windows.emplace_back(ptr);
+        return ptr->get_impl();
+    }
+
+    auto run() -> void {
+        running = true;
+        wl.display.wait_sync();
+    loop:
+        auto& events = app_queue.swap();
+        if(events.empty()) {
+            app_queue.wait();
+            goto loop;
+        }
+        for(auto& e : events) {
+            using Queue = internal::app_event::Queue;
+            switch(e.get_index()) {
+            case Queue::index_of<internal::app_event::HandleEventArgs>: {
+                auto& args = e.template as<internal::app_event::HandleEventArgs>();
+                args.window->handle_event();
+            } break;
+            case Queue::index_of<internal::app_event::CloseWindowArgs>: {
+                auto& args = e.template as<internal::app_event::CloseWindowArgs>();
+                erase_window(args.window);
+                wl.display.flush();
+
+                auto [lock, windows] = critical_windows.access();
+                if(quitted && windows.empty()) {
+                    quitted = false;
+                    goto exit;
+                }
+            } break;
+            case Queue::index_of<internal::app_event::QuitApplicationArgs>:
+                quitted = true;
+                close_all_windows();
+                break;
+            }
+        }
+        goto loop;
+
+    exit:
+        running = false;
     }
 
     auto quit() -> void {
-        application_events.template push<typename Shared::QuitApplicationArgs>();
+        app_queue.push<internal::app_event::QuitApplicationArgs>();
     }
 
     auto is_running() const -> bool {
-        return running.access().second;
+        return running;
     }
 
-    auto get_shared_data() -> Shared {
-        return Shared{&wl, &egl, &application_events};
-    }
-
-    ApplicationBackend() : Application<ApplicationBackend<Impls...>, WindowBackend, Impls...>(), wl(this->windows), egl(wl.display) {
+    Application()
+        : wl(critical_windows),
+          egl(wl.display) {
+        // bind wayland interfaces
         wl.display.roundtrip();
-        if(wl.registry.template interface<typename WlType::Compositor>().empty() || wl.registry.template interface<typename WlType::WMBase>().empty()) {
+        if(wl.registry.template interface<internal::Compositor>().empty() || wl.registry.template interface<internal::WMBase>().empty()) {
             panic("wayland server doesn't provide necessary interfaces");
         }
 
+        // initialize egl
         dynamic_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
-        global = new GLObjects();
+        ::gawl::internal::global = new ::gawl::internal::GLObjects();
 
-        wayland_main = std::thread([this]() {
-            auto  fds                    = std::array{pollfd{wl.display.get_fd(), POLLIN, 0}, pollfd{wayland_main_stop, POLLIN, 0}};
-            auto& wl_display_event_poll  = fds[0];
-            auto& wayland_main_stop_poll = fds[1];
-            while(true) {
-                auto read_intent = wl.display.obtain_read_intent();
-                wl.display.flush();
-                dynamic_assert(poll(fds.data(), fds.size(), -1) != -1);
-                if(wl_display_event_poll.revents & POLLIN) {
-                    read_intent.read();
-                    wl.display.dispatch_pending();
-                }
-                if(wayland_main_stop_poll.revents & POLLIN) {
-                    wayland_main_stop.consume();
-                    break;
-                }
-            }
-        });
+        // start wayland event loop
+        wayland_thread = std::thread(std::bind(&Application::wayland_main, this));
     }
 
-    ~ApplicationBackend() {
-        wayland_main_stop.notify();
-        wayland_main.join();
-        delete global;
+    ~Application() {
+        wayland_thread_stop.notify();
+        wayland_thread.join();
+        delete ::gawl::internal::global;
     }
 };
-}; // namespace gawl::internal::wl
+}; // namespace gawl::wl

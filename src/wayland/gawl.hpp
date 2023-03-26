@@ -1,14 +1,9 @@
 #pragma once
-#include "../include.hpp"
 #include "application.hpp"
-#include "window.hpp"
 
 namespace gawl {
-template <class... Impls>
-struct Gawl {
-    using Application = internal::wl::ApplicationBackend<Impls...>;
+using Application = wl::Application;
 
-    template <class Impl>
-    using Window = gawl::wl::Window<Impl, Impls...>;
-};
+template <class T>
+using Window = wl::Window<T>;
 } // namespace gawl

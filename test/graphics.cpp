@@ -1,12 +1,9 @@
+#include <gawl/graphic.hpp>
 #include <gawl/wayland/gawl.hpp>
-
-class Impl;
-
-using Gawl = gawl::Gawl<Impl>;
 
 class Impl {
   private:
-    Gawl::Window<Impl>& window;
+    gawl::Window<Impl>& window;
     gawl::Graphic       graphic;
 
   public:
@@ -18,11 +15,11 @@ class Impl {
         graphic.draw_transformed(window, {{{510, 0}, {680, 170}, {510, 340}, {340, 170}}});
         graphic.draw_fit_rect(window, {{680, 0}, {1020, 340}});
     }
-    Impl(Gawl::Window<Impl>& window) : window(window), graphic(gawl::PixelBuffer::from_file("image.png").unwrap()) {}
+    Impl(gawl::Window<Impl>& window) : window(window), graphic(gawl::PixelBuffer::from_file("image.png").unwrap()) {}
 };
 
 auto main() -> int {
-    auto app = Gawl::Application();
+    auto app = gawl::Application();
     app.open_window<Impl>({.manual_refresh = false});
     app.run();
     return 0;

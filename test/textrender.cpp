@@ -1,13 +1,10 @@
 #include <gawl/fc.hpp>
+#include <gawl/textrender.hpp>
 #include <gawl/wayland/gawl.hpp>
-
-class Impl;
-
-using Gawl = gawl::Gawl<Impl>;
 
 class Impl {
   private:
-    Gawl::Window<Impl>& window;
+    gawl::Window<Impl>& window;
     gawl::TextRender    font;
     gawl::WrappedText   wrapped_text; // for cache
 
@@ -51,14 +48,14 @@ class Impl {
         }
     }
 
-    Impl(Gawl::Window<Impl>& window)
+    Impl(gawl::Window<Impl>& window)
         : window(window),
           font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 32) {}
 };
 
 auto main() -> int {
-    auto app = Gawl::Application();
-    app.open_window<Impl>({.manual_refresh = false});
+    auto app = gawl::Application();
+    app.open_window<Impl>({});
     app.run();
     return 0;
 }

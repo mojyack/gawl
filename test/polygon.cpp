@@ -1,12 +1,9 @@
+#include <gawl/polygon.hpp>
 #include <gawl/wayland/gawl.hpp>
-
-class Impl;
-
-using Gawl = gawl::Gawl<Impl>;
 
 class Impl {
   private:
-    Gawl::Window<Impl>& window;
+    gawl::Window<Impl>& window;
     int                 count = 0;
 
   public:
@@ -31,11 +28,11 @@ class Impl {
         count += 1;
     }
 
-    Impl(Gawl::Window<Impl>& window) : window(window) {}
+    Impl(gawl::Window<Impl>& window) : window(window) {}
 };
 
 auto main() -> int {
-    auto app = Gawl::Application();
+    auto app = gawl::Application();
     app.open_window<Impl>({});
     app.run();
     return 0;

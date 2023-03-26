@@ -1,13 +1,11 @@
+#define GAWL_MOUSE
 #include <gawl/fc.hpp>
+#include <gawl/textrender.hpp>
 #include <gawl/wayland/gawl.hpp>
-
-class Impl;
-
-using Gawl = gawl::Gawl<Impl>;
 
 class Impl {
   private:
-    Gawl::Window<Impl>&   window;
+    gawl::Window<Impl>&   window;
     gawl::TextRender      font;
     gawl::Point           pointer;
     std::array<bool, 3>   click  = {false, false};
@@ -27,7 +25,7 @@ class Impl {
         font.draw_fit_rect(window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, build_string(static_cast<int>(pointer.x), ",", static_cast<int>(pointer.y)).data());
     }
 
-    auto pointermove_callback(const gawl::Point& point) -> void {
+    auto pointer_move_callback(const gawl::Point& point) -> void {
         pointer = point;
         window.refresh();
     }
@@ -48,13 +46,13 @@ class Impl {
         }
     }
 
-    Impl(Gawl::Window<Impl>& window)
+    Impl(gawl::Window<Impl>& window)
         : window(window),
           font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 16) {}
 };
 
 auto main() -> int {
-    auto app = Gawl::Application();
+    auto app = gawl::Application();
     app.open_window<Impl>({.manual_refresh = false});
     app.run();
     return 0;

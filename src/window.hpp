@@ -101,5 +101,7 @@ class Window {
     auto get_event_driven() const -> bool {
         return event_driven;
     }
+
+    virtual ~Window() {}
 };
 } // namespace gawl::internal

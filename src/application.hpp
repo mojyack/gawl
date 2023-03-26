@@ -4,56 +4,42 @@
 
 #include "internal-type.hpp"
 #include "util.hpp"
+#include "window.hpp"
 
 namespace gawl::internal {
-template <class Backend, template <class, class...> class WindowBackend, class... Impls>
 class Application {
   protected:
-    std::list<Variant<WindowBackend<Impls, Impls...>...>> windows;
+    Critical<std::vector<std::unique_ptr<Window>>> critical_windows;
 
-    auto backend() -> Backend* {
-        return std::bit_cast<Backend*>(this);
-    }
+    virtual auto backend_get_window_create_hint() -> void* = 0;
 
-    template <class Window>
-    auto close_window_backend(Window& window) -> void {
-        window.set_state(internal::WindowState::Destructing);
-        backend()->close_window(window);
-    }
+    virtual auto backend_close_window(Window* window) -> void = 0;
 
-    template <class Window>
-    auto destroy_window(const Window& window) -> bool {
-        static_assert(std::disjunction_v<std::is_same<Window, WindowBackend<Impls, Impls...>>...>);
-        for(auto i = windows.begin(); i != windows.end(); i = std::next(i)) {
-            const auto match = i->apply([&window](auto& w) -> bool {
-                if constexpr(std::is_same_v<decltype(w), Window&>) {
-                    return &w == &window;
-                } else {
-                    return false;
-                }
-            });
-            dynamic_assert(match.has_value(), "variant error");
-            if(match.value()) {
+    auto erase_window(const Window* const window) -> void {
+        auto [lock, windows] = critical_windows.access();
+        for(auto i = windows.begin(); i < windows.end(); i += 1) {
+            if(i->get() == window) {
                 windows.erase(i);
-                return windows.empty();
+                return;
             }
         }
-        panic("unknown window");
     }
 
   public:
-    template <class Impl, class... Args>
-    auto open_window(typename WindowBackend<Impl, Impls...>::WindowCreateHintType hint, Args&&... args) -> Impl& {
-        using T = WindowBackend<Impl, Impls...>;
+    // open_window is provided by backend class
 
-        hint.backend_hint = backend()->get_shared_data();
-        return windows.emplace_back(Tag<T>(), hint, std::forward<Args>(args)...).template as<T>().get_impl();
+    auto close_window(Window* const window) -> void {
+        window->set_state(WindowState::Destructing);
+        backend_close_window(window);
     }
 
     auto close_all_windows() -> void {
-        for(auto& w : windows) {
-            w.apply([this](auto& w) { this->close_window_backend(w); });
+        auto [lock, windows] = critical_windows.access();
+        for(const auto& w : windows) {
+            close_window(w.get());
         }
     }
+
+    virtual ~Application() {}
 };
 } // namespace gawl::internal

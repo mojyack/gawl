@@ -1,13 +1,11 @@
 #include <thread>
 
+#include <gawl/graphic.hpp>
 #include <gawl/wayland/gawl.hpp>
 
-class Impl;
-
-using Gawl = gawl::Gawl<Impl>;
 class Impl {
   private:
-    Gawl::Window<Impl>&            window;
+    gawl::Window<Impl>&            window;
     std::mutex                     mutex;
     std::unique_ptr<gawl::Graphic> graphic1;
     std::unique_ptr<gawl::Graphic> graphic2;
@@ -31,7 +29,7 @@ class Impl {
         }
     }
 
-    Impl(Gawl::Window<Impl>& window) : window(window) {
+    Impl(gawl::Window<Impl>& window) : window(window) {
         worker = std::thread([this]() {
             auto context = this->window.fork_context();
 
@@ -67,8 +65,8 @@ class Impl {
 };
 
 auto main() -> int {
-    auto app = Gawl::Application();
-    app.open_window<Impl>({.manual_refresh = false});
+    auto app = gawl::Application();
+    app.open_window<Impl>({});
     app.run();
     return 0;
 }

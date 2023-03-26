@@ -1,19 +1,12 @@
+#define GAWL_KEYCODE
 #include <gawl/wayland/gawl.hpp>
 
-class Red;
-class Green;
-class Blue;
-
-using Gawl = gawl::Gawl<Red, Green, Blue>;
-
-auto open_window(void* app, int number) -> void;
-
-template <class T, int next_window, bool red, bool green, bool blue>
+template <class T, class U, bool red, bool green, bool blue>
 class Color {
   protected:
-    Gawl::Window<T>& window;
-    void*            app; // Gawl::Application is incomplete type here
-    int              count = 0;
+    gawl::Window<T>&   window;
+    gawl::Application& app;
+    int                    count = 0;
 
   public:
     auto refresh_callback() -> void {
@@ -28,7 +21,7 @@ class Color {
         }
         switch(key) {
         case KEY_N:
-            open_window(app, next_window);
+            app.open_window<U>({}, app);
             break;
         case KEY_M:
             window.close_window();
@@ -39,46 +32,33 @@ class Color {
         }
     }
 
-    Color(Gawl::Window<T>& window, void* const app) : window(window), app(app) {}
+    Color(gawl::Window<T>& window, gawl::Application& app)
+        : window(window),
+          app(app) {}
 };
 
-class Red : public Color<Red, 2, true, false, false> {
+class Red;
+class Green;
+class Blue;
+
+class Red : public Color<Red, Green, true, false, false> {
   public:
-    Red(Gawl::Window<Red>& window, void* const app) : Color(window, app) {}
+    Red(gawl::Window<Red>& window, gawl::Application& app) : Color(window, app) {}
 };
 
-class Green : public Color<Green, 3, false, true, false> {
+class Green : public Color<Green, Blue, false, true, false> {
   public:
-    Green(Gawl::Window<Green>& window, void* const app) : Color(window, app) {}
+    Green(gawl::Window<Green>& window, gawl::Application& app) : Color(window, app) {}
 };
 
-class Blue : public Color<Blue, 1, false, false, true> {
+class Blue : public Color<Blue, Red, false, false, true> {
   public:
-    Blue(Gawl::Window<Blue>& window, void* const app) : Color(window, app) {}
+    Blue(gawl::Window<Blue>& window, gawl::Application& app) : Color(window, app) {}
 };
-
-static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Red>);
-static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Green>);
-static_assert(gawl::concepts::WindowImplWithKeycodeCallback<Blue>);
-
-auto open_window(void* const app, const int number) -> void {
-    auto& a = *std::bit_cast<Gawl::Application*>(app);
-    switch(number) {
-    case 1:
-        a.open_window<Red>({.title = "Red"}, app);
-        break;
-    case 2:
-        a.open_window<Green>({.title = "Green"}, app);
-        break;
-    case 3:
-        a.open_window<Blue>({.title = "Blue"}, app);
-        break;
-    }
-}
 
 auto main() -> int {
-    auto app = Gawl::Application();
-    open_window(&app, 1);
+    auto app = gawl::Application();
+    app.open_window<Red>({}, app);
     app.run();
     return 0;
 }

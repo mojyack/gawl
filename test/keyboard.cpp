@@ -1,11 +1,10 @@
+#define GAWL_KEYCODE
+#define GAWL_KEYSYM
+
 #include <bitset>
 #include <iostream>
 
 #include <gawl/wayland/gawl.hpp>
-
-class Keycode;
-
-using GawlKeycode = gawl::Gawl<Keycode>;
 
 class Keycode {
   public:
@@ -13,12 +12,8 @@ class Keycode {
         std::cout << keycode << " " << static_cast<int>(state) << std::endl;
     }
 
-    Keycode(GawlKeycode::Window<Keycode>& /*window*/) {}
+    Keycode(gawl::Window<Keycode>& /*window*/) {}
 };
-
-class Keysym;
-
-using GawlKeysym = gawl::Gawl<Keysym>;
 
 enum class Modifiers {
     None    = 0,
@@ -52,26 +47,26 @@ class Keysym {
             return;
         }
 
-        const auto keysym = xkb_state_key_get_one_sym(xkb_state, keycode);
+        const auto  keysym = xkb_state_key_get_one_sym(xkb_state, keycode);
         static auto buffer = std::array<char, 128>();
         xkb_keysym_get_name(keysym, buffer.data(), buffer.size());
         std::cout << buffer.data() << "(" << keysym << ")"
                   << " " << static_cast<int>(state) << " " << std::bitset<8>(static_cast<int>(calc_modifiers(xkb_state))) << std::endl;
     }
 
-    Keysym(GawlKeysym::Window<Keysym>& /*window*/) {}
+    Keysym(gawl::Window<Keysym>& /*window*/) {}
 };
 
 auto main() -> int {
     {
         std::cout << "keycode:" << std::endl;
-        auto app = GawlKeycode::Application();
+        auto app = gawl::Application();
         app.open_window<Keycode>({.manual_refresh = false});
         app.run();
     }
     {
         std::cout << "keysym:" << std::endl;
-        auto app = GawlKeysym::Application();
+        auto app = gawl::Application();
         app.open_window<Keysym>({.manual_refresh = false});
         app.run();
     }

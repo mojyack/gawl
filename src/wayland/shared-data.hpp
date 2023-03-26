@@ -1,26 +1,12 @@
 #pragma once
-#include "../variant-buffer.hpp"
+#include "app-event.hpp"
 #include "eglobject.hpp"
 #include "wlobject.hpp"
 
-namespace gawl::internal::wl {
-template <template <class, class...> class Backend, class... Impls>
+namespace gawl::wl::internal {
 struct SharedData {
-    struct HandleEventArgs {
-        Variant<Backend<Impls, Impls...>*...> window;
-    };
-
-    struct CloseWindowArgs {
-        Variant<Backend<Impls, Impls...>*...> window;
-    };
-
-    struct QuitApplicationArgs {};
-
-    using BufferType = VariantEventBuffer<HandleEventArgs, CloseWindowArgs, QuitApplicationArgs>;
-    using WlType     = Wl<Backend, Impls...>;
-
-    typename WlType::WaylandClientObject* wl;
-    EGLObject*                            egl;
-    BufferType*                           application_events;
+    WaylandClientObject* wl;
+    EGLObject*           egl;
+    app_event::Queue*    application_events;
 };
-}; // namespace gawl::internal::wl
+} // namespace gawl::wl::internal
