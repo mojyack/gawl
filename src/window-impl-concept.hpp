@@ -7,11 +7,6 @@
 
 namespace gawl::concepts {
 namespace internal {
-template <class t>
-concept IsComplete = requires() {
-                         { sizeof(t) };
-                     };
-
 template <class Impl>
 concept WindowImplWithRefreshCallback = requires(Impl& m) {
                                             { m.refresh_callback() } -> std::same_as<void>;
@@ -57,111 +52,38 @@ concept WindowImplWithUserCallback = requires(Impl& m) {
                                          { m.user_callback(nullptr) } -> std::same_as<void>;
                                      };
 
+template <class T>
+consteval auto is_complete() -> bool {
+    static_assert(sizeof(T), "incomplete type");
+    return true;
+}
+
 } // namespace internal
 
 template <class Impl>
-consteval auto has_refresh_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithRefreshCallback<Impl>;
-}
+constexpr auto has_refresh_callback = internal::WindowImplWithRefreshCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_window_resize_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithWindowResizeCallback<Impl>;
-}
+constexpr auto has_window_resize_callback = internal::WindowImplWithWindowResizeCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_keycode_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithKeycodeCallback<Impl>;
-}
+constexpr auto has_keycode_callback = internal::WindowImplWithKeycodeCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_keysym_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithKeysymCallback<Impl>;
-}
+constexpr auto has_keysym_callback = internal::WindowImplWithKeysymCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_pointer_move_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithPointerMoveCallback<Impl>;
-}
+constexpr auto has_pointer_move_callback = internal::WindowImplWithPointerMoveCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_click_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithClickCallback<Impl>;
-}
+constexpr auto has_click_callback = internal::WindowImplWithClickCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_scroll_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithScrollCallback<Impl>;
-}
+constexpr auto has_scroll_callback = internal::WindowImplWithScrollCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_close_request_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithCloseRequestCallback<Impl>;
-}
+constexpr auto has_close_request_callback = internal::WindowImplWithCloseRequestCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
-consteval auto has_user_callback() -> bool {
-    static_assert(internal::IsComplete<Impl>, "incomplete type passed");
-    return internal::WindowImplWithUserCallback<Impl>;
-}
+constexpr auto has_user_callback = internal::WindowImplWithUserCallback<Impl> && internal::is_complete<Impl>();
 } // namespace gawl::concepts
-
-namespace gawl::internal {
-template <template <class> class Concept, class T, class... Ts>
-constexpr auto not_implemented() -> bool {
-    if constexpr(!Concept<T>()) {
-        if constexpr(sizeof...(Ts) == 0) {
-            return true;
-        } else {
-            return not_implemented<Concept, Ts...>();
-        }
-    } else {
-        return false;
-    }
-}
-
-template <class... Impls>
-struct Implement {
-    template <class Impl>
-    using HasRefreshCallback = typename std::conditional_t<gawl::concepts::has_refresh_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasWindowResizeCallback = typename std::conditional_t<gawl::concepts::has_window_resize_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasKeycodeCallback = typename std::conditional_t<gawl::concepts::has_keycode_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasKeysymCallback = typename std::conditional_t<gawl::concepts::has_keysym_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasPointerMoveCallback = typename std::conditional_t<gawl::concepts::has_pointer_move_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasClickCallback = typename std::conditional_t<gawl::concepts::has_click_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasScrollCallback = typename std::conditional_t<gawl::concepts::has_scroll_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasCloseCallback = typename std::conditional_t<gawl::concepts::has_click_callback<Impl>(), std::true_type, std::false_type>;
-
-    template <class Impl>
-    using HasUserCallback = typename std::conditional_t<gawl::concepts::has_user_callback<Impl>(), std::true_type, std::false_type>;
-
-    constexpr static auto keycode  = !not_implemented<HasKeycodeCallback, Impls...>();
-    constexpr static auto keysym   = !not_implemented<HasKeysymCallback, Impls...>();
-    constexpr static auto keyboard = keycode || keysym;
-    constexpr static auto click    = !not_implemented<HasClickCallback, Impls...>();
-    constexpr static auto motion   = !not_implemented<HasPointerMoveCallback, Impls...>();
-    constexpr static auto pointer  = click || motion;
-};
-} // namespace gawl::internal

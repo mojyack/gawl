@@ -17,11 +17,6 @@ inline auto choose_surface(const EGLSurface eglsurface, const EGLObject& egl) ->
 }
 } // namespace internal
 
-template <class t>
-concept complete = requires() {
-                       { sizeof(t) };
-                   };
-
 template <class Impl>
 class Window : public internal::WindowBase {
   private:
@@ -69,7 +64,7 @@ class Window : public internal::WindowBase {
         }
 
         auto on_close() -> void {
-            if constexpr(gawl::concepts::has_close_request_callback<Impl>()) {
+            if constexpr(gawl::concepts::has_close_request_callback<Impl>) {
                 window->queue_callback<internal::callback::CloseRequest>();
             } else {
                 window->quit_application();
@@ -86,13 +81,13 @@ class Window : public internal::WindowBase {
         std::atomic_uint32_t  last_pressed_key = -1;
     };
 
-    constexpr static auto enable_keycode  = gawl::concepts::has_keycode_callback<Impl>();
-    constexpr static auto enable_keysym   = gawl::concepts::has_keysym_callback<Impl>();
+    constexpr static auto enable_keycode  = gawl::concepts::has_keycode_callback<Impl>;
+    constexpr static auto enable_keysym   = gawl::concepts::has_keysym_callback<Impl>;
     constexpr static auto enable_keyboard = enable_keycode || enable_keysym;
     constexpr static auto enable_mouse =
-        gawl::concepts::has_click_callback<Impl>() ||
-        gawl::concepts::has_pointer_move_callback<Impl>() ||
-        gawl::concepts::has_scroll_callback<Impl>();
+        gawl::concepts::has_click_callback<Impl> ||
+        gawl::concepts::has_pointer_move_callback<Impl> ||
+        gawl::concepts::has_scroll_callback<Impl>;
 
 #if !defined(GAWL_KEYCODE)
     static_assert(!enable_keycode, "add #define GAWL_KEYCODE to use keycode feature");
@@ -162,7 +157,7 @@ class Window : public internal::WindowBase {
         this->on_buffer_resize(std::array{new_width, new_height}, new_scale);
 
         obsolete_egl_window_size = true;
-        if constexpr(gawl::concepts::has_window_resize_callback<Impl>()) {
+        if constexpr(gawl::concepts::has_window_resize_callback<Impl>) {
             queue_callback<internal::callback::WindowResize>();
         }
         this->refresh();
@@ -182,54 +177,54 @@ class Window : public internal::WindowBase {
                     swap_buffer(); // ensure buffer sizes are changed to prevent "Buffer size is not divisible by scale" error
                     surface.set_buffer_scale(buffer_size.scale);
                 }
-                if constexpr(gawl::concepts::has_refresh_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_refresh_callback<Impl>) {
                     impl.refresh_callback();
                 }
                 surface.set_frame();
                 swap_buffer();
             } break;
             case Queue::index_of<internal::callback::WindowResize>:
-                if constexpr(gawl::concepts::has_window_resize_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_window_resize_callback<Impl>) {
                     impl.window_resize_callback();
                 }
                 break;
             case Queue::index_of<internal::callback::Keycode>: {
-                if constexpr(gawl::concepts::has_keycode_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_keycode_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::Keycode>();
                     impl.keycode_callback(args.key, args.state);
                 }
             } break;
             case Queue::index_of<internal::callback::Keysym>: {
-                if constexpr(gawl::concepts::has_keysym_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_keysym_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::Keysym>();
                     impl.keysym_callback(args.key, args.state, args.xkbstate);
                 }
             } break;
             case Queue::index_of<internal::callback::PointerMove>: {
-                if constexpr(gawl::concepts::has_pointer_move_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_pointer_move_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::PointerMove>();
                     impl.pointer_move_callback(args.pos);
                 }
             } break;
             case Queue::index_of<internal::callback::Click>: {
-                if constexpr(gawl::concepts::has_click_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_click_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::Click>();
                     impl.click_callback(args.key, args.state);
                 }
             } break;
             case Queue::index_of<internal::callback::Scroll>: {
-                if constexpr(gawl::concepts::has_scroll_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_scroll_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::Scroll>();
                     impl.scroll_callback(args.axis, args.value);
                 }
             } break;
             case Queue::index_of<internal::callback::CloseRequest>:
-                if constexpr(gawl::concepts::has_close_request_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_close_request_callback<Impl>) {
                     impl.close_request_callback();
                 }
                 break;
             case Queue::index_of<internal::callback::User>: {
-                if constexpr(gawl::concepts::has_user_callback<Impl>()) {
+                if constexpr(gawl::concepts::has_user_callback<Impl>) {
                     const auto& args = a.template as<internal::callback::User>();
                     impl.user_callback(args.data);
                 }
@@ -334,20 +329,20 @@ class Window : public internal::WindowBase {
     }
 
     auto wl_on_click(const uint32_t button, const uint32_t state) -> void override {
-        if constexpr(gawl::concepts::has_click_callback<Impl>()) {
+        if constexpr(gawl::concepts::has_click_callback<Impl>) {
             const auto s = state == WL_POINTER_BUTTON_STATE_PRESSED ? gawl::ButtonState::Press : gawl::ButtonState::Release;
             queue_callback<internal::callback::Click>(button, s);
         }
     }
 
     auto wl_on_pointer_motion(const double x, const double y) -> void override {
-        if constexpr(gawl::concepts::has_pointer_move_callback<Impl>()) {
+        if constexpr(gawl::concepts::has_pointer_move_callback<Impl>) {
             queue_callback<internal::callback::PointerMove>(gawl::Point{x, y});
         }
     }
 
     auto wl_on_pointer_axis(const uint32_t axis, const double value) -> void override {
-        if constexpr(gawl::concepts::has_scroll_callback<Impl>()) {
+        if constexpr(gawl::concepts::has_scroll_callback<Impl>) {
             const auto w = axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
             queue_callback<internal::callback::Scroll>(w, value);
         }
