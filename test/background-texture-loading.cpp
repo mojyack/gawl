@@ -31,31 +31,20 @@ class Impl {
 
     Impl(gawl::Window<Impl>& window) : window(window) {
         worker = std::thread([this]() {
-            auto context = this->window.fork_context();
-
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            {
+            auto       context      = this->window.fork_context();
+            const auto load_graphic = [this, &context](std::unique_ptr<gawl::Graphic>& storage) -> void {
                 auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
-                graphic1        = std::unique_ptr<gawl::Graphic>(graphic);
-            }
+                storage         = std::unique_ptr<gawl::Graphic>(graphic);
+            };
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            {
-                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
-                context.flush();
-                const auto lock = std::lock_guard(mutex);
-                graphic2        = std::unique_ptr<gawl::Graphic>(graphic);
-            }
-
+            load_graphic(graphic1);
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            {
-                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
-                context.flush();
-                const auto lock = std::lock_guard(mutex);
-                graphic3        = std::unique_ptr<gawl::Graphic>(graphic);
-            }
+            load_graphic(graphic2);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            load_graphic(graphic3);
         });
     }
 
