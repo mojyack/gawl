@@ -362,8 +362,8 @@ class Window : public internal::WindowBase {
         : WindowBase(*std::bit_cast<internal::SharedData*>(backend_hint)->wl,
                      *std::bit_cast<internal::SharedData*>(backend_hint)->egl,
                      *std::bit_cast<internal::SharedData*>(backend_hint)->application_events),
-          surface(wl.registry.template interface<internal::Compositor>()[0].create_surface(SurfaceGlue(*this, output))),
-          xdg_surface(wl.registry.template interface<internal::WMBase>()[0].create_xdg_surface(surface)),
+          surface(wl.registry.template interface<internal::Compositor>()[0]->create_surface(SurfaceGlue(*this, output))),
+          xdg_surface(wl.registry.template interface<internal::WMBase>()[0]->create_xdg_surface(surface)),
           xdg_toplevel(xdg_surface.create_xdg_toplevel(XDGToplevelGlue(*this))),
           egl_window(surface, hint.width, hint.height), impl(*this, args...) {
         surface.commit();
