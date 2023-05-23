@@ -17,34 +17,32 @@ concept BindCaller = requires(F f) {
 template <GLenum E, BindCaller F>
 class [[nodiscard]] Binder {
   private:
-    std::optional<GLuint> b;
+    GLuint v = 0;
 
     auto unbind() -> void {
-        if(b.has_value()) {
-            F::bind(E, 0);
-        }
+        v = 0;
+        F::bind(E, v);
     }
 
   public:
     auto get() const -> GLuint {
-        dynamic_assert(b.has_value());
-        return b.value();
+        return v;
     }
 
     auto operator=(Binder&& o) -> Binder& {
         unbind();
-        b = std::exchange(o.b, decltype(b)());
+        std::swap(v, o.v);
         return *this;
     }
 
     Binder() = default;
 
-    Binder(const GLuint b) : b(b) {
-        F::bind(E, b);
+    Binder(const GLuint v) : v(v) {
+        F::bind(E, v);
     }
 
-    Binder(Binder& o) : b(o.b) {
-        o.b.reset();
+    Binder(Binder&& o) {
+        *this = std::move(o);
     }
 
     ~Binder() {
