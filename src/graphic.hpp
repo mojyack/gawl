@@ -5,7 +5,7 @@
 namespace gawl {
 class Graphic : public internal::GraphicBase<internal::GraphicGLObject> {
   public:
-    Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) : GraphicBase<internal::GraphicGLObject>(internal::global->graphic_shader) {
+    auto update_texture(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) -> void {
         const auto txbinder = this->bind_texture();
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         if(crop) {
@@ -34,6 +34,10 @@ class Graphic : public internal::GraphicBase<internal::GraphicGLObject> {
         this->height = crop ? (*crop)[3] : buffer.get_height();
         glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.get_width());
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get_buffer());
+    }
+
+    Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) : GraphicBase<internal::GraphicGLObject>(internal::global->graphic_shader) {
+        update_texture(buffer, crop);
     }
 };
 
