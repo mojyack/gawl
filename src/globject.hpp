@@ -58,7 +58,6 @@ class GLObject {
         glLinkProgram(shader_program);
         glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
         dynamic_assert(status == GL_TRUE);
-        glBindFragDataLocation(shader_program, 0, "color");
     }
 
     ~GLObject() {
