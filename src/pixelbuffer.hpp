@@ -45,7 +45,17 @@ class PixelBuffer {
         data.clear();
     }
 
+    auto operator=(PixelBuffer&& other) -> PixelBuffer& {
+        size = other.size;
+        std::swap(data, other.data);
+        return *this;
+    }
+
     PixelBuffer() = default;
+
+    PixelBuffer(PixelBuffer&& other) {
+        *this = std::move(other);
+    }
 
     static auto from_raw(const size_t width, const size_t height, const std::byte* const buffer) -> PixelBuffer {
         const auto len  = size_t(width * height * 4);
