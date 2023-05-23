@@ -6,7 +6,7 @@
 
 #include <jxl/decode_cxx.h>
 
-#include "util/misc.hpp"
+#include "util.hpp"
 
 namespace gawl::internal::jxl {
 struct Animation {
