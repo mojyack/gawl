@@ -19,14 +19,14 @@ class [[nodiscard]] Binder {
   private:
     GLuint v = 0;
 
-    auto unbind() -> void {
-        v = 0;
-        F::bind(E, v);
-    }
-
   public:
     auto get() const -> GLuint {
         return v;
+    }
+
+    auto unbind() -> void {
+        v = 0;
+        F::bind(E, v);
     }
 
     auto operator=(Binder&& o) -> Binder& {
