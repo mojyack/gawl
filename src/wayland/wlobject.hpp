@@ -76,6 +76,43 @@ class PointerGlue {
     PointerGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
 };
 
+// only mouse emulation implemented
+class TouchGlue {
+  private:
+    Critical<Windows>* critical_windows;
+    towl::SurfaceTag   active;
+
+  public:
+    auto on_down(const towl::SurfaceTag surface, const uint32_t id, const double x, const double y) -> void {
+        if(id != 0) {
+            return;
+        }
+
+        active = surface;
+        proc_window(*critical_windows, active, [x, y](auto& impl) -> void {
+            impl.wl_on_pointer_motion(x, y);
+            impl.wl_on_click(BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED);
+        });
+    }
+
+    auto on_up(const uint32_t id) -> void {
+        if(id != 0 || !active) {
+            return;
+        }
+        proc_window(*critical_windows, active, [](auto& impl) -> void { impl.wl_on_click(BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED); });
+        active = towl::nulltag;
+    }
+
+    auto on_motion(const uint32_t id, const double x, const double y) -> void {
+        if(id != 0 || !active) {
+            return;
+        }
+        proc_window(*critical_windows, active, [x, y](auto& impl) -> void { impl.wl_on_pointer_motion(x, y); });
+    }
+
+    TouchGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
+};
+
 template <bool use_keycode, bool use_keysym>
 class KeyboardGlue {
   private:
@@ -228,7 +265,7 @@ using PointerGlueOpt  = towl::Empty;
 
 using Compositor = towl::Compositor<4>;
 using WMBase     = towl::WMBase<2>;
-using Seat       = towl::Seat<4, KeyboardGlueOpt, PointerGlueOpt>;
+using Seat       = towl::Seat<4, KeyboardGlueOpt, PointerGlueOpt, TouchGlue>;
 using Output     = towl::Output<2, OutputGlue>;
 using Registry   = towl::Registry<GlueParameter, Compositor, WMBase, Seat, Output>;
 
