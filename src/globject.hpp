@@ -12,6 +12,24 @@ class GLObject {
     GLuint fragment_shader;
     GLuint shader_program;
 
+    static auto compile_shader(const uint32_t type, const char* const source) -> GLuint {
+        auto status = GLint();
+        auto shader = glCreateShader(type);
+        glShaderSource(shader, 1, &source, NULL);
+        glCompileShader(shader);
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+        if(status == GL_FALSE) {
+            auto max_len = GLint(0);
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &max_len);
+
+            auto error_log = std::vector<GLchar>(max_len);
+            glGetShaderInfoLog(shader, max_len, &max_len, error_log.data());
+            printf("shader compile error: %s\n", error_log.data());
+            exit(1);
+        }
+        return shader;
+    }
+
   public:
     auto bind_vao() const -> VArrayBinder {
         return vao;
@@ -38,20 +56,10 @@ class GLObject {
         glGenBuffers(1, &vbo);
         glGenBuffers(1, &ebo);
 
+        vertex_shader   = compile_shader(GL_VERTEX_SHADER, vertex_shader_source);
+        fragment_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_shader_source);
+
         auto status = GLint();
-
-        vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-        glCompileShader(vertex_shader);
-        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
-        dynamic_assert(status == GL_TRUE);
-
-        fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-        glCompileShader(fragment_shader);
-        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
-        dynamic_assert(status == GL_TRUE);
-
         shader_program = glCreateProgram();
         glAttachShader(shader_program, vertex_shader);
         glAttachShader(shader_program, fragment_shader);
