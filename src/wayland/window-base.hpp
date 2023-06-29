@@ -36,13 +36,27 @@ struct Scroll {
     double          value;
 };
 
+struct TouchDown {
+    uint32_t    id;
+    gawl::Point pos;
+};
+
+struct TouchUp {
+    uint32_t id;
+};
+
+struct TouchMotion {
+    uint32_t    id;
+    gawl::Point pos;
+};
+
 struct CloseRequest {};
 
 struct User {
     void* data;
 };
 
-using Queue = ::gawl::internal::VariantBuffer<Refresh, WindowResize, Keycode, Keysym, PointerMove, Click, Scroll, CloseRequest, User>;
+using Queue = ::gawl::internal::VariantBuffer<Refresh, WindowResize, Keycode, Keysym, PointerMove, Click, Scroll, TouchDown, TouchUp, TouchMotion, CloseRequest, User>;
 } // namespace callback
 
 struct WaylandClientObject;

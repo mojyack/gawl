@@ -16,6 +16,9 @@ class WaylandWindow {
     virtual auto wl_on_click(uint32_t button, uint32_t state) -> void                                                       = 0;
     virtual auto wl_on_pointer_motion(double x, double y) -> void                                                           = 0;
     virtual auto wl_on_pointer_axis(uint32_t axis, double value) -> void                                                    = 0;
+    virtual auto wl_on_touch_down(uint32_t id, double x, double y) -> void                                                  = 0;
+    virtual auto wl_on_touch_up(uint32_t id) -> void                                                                        = 0;
+    virtual auto wl_on_touch_motion(uint32_t id, double x, double y) -> void                                                = 0;
     virtual auto wl_set_output_scale(uint32_t scale) -> void                                                                = 0;
 
     virtual ~WaylandWindow() {}

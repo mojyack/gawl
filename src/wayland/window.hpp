@@ -218,6 +218,24 @@ class Window : public internal::WindowBase {
                     impl.scroll_callback(args.axis, args.value);
                 }
             } break;
+            case Queue::index_of<internal::callback::TouchDown>: {
+                if constexpr(gawl::concepts::has_touch_down_callback<Impl>) {
+                    const auto& args = a.template as<internal::callback::TouchDown>();
+                    impl.touch_down_callback(args.id, args.pos);
+                }
+            } break;
+            case Queue::index_of<internal::callback::TouchUp>: {
+                if constexpr(gawl::concepts::has_touch_up_callback<Impl>) {
+                    const auto& args = a.template as<internal::callback::TouchUp>();
+                    impl.touch_up_callback(args.id);
+                }
+            } break;
+            case Queue::index_of<internal::callback::TouchMotion>: {
+                if constexpr(gawl::concepts::has_touch_motion_callback<Impl>) {
+                    const auto& args = a.template as<internal::callback::TouchMotion>();
+                    impl.touch_motion_callback(args.id, args.pos);
+                }
+            } break;
             case Queue::index_of<internal::callback::CloseRequest>:
                 if constexpr(gawl::concepts::has_close_request_callback<Impl>) {
                     impl.close_request_callback();
@@ -345,6 +363,24 @@ class Window : public internal::WindowBase {
         if constexpr(gawl::concepts::has_scroll_callback<Impl>) {
             const auto w = axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL ? gawl::WheelAxis::Horizontal : gawl::WheelAxis::Vertical;
             queue_callback<internal::callback::Scroll>(w, value);
+        }
+    }
+
+    auto wl_on_touch_down(const uint32_t id, const double x, const double y) -> void override {
+        if constexpr(gawl::concepts::has_touch_down_callback<Impl>) {
+            queue_callback<internal::callback::TouchDown>(id, gawl::Point{x, y});
+        }
+    }
+
+    auto wl_on_touch_up(const uint32_t id) -> void override {
+        if constexpr(gawl::concepts::has_touch_up_callback<Impl>) {
+            queue_callback<internal::callback::TouchUp>(id);
+        }
+    }
+
+    auto wl_on_touch_motion(const uint32_t id, const double x, const double y) -> void override {
+        if constexpr(gawl::concepts::has_touch_motion_callback<Impl>) {
+            queue_callback<internal::callback::TouchMotion>(id, gawl::Point{x, y});
         }
     }
 

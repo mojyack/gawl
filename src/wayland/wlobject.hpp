@@ -76,7 +76,9 @@ class PointerGlue {
     PointerGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
 };
 
-// only mouse emulation implemented
+#define GAWL_TOUCH
+#if !defined(GAWL_TOUCH)
+// mouse emulation
 class TouchGlue {
   private:
     Critical<Windows>* critical_windows;
@@ -112,6 +114,54 @@ class TouchGlue {
 
     TouchGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
 };
+
+#else
+class TouchGlue {
+  private:
+    Critical<Windows>*            critical_windows;
+    std::vector<towl::SurfaceTag> actives;
+
+    auto active_by_id(const uint32_t id) -> towl::SurfaceTag& {
+        if(id + 1 >= actives.size()) {
+            actives.resize(id + 1);
+        }
+        return actives[id];
+    }
+
+  public:
+    auto on_down(const towl::SurfaceTag surface, const uint32_t id, const double x, const double y) -> void {
+        auto& active = active_by_id(id);
+        active       = surface;
+        proc_window(*critical_windows, active, [id, x, y](auto& impl) -> void {
+            impl.wl_on_touch_down(id, x, y);
+        });
+    }
+
+    auto on_up(const uint32_t id) -> void {
+        auto& active = active_by_id(id);
+        if(active == towl::nulltag) {
+            return;
+        }
+        proc_window(*critical_windows, active, [id](auto& impl) -> void {
+            impl.wl_on_touch_up(id);
+        });
+        active = towl::nulltag;
+    }
+
+    auto on_motion(const uint32_t id, const double x, const double y) -> void {
+        auto& active = active_by_id(id);
+        if(active == towl::nulltag) {
+            return;
+        }
+        proc_window(*critical_windows, active, [id, x, y](auto& impl) -> void {
+            impl.wl_on_touch_motion(id, x, y);
+        });
+    }
+
+    TouchGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
+};
+
+#endif
 
 template <bool use_keycode, bool use_keysym>
 class KeyboardGlue {
@@ -263,9 +313,15 @@ using PointerGlueOpt = PointerGlue;
 using PointerGlueOpt  = towl::Empty;
 #endif
 
+#if defined(GAWL_TOUCH) || defined(GAWL_MOUSE)
+using TouchGlueOpt = TouchGlue;
+#else
+using TouchGlueOpt    = towl::Empty;
+#endif
+
 using Compositor = towl::Compositor<4>;
 using WMBase     = towl::WMBase<2>;
-using Seat       = towl::Seat<4, KeyboardGlueOpt, PointerGlueOpt, TouchGlue>;
+using Seat       = towl::Seat<4, KeyboardGlueOpt, PointerGlueOpt, TouchGlueOpt>;
 using Output     = towl::Output<2, OutputGlue>;
 using Registry   = towl::Registry<GlueParameter, Compositor, WMBase, Seat, Output>;
 

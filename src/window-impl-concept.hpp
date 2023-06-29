@@ -28,19 +28,34 @@ concept WindowImplWithKeysymCallback = requires(Impl& m, xkb_keycode_t keycode, 
                                        };
 
 template <class Impl>
-concept WindowImplWithPointerMoveCallback = requires(Impl& m) {
-                                                { m.pointer_move_callback(gawl::Point()) } -> std::same_as<void>;
+concept WindowImplWithPointerMoveCallback = requires(Impl& m, gawl::Point pos) {
+                                                { m.pointer_move_callback(pos) } -> std::same_as<void>;
                                             };
 
 template <class Impl>
-concept WindowImplWithClickCallback = requires(Impl& m) {
-                                          { m.click_callback(uint32_t(), gawl::ButtonState()) } -> std::same_as<void>;
+concept WindowImplWithClickCallback = requires(Impl& m, uint32_t button, gawl::ButtonState state) {
+                                          { m.click_callback(button, state) } -> std::same_as<void>;
                                       };
 
 template <class Impl>
-concept WindowImplWithScrollCallback = requires(Impl& m) {
-                                           { m.scroll_callback(gawl::WheelAxis(), double()) } -> std::same_as<void>;
+concept WindowImplWithScrollCallback = requires(Impl& m, gawl::WheelAxis axis, double value) {
+                                           { m.scroll_callback(axis, value) } -> std::same_as<void>;
                                        };
+
+template <class Impl>
+concept WindowImplWithTouchDown = requires(Impl& m, uint32_t id, gawl::Point pos) {
+                                      { m.touch_down_callback(id, pos) } -> std::same_as<void>;
+                                  };
+
+template <class Impl>
+concept WindowImplWithTouchUp = requires(Impl& m, uint32_t id) {
+                                    { m.touch_down_callback(id) } -> std::same_as<void>;
+                                };
+
+template <class Impl>
+concept WindowImplWithTouchMotionCallback = requires(Impl& m, uint32_t id, gawl::Point pos) {
+                                                { m.touch_motion_callback(id, pos) } -> std::same_as<void>;
+                                            };
 
 template <class Impl>
 concept WindowImplWithCloseRequestCallback = requires(Impl& m) {
@@ -48,8 +63,8 @@ concept WindowImplWithCloseRequestCallback = requires(Impl& m) {
                                              };
 
 template <class Impl>
-concept WindowImplWithUserCallback = requires(Impl& m) {
-                                         { m.user_callback(nullptr) } -> std::same_as<void>;
+concept WindowImplWithUserCallback = requires(Impl& m, void* data) {
+                                         { m.user_callback(data) } -> std::same_as<void>;
                                      };
 
 template <class T>
@@ -80,6 +95,15 @@ constexpr auto has_click_callback = internal::WindowImplWithClickCallback<Impl> 
 
 template <class Impl>
 constexpr auto has_scroll_callback = internal::WindowImplWithScrollCallback<Impl> && internal::is_complete<Impl>();
+
+template <class Impl>
+constexpr auto has_touch_down_callback = internal::WindowImplWithTouchDown<Impl> && internal::is_complete<Impl>();
+
+template <class Impl>
+constexpr auto has_touch_up_callback = internal::WindowImplWithTouchUp<Impl> && internal::is_complete<Impl>();
+
+template <class Impl>
+constexpr auto has_touch_motion_callback = internal::WindowImplWithTouchMotionCallback<Impl> && internal::is_complete<Impl>();
 
 template <class Impl>
 constexpr auto has_close_request_callback = internal::WindowImplWithCloseRequestCallback<Impl> && internal::is_complete<Impl>();
