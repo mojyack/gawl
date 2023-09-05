@@ -1,7 +1,7 @@
 #pragma once
 namespace gawl::internal {
 constexpr auto graphic_vertex_shader_source      = R"glsl(
-    #version 330 core
+    #version 130
     in vec2  position;
     in vec2  texcoord;
     out vec2 tex_coordinate;
@@ -12,7 +12,7 @@ constexpr auto graphic_vertex_shader_source      = R"glsl(
 )glsl";
 
 constexpr auto graphic_fragment_shader_source    = R"glsl(
-    #version 330 core
+    #version 130
     in vec2           tex_coordinate;
     uniform sampler2D tex;
     out vec4          color;
@@ -24,7 +24,7 @@ constexpr auto graphic_fragment_shader_source    = R"glsl(
 constexpr auto textrender_vertex_shader_source   = graphic_vertex_shader_source;
 
 constexpr auto textrender_fragment_shader_source = R"glsl(
-    #version 330 core
+    #version 130
     in vec2           tex_coordinate;
     out vec4          color;
     uniform sampler2D tex;
@@ -37,7 +37,7 @@ constexpr auto textrender_fragment_shader_source = R"glsl(
 )glsl";
 
 constexpr auto polygon_vertex_shader_source      = R"glsl(
-    #version 330 core
+    #version 130
     in vec2 position;
     void main() {
         gl_Position = vec4(position, 0.0, 1.0);
@@ -45,7 +45,7 @@ constexpr auto polygon_vertex_shader_source      = R"glsl(
 )glsl";
 
 constexpr auto polygon_fragment_shader_source    = R"glsl(
-    #version 330 core
+    #version 130
     out vec4     color;
     uniform vec4 polygon_color;
     void main() {
