@@ -49,7 +49,7 @@ concept WindowImplWithTouchDown = requires(Impl& m, uint32_t id, gawl::Point pos
 
 template <class Impl>
 concept WindowImplWithTouchUp = requires(Impl& m, uint32_t id) {
-                                    { m.touch_down_callback(id) } -> std::same_as<void>;
+                                    { m.touch_up_callback(id) } -> std::same_as<void>;
                                 };
 
 template <class Impl>
