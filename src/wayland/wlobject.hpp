@@ -76,7 +76,6 @@ class PointerGlue {
     PointerGlue(GlueParameter& parameter) : critical_windows(parameter.critical_windows) {}
 };
 
-#define GAWL_TOUCH
 #if !defined(GAWL_TOUCH)
 // mouse emulation
 class TouchGlue {
