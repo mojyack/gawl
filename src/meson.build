@@ -1,12 +1,14 @@
-subdir('wayland/towl')
+subdir('wayland')
 
 freetype_dep = dependency('freetype2')
 magick_dep = dependency('Magick++')
+jxl_dep = dependency('libjxl')
 xkbcommon_dep = dependency('xkbcommon')
 fc_dep = dependency('fontconfig')
-jxl_dep = dependency('libjxl')
 
-gawl_dep = [gawl_wayland_deps, freetype_dep, magick_dep, jxl_dep]
+gawl_deps = gawl_wayland_deps + [freetype_dep, magick_dep, jxl_dep]
+gawl_keysym_deps = [xkbcommon_dep]
+gawl_fc_deps = [fc_dep]
 
 gawl_headers = files(
   'application.hpp',
@@ -38,4 +40,7 @@ gawl_headers = files(
   'window-creat-hint.hpp',
   'window-impl-concept.hpp',
   'window.hpp',
+)
+
+gawl_files = files(
 )

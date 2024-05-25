@@ -33,7 +33,7 @@ class Impl {
         worker = std::thread([this]() {
             auto       context      = this->window.fork_context();
             const auto load_graphic = [this, &context](std::unique_ptr<gawl::Graphic>& storage) -> void {
-                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("image.png").unwrap());
+                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("examples/image.png").unwrap());
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
                 storage         = std::unique_ptr<gawl::Graphic>(graphic);

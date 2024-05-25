@@ -1,5 +1,7 @@
 subdir('towl')
 
+gawl_wayland_deps = towl_deps + towl_egl_deps
+
 gawl_wayland_headers = files(
   'app-event.hpp',
   'application.hpp',
@@ -13,4 +15,4 @@ gawl_wayland_headers = files(
   'wlobject.hpp',
 )
 
-gawl_wayland_deps = [towl_deps, towl_egl_deps]
+gawl_wayland_files = towl_files

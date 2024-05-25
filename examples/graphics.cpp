@@ -15,7 +15,7 @@ class Impl {
         graphic.draw_transformed(window, {{{510, 0}, {680, 170}, {510, 340}, {340, 170}}});
         graphic.draw_fit_rect(window, {{680, 0}, {1020, 340}});
     }
-    Impl(gawl::Window<Impl>& window) : window(window), graphic(gawl::PixelBuffer::from_file("image.png").unwrap()) {}
+    Impl(gawl::Window<Impl>& window) : window(window), graphic(gawl::PixelBuffer::from_file("examples/image.png").unwrap()) {}
 };
 
 auto main() -> int {
