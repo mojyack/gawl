@@ -1,20 +1,17 @@
 #pragma once
-#include <concepts>
-#include <optional>
+#include <utility>
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#include "util.hpp"
-
-namespace gawl::internal {
+namespace gawl::impl {
 template <typename F>
 concept BindCaller = requires(F f) {
-                         f.bind(GLenum(), GLuint());
-                     };
+    f.bind(GLenum(), GLuint());
+};
 
-template <GLenum E, BindCaller F>
+template <GLenum target, BindCaller F>
 class [[nodiscard]] Binder {
   private:
     GLuint v = 0;
@@ -26,7 +23,7 @@ class [[nodiscard]] Binder {
 
     auto unbind() -> void {
         v = 0;
-        F::bind(E, v);
+        F::bind(target, v);
     }
 
     auto operator=(Binder&& o) -> Binder& {
@@ -38,7 +35,7 @@ class [[nodiscard]] Binder {
     Binder() = default;
 
     Binder(const GLuint v) : v(v) {
-        F::bind(E, v);
+        F::bind(target, v);
     }
 
     Binder(Binder&& o) {
@@ -52,32 +49,32 @@ class [[nodiscard]] Binder {
 
 namespace bindcaller {
 struct FramebufferBindCaller {
-    static auto bind(const GLenum e, const GLuint b) -> void {
-        glBindFramebuffer(e, b);
+    static auto bind(const GLenum target, const GLuint b) -> void {
+        glBindFramebuffer(target, b);
     }
 };
 
 struct BufferBindCaller {
-    static auto bind(const GLenum e, const GLuint b) -> void {
-        glBindBuffer(e, b);
+    static auto bind(const GLenum target, const GLuint b) -> void {
+        glBindBuffer(target, b);
     }
 };
 
 struct VArrayBindCaller {
-    static auto bind(const GLenum /* e */, const GLuint b) -> void {
+    static auto bind(const GLenum /*target*/, const GLuint b) -> void {
         glBindVertexArray(b);
     }
 };
 
 struct ShaderBindCaller {
-    static auto bind(const GLenum /* e */, const GLuint b) -> void {
+    static auto bind(const GLenum /*target*/, const GLuint b) -> void {
         glUseProgram(b);
     }
 };
 
 struct TextureBindCaller {
-    static auto bind(const GLenum e, const GLuint b) -> void {
-        glBindTexture(e, b);
+    static auto bind(const GLenum target, const GLuint b) -> void {
+        glBindTexture(target, b);
     }
 };
 } // namespace bindcaller
@@ -89,4 +86,4 @@ using VArrayBinder        = Binder<0, bindcaller::VArrayBindCaller>;
 using ShaderBinder        = Binder<0, bindcaller::ShaderBindCaller>;
 using TextureBinder       = Binder<GL_TEXTURE_2D, bindcaller::TextureBindCaller>;
 
-} // namespace gawl::internal
+} // namespace gawl::impl

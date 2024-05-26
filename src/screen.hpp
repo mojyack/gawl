@@ -1,25 +1,19 @@
 #pragma once
-#include <array>
-#include <concepts>
-
 #include "binder.hpp"
-#include "internal-type.hpp"
-#include "type.hpp"
+#include "viewport.hpp"
 
 namespace gawl {
-namespace concepts {
-template <class S>
-concept MetaScreen = requires(const S& c) {
-    { c.get_scale() } -> std::same_as<double>;
-    { c.get_viewport() } -> std::convertible_to<internal::Viewport>;
+class MetaScreen {
+  public:
+    virtual auto get_scale() const -> double             = 0;
+    virtual auto get_viewport() const -> const Viewport& = 0;
+    virtual ~MetaScreen() {}
 };
 
-template <class S>
-concept Screen = requires(S& m) {
-    { m.prepare() } -> std::same_as<internal::FramebufferBinder>;
-    { m.set_viewport(gawl::Rectangle{}) } -> std::same_as<void>;
-    { m.unset_viewport() } -> std::same_as<void>;
-}
-&&MetaScreen<S>;
-} // namespace concepts
+class Screen : public MetaScreen {
+  public:
+    virtual auto prepare() -> impl::FramebufferBinder        = 0;
+    virtual auto set_viewport(const Rectangle& rect) -> void = 0;
+    virtual auto unset_viewport() -> void                    = 0;
+};
 } // namespace gawl

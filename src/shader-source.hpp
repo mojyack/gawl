@@ -1,5 +1,5 @@
 #pragma once
-namespace gawl::internal {
+namespace gawl::impl {
 constexpr auto graphic_vertex_shader_source      = R"glsl(
     #version 130
     in vec2  position;

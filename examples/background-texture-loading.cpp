@@ -1,7 +1,7 @@
 #include <thread>
 
-#include <gawl/graphic.hpp>
-#include <gawl/wayland/gawl.hpp>
+#include "gawl/graphic.hpp"
+#include "gawl/wayland/gawl.hpp"
 
 class Impl {
   private:

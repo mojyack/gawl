@@ -1,19 +1,10 @@
 #pragma once
-#include <concepts>
-#include <list>
-
-#include "internal-type.hpp"
-#include "util.hpp"
 #include "window.hpp"
 
-namespace gawl::internal {
+namespace gawl {
 class Application {
   protected:
     Critical<std::vector<std::unique_ptr<Window>>> critical_windows;
-
-    virtual auto backend_get_window_create_hint() -> void* = 0;
-
-    virtual auto backend_close_window(Window* window) -> void = 0;
 
     auto erase_window(const Window* const window) -> void {
         auto [lock, windows] = critical_windows.access();
@@ -25,12 +16,14 @@ class Application {
         }
     }
 
+    virtual auto close_window_impl(Window* window) -> void = 0;
+
   public:
     // open_window is provided by backend class
 
     auto close_window(Window* const window) -> void {
-        window->set_state(WindowState::Destructing);
-        backend_close_window(window);
+        window->set_state(impl::WindowState::Destructing);
+        close_window_impl(window);
     }
 
     auto close_all_windows() -> void {
@@ -42,4 +35,4 @@ class Application {
 
     virtual ~Application() {}
 };
-} // namespace gawl::internal
+} // namespace gawl

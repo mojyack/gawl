@@ -1,20 +1,19 @@
 #pragma once
-#include "graphic-globject.hpp"
-#include "polygon-globject.hpp"
-#include "shader-source.hpp"
-#include "textrender-globject.hpp"
+#include "graphic-shader.hpp"
+#include "polygon-shader.hpp"
+#include "textrender-shader.hpp"
 
-namespace gawl::internal {
-struct GLObjects {
-    GraphicGLObject    graphic_shader;
-    TextRenderGLObject textrender_shader;
-    PolygonGLObject    polygon_shader;
+namespace gawl::impl {
+struct Shaders {
+    GraphicShader    graphic_shader;
+    TextRenderShader textrender_shader;
+    PolygonShader    polygon_shader;
 
-    GLObjects() {
+    Shaders() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 };
 
-inline GLObjects* global = nullptr;
-} // namespace gawl::internal
+inline auto global = (Shaders*)(nullptr);
+} // namespace gawl::impl
