@@ -1,42 +1,49 @@
 #include <thread>
 
 #include "gawl/graphic.hpp"
-#include "gawl/wayland/gawl.hpp"
+#include "gawl/misc.hpp"
+#include "gawl/wayland/application.hpp"
+#include "macros/unwrap.hpp"
+#include "util/assert.hpp"
 
-class Impl {
+class Callbacks : public gawl::WindowCallbacks {
   private:
-    gawl::Window<Impl>&            window;
-    std::mutex                     mutex;
-    std::unique_ptr<gawl::Graphic> graphic1;
-    std::unique_ptr<gawl::Graphic> graphic2;
-    std::unique_ptr<gawl::Graphic> graphic3;
+    std::mutex    mutex;
+    gawl::Graphic graphic1;
+    gawl::Graphic graphic2;
+    gawl::Graphic graphic3;
 
     std::thread worker;
 
   public:
-    auto refresh_callback() -> void {
+    auto refresh() -> void override {
         gawl::clear_screen({0, 0, 0, 1});
 
         const auto lock = std::lock_guard(mutex);
         if(graphic1) {
-            graphic1->draw(window, {170 * 0, 0});
+            graphic1.draw(*window, {170 * 0, 0});
         }
         if(graphic2) {
-            graphic2->draw(window, {170 * 1, 0});
+            graphic2.draw(*window, {170 * 1, 0});
         }
         if(graphic3) {
-            graphic3->draw(window, {170 * 2, 0});
+            graphic3.draw(*window, {170 * 2, 0});
         }
     }
 
-    Impl(gawl::Window<Impl>& window) : window(window) {
+    auto close() -> void override {
+        application->quit();
+    }
+
+    Callbacks() {
         worker = std::thread([this]() {
-            auto       context      = this->window.fork_context();
-            const auto load_graphic = [this, &context](std::unique_ptr<gawl::Graphic>& storage) -> void {
-                auto graphic = new gawl::Graphic(gawl::PixelBuffer::from_file("examples/image.png").unwrap());
+            auto       context      = std::bit_cast<gawl::WaylandWindow*>(this->window)->fork_context();
+            const auto load_graphic = [this, &context](gawl::Graphic& graphic) -> void {
+                unwrap_on(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
+                auto new_graphic = gawl::Graphic(pixbuf);
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
-                storage         = std::unique_ptr<gawl::Graphic>(graphic);
+                graphic         = std::move(new_graphic);
             };
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -48,14 +55,14 @@ class Impl {
         });
     }
 
-    ~Impl() {
+    ~Callbacks() {
         worker.join();
     }
 };
 
 auto main() -> int {
-    auto app = gawl::Application();
-    app.open_window<Impl>({});
+    auto app = gawl::WaylandApplication();
+    app.open_window({}, new Callbacks());
     app.run();
     return 0;
 }

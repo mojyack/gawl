@@ -27,6 +27,10 @@ class Callbacks : public gawl::WindowCallbacks {
 
         count += 1;
     }
+
+    auto close() -> void override {
+        application->quit();
+    }
 };
 
 auto main() -> int {
