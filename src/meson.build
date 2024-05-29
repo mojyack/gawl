@@ -11,6 +11,7 @@ gawl_keysym_deps = [xkbcommon_dep]
 gawl_fc_deps = [fc_dep]
 gawl_files = files(
   'application.cpp',
+  'point.cpp',
   'window-callbacks.cpp',
   'pixelbuffer.cpp',
   'shader.cpp',
