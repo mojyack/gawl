@@ -15,6 +15,12 @@ executable(
 )
 
 executable(
+  'empty-texture',
+  files('examples/empty-texture.cpp') + gawl_core_files + gawl_graphic_files + gawl_empty_texture_files,
+  dependencies: gawl_core_deps + gawl_graphic_deps,
+)
+
+executable(
   'textrender',
   files('examples/textrender.cpp') + gawl_core_files + gawl_textrender_files + gawl_fc_files,
   dependencies: gawl_core_deps + gawl_textrender_deps + gawl_fc_deps,

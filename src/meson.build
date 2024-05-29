@@ -46,3 +46,6 @@ gawl_fc_deps = [fc_dep]
 gawl_fc_files = files(
   'fc.cpp',
 )
+
+# optional files
+gawl_empty_texture_files = files('empty-texture.cpp')
