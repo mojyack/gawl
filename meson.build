@@ -1,4 +1,4 @@
-project('gawl', ['cpp', 'c'], version : '2.6.6', default_options : ['warning_level=3', 'werror=false', 'cpp_std=c++20'])
+project('gawl', ['cpp', 'c'], version : '3.0.0', default_options : ['warning_level=3', 'werror=false', 'cpp_std=c++20'])
 add_project_arguments('-Wfatal-errors', language: 'cpp')
 subdir('src')
 
