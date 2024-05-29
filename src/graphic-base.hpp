@@ -27,8 +27,10 @@ class GraphicBase {
     auto draw_fit_rect(Screen& screen, const Rectangle& rect) -> void;
     auto draw_transformed(Screen& screen, const std::array<Point, 4>& vertices) -> void;
 
+    operator bool() const;
     auto operator=(GraphicBase&& o) -> GraphicBase&;
 
+    GraphicBase() {};
     GraphicBase(GraphicShader& shader);
     GraphicBase(GraphicBase&& o);
     ~GraphicBase();

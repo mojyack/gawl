@@ -1,5 +1,9 @@
 #pragma once
-#include "util.hpp"
+#define CUTIL_NS gawl
+#include "util/event.hpp"
+#include "util/variant.hpp"
+#include "util/writers-reader-buffer.hpp"
+#undef CUTIL_NS
 
 namespace gawl::impl {
 template <class... Ts>
@@ -32,7 +36,7 @@ class VariantEventBuffer : public VariantBuffer<Ts...> {
         Super::template push<T>(std::forward<Args>(args)...);
         reader_ready.wakeup();
     }
-    
+
     auto wait() -> void {
         reader_ready.wait();
         reader_ready.clear();

@@ -3,6 +3,10 @@
 #include "app-events.hpp"
 #include "window.hpp"
 
+#define CUTIL_NS gawl
+#include "../util/fd.hpp"
+#undef CUTIL_NS
+
 namespace gawl {
 class WaylandApplication : public Application {
   private:

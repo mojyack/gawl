@@ -3,10 +3,13 @@
 
 #include <fontconfig/fontconfig.h>
 
-#include "util.hpp"
+#define CUTIL_NS gawl
+#include "util/error.hpp"
+#include "util/result.hpp"
+#undef CUTIL_NS
 
 namespace gawl {
-inline auto find_fontpath_from_name(const char* const name) -> Result<std::string> {
+inline auto find_fontpath_from_name(const char* const name) -> Result<std::string, StringError> {
     const auto config  = FcInitLoadConfigAndFonts();
     const auto pattern = FcNameParse((const FcChar8*)(name));
     FcConfigSubstitute(config, pattern, FcMatchPattern);
@@ -24,7 +27,7 @@ inline auto find_fontpath_from_name(const char* const name) -> Result<std::strin
     FcPatternDestroy(pattern);
     FcConfigDestroy(config);
     if(path.empty()) {
-        return Error("failed to find font");
+        return StringError("failed to find font");
     } else {
         return path;
     }

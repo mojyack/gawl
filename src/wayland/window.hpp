@@ -3,13 +3,16 @@
 
 #include <EGL/egl.h>
 
-#include "../util.hpp"
 #include "../window-creat-hint.hpp"
 #include "../window.hpp"
 #include "app-events.hpp"
 #include "eglobject.hpp"
 #include "window-events.hpp"
 #include "wl-object.hpp"
+
+#define CUTIL_NS gawl
+#include "../util/timer-event.hpp"
+#undef CUTIL_NS
 
 namespace gawl {
 class WaylandWindowCallbacks;

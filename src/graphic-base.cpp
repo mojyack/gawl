@@ -57,6 +57,10 @@ auto GraphicBase::draw_transformed(Screen& screen, const std::array<Point, 4>& v
     do_draw(screen);
 }
 
+GraphicBase::operator bool() const {
+    return texture != 0;
+}
+
 auto GraphicBase::operator=(GraphicBase&& o) -> GraphicBase& {
     release_texture();
     shader            = o.shader;

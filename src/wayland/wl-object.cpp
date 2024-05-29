@@ -1,6 +1,10 @@
 #include "wl-object.hpp"
-#include "../macros/unwrap.hpp"
 #include "window.hpp"
+
+#define CUTIL_NS gawl
+#include "../macros/unwrap.hpp"
+#include "../util/assert.hpp"
+#undef CUTIL_NS
 
 namespace gawl::impl {
 

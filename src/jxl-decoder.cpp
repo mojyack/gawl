@@ -2,7 +2,12 @@
 
 #include "jxl-decoder.hpp"
 #include "macros/assert.hpp"
-#include "util.hpp"
+
+#define CUTIL_NS gawl
+#include "macros/assert.hpp"
+#include "util/assert.hpp"
+#include "util/misc.hpp"
+#undef CUTIL_NS
 
 namespace gawl::impl::jxl {
 class ParallelRunner {

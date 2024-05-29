@@ -1,9 +1,12 @@
 #include <ImageMagick-7/Magick++.h>
 
 #include "jxl-decoder.hpp"
-#include "macros/unwrap.hpp"
 #include "pixelbuffer.hpp"
-#include "util.hpp"
+
+#define CUTIL_NS gawl
+#include "macros/unwrap.hpp"
+#include "util/assert.hpp"
+#undef CUTIL_NS
 
 namespace gawl {
 auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {
@@ -24,7 +27,7 @@ auto PixelBuffer::from_raw(const size_t width, const size_t height, const std::b
     return PixelBuffer{width, height, std::move(data)};
 }
 
-auto from_file(const char* const file) -> std::optional<PixelBuffer> {
+auto PixelBuffer::from_file(const char* const file) -> std::optional<PixelBuffer> {
     // ImageMagick 7.1.0-44 can't decode grayscale jxl image properly
     // hook and decode it by hand
     if(std::string_view(file).ends_with(".jxl")) {
@@ -40,7 +43,7 @@ auto from_file(const char* const file) -> std::optional<PixelBuffer> {
     }
 }
 
-auto from_blob(const std::byte* const data, const size_t size) -> std::optional<PixelBuffer> {
+auto PixelBuffer::from_blob(const std::byte* const data, const size_t size) -> std::optional<PixelBuffer> {
     try {
         auto blob = Magick::Blob(data, size);
         return load_texture_imagemagick(Magick::Image(blob));
@@ -50,7 +53,7 @@ auto from_blob(const std::byte* const data, const size_t size) -> std::optional<
     }
 }
 
-auto from_blob(const std::span<const std::byte> buffer) -> std::optional<PixelBuffer> {
+auto PixelBuffer::from_blob(const std::span<const std::byte> buffer) -> std::optional<PixelBuffer> {
     return from_blob(buffer.data(), buffer.size());
 }
 } // namespace gawl

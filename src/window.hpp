@@ -3,9 +3,12 @@
 
 #include "binder.hpp"
 #include "screen.hpp"
-#include "util.hpp"
 #include "viewport.hpp"
 #include "window-callbacks.hpp"
+
+#define CUTIL_NS gawl
+#include "util/critical.hpp"
+#undef CUTIL_NS
 
 namespace gawl::impl {
 enum class WindowState {
