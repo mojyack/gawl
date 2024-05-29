@@ -21,7 +21,6 @@ struct WaylandClientObjects {
     towl::CompositorBinder         compositor_binder;
     towl::XDGWMBaseBinder          xdg_wm_base_binder;
     towl::SeatBinder               seat_binder;
-    towl::OutputBinder             output_binder;
     std::optional<KeyRepeatConfig> repeat_config;
 
     static auto create(Critical<Windows>* critical_windows) -> std::unique_ptr<WaylandClientObjects>;

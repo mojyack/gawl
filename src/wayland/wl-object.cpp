@@ -10,8 +10,7 @@ namespace gawl::impl {
 
 class WaylandCallbacks : public towl::KeyboardCallbacks,
                          public towl::PointerCallbacks,
-                         public towl::TouchCallbacks,
-                         public towl::OutputCallbacks {
+                         public towl::TouchCallbacks {
   private:
     Critical<Windows>*              critical_windows;
     std::optional<KeyRepeatConfig>* keyboard_repeat_config;
@@ -120,19 +119,6 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
 
     auto on_wl_touch_frame() -> void override {}
 
-    // OutputCallbacks
-
-    auto on_wl_output_scale(wl_output* const output, const uint32_t scale) -> void override {
-        auto [lock, windows] = critical_windows->access();
-        for(const auto& window : windows) {
-            const auto wl_window = std::bit_cast<WaylandWindow*>(window.get());
-            if(wl_window->wl_get_output() == output) {
-                wl_window->wl_set_output_scale(scale);
-                return;
-            }
-        }
-    }
-
   public:
     auto set_keyboard_repeat_config(std::optional<KeyRepeatConfig>* keyboard_repeat_config) -> void {
         this->keyboard_repeat_config = keyboard_repeat_config;
@@ -157,10 +143,9 @@ auto WaylandClientObjects::create(Critical<Windows>* const critical_windows) -> 
         .compositor_binder  = towl::CompositorBinder(6),
         .xdg_wm_base_binder = towl::XDGWMBaseBinder(2),
         .seat_binder        = towl::SeatBinder(4, callbacks, callbacks, callbacks),
-        .output_binder      = towl::OutputBinder(2, callbacks),
     };
 
-    wl->registry.set_binders({&wl->compositor_binder, &wl->xdg_wm_base_binder, &wl->seat_binder, &wl->output_binder});
+    wl->registry.set_binders({&wl->compositor_binder, &wl->xdg_wm_base_binder, &wl->seat_binder});
     callbacks->set_keyboard_repeat_config(&wl->repeat_config);
 
     return std::unique_ptr<WaylandClientObjects>(wl);

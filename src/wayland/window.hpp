@@ -27,7 +27,6 @@ class WaylandWindow : public Window {
     impl::WindowEvents::Queue   window_event_queue;
     WaylandWindowCallbacks*     wl_callbacks;
 
-    wl_output*        output      = nullptr;
     EGLSurface        egl_surface = nullptr;
     towl::Surface     wayland_surface;
     towl::XDGSurface  xdg_surface;
@@ -61,7 +60,6 @@ class WaylandWindow : public Window {
   public:
     // wayland callbacks
     auto wl_get_surface() -> wl_surface*;
-    auto wl_get_output() const -> wl_output*;
     auto wl_on_keycode_enter(const towl::Array<uint32_t>& keys) -> void;
     auto wl_on_key_leave() -> void;
     auto wl_on_keycode_input(const uint32_t keycode, const uint32_t state) -> void;
@@ -71,7 +69,6 @@ class WaylandWindow : public Window {
     auto wl_on_touch_down(const uint32_t id, const double x, const double y) -> void;
     auto wl_on_touch_up(const uint32_t id) -> void;
     auto wl_on_touch_motion(const uint32_t id, const double x, const double y) -> void;
-    auto wl_set_output_scale(uint32_t scale) -> void;
 
     // for users
     auto refresh() -> void override;

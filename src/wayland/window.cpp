@@ -10,15 +10,6 @@ class WaylandWindowCallbacks : public towl::SurfaceCallbacks,
     WaylandWindow* window;
 
     // SurfaceCallbacks
-    auto on_wl_surface_enter(wl_output* const output) -> void override {
-        window->output = output;
-        // window->resize_buffer(-1, -1, factor);
-    }
-
-    auto on_wl_surface_leave(wl_output* /*output*/) -> void override {
-        window->output = nullptr;
-    }
-
     auto on_wl_surface_preferred_buffer_scale(int32_t factor) -> void override {
         window->resize_buffer(-1, -1, factor);
     }
@@ -175,10 +166,6 @@ auto WaylandWindow::wl_get_surface() -> wl_surface* {
     return wayland_surface.native();
 }
 
-auto WaylandWindow::wl_get_output() const -> wl_output* {
-    return output;
-}
-
 auto WaylandWindow::wl_on_keycode_enter(const towl::Array<uint32_t>& keys) -> void {
     for(auto i = size_t(0); i < keys.size; i += 1) {
         push_window_event<impl::WindowEvents::Keycode>(keys.data[i], gawl::ButtonState::Enter);
@@ -241,10 +228,6 @@ auto WaylandWindow::wl_on_touch_up(const uint32_t id) -> void {
 
 auto WaylandWindow::wl_on_touch_motion(const uint32_t id, const double x, const double y) -> void {
     push_window_event<impl::WindowEvents::TouchMotion>(id, Point{x, y});
-}
-
-auto WaylandWindow::wl_set_output_scale(uint32_t scale) -> void {
-    resize_buffer(-1, -1, scale);
 }
 
 auto WaylandWindow::refresh() -> void {
