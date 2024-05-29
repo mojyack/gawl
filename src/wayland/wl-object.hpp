@@ -15,13 +15,13 @@ auto delete_wayland_callbacks(WaylandCallbacks* callbacks) -> void;
 declare_autoptr(WaylandCallbacks, WaylandCallbacks, delete_wayland_callbacks);
 
 struct WaylandClientObjects {
+    towl::Display                  display;
+    towl::Registry                 registry;
     AutoWaylandCallbacks           callbacks;
     towl::CompositorBinder         compositor_binder;
     towl::XDGWMBaseBinder          xdg_wm_base_binder;
     towl::SeatBinder               seat_binder;
     towl::OutputBinder             output_binder;
-    towl::Registry                 registry;
-    towl::Display                  display;
     std::optional<KeyRepeatConfig> repeat_config;
 
     static auto create(Critical<Windows>* critical_windows) -> std::unique_ptr<WaylandClientObjects>;

@@ -254,15 +254,6 @@ auto WaylandWindow::refresh() -> void {
     push_window_event<impl::WindowEvents::Refresh>();
 }
 
-auto WaylandWindow::close_window() -> void {
-    set_state(impl::WindowState::Destructing);
-    app_event_queue->push<impl::CloseWindowArgs>(this);
-}
-
-auto WaylandWindow::quit_application() -> void {
-    app_event_queue->push<impl::QuitApplicationArgs>();
-}
-
 auto WaylandWindow::fork_context() -> EGLSubObject {
     return egl->fork();
 }

@@ -6,12 +6,15 @@
 
 namespace gawl {
 class Window;
+class Application;
 
 class WindowCallbacks {
   protected:
+    friend class Application;
     friend class Window;
 
-    Window* window;
+    Application* application;
+    Window*      window;
 
   public:
     // ask user to redraw its contents

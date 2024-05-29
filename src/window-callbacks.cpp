@@ -1,7 +1,7 @@
-#include "window.hpp"
+#include "application.hpp"
 
 namespace gawl {
 auto WindowCallbacks::close() -> void {
-    // window->close(); TODO: implement close
+    application->close_window(window);
 }
-}
+} // namespace gawl

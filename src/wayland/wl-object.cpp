@@ -142,17 +142,20 @@ auto delete_wayland_callbacks(WaylandCallbacks* callbacks) -> void {
 }
 
 auto WaylandClientObjects::create(Critical<Windows>* const critical_windows) -> std::unique_ptr<WaylandClientObjects> {
-    auto       display   = towl::Display();
-    const auto callbacks = new WaylandCallbacks(critical_windows);
-    const auto wl        = new WaylandClientObjects{
-               .callbacks          = AutoWaylandCallbacks(callbacks),
-               .compositor_binder  = towl::CompositorBinder(4),
-               .xdg_wm_base_binder = towl::XDGWMBaseBinder(2),
-               .seat_binder        = towl::SeatBinder(4, callbacks, callbacks, callbacks),
-               .output_binder      = towl::OutputBinder(2, callbacks),
-               .registry           = display.get_registry(),
-               .display            = std::move(display),
+    auto       display      = towl::Display();
+    const auto registry_ptr = display.get_registry();
+    const auto callbacks    = new WaylandCallbacks(critical_windows);
+
+    const auto wl = new WaylandClientObjects{
+        .display            = std::move(display),
+        .registry           = towl::Registry(registry_ptr),
+        .callbacks          = AutoWaylandCallbacks(callbacks),
+        .compositor_binder  = towl::CompositorBinder(4),
+        .xdg_wm_base_binder = towl::XDGWMBaseBinder(2),
+        .seat_binder        = towl::SeatBinder(4, callbacks, callbacks, callbacks),
+        .output_binder      = towl::OutputBinder(2, callbacks),
     };
+
     wl->registry.set_binders({&wl->compositor_binder, &wl->xdg_wm_base_binder, &wl->seat_binder, &wl->output_binder});
     callbacks->set_keyboard_repeat_config(&wl->repeat_config);
 

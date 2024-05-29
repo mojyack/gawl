@@ -72,8 +72,6 @@ class WaylandWindow : public Window {
 
     // for users
     auto refresh() -> void;
-    auto close_window() -> void;
-    auto quit_application() -> void;
     auto fork_context() -> EGLSubObject;
 
     WaylandWindow(const WindowCreateHint& hint, WindowCallbacks* callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, impl::AppEventQueue* app_event_queue);

@@ -4,6 +4,10 @@
 #include "../util/assert.hpp"
 
 namespace gawl {
+auto WaylandApplication::create_window(const WindowCreateHint& hint, WindowCallbacks* callbacks) -> Window* {
+    return new WaylandWindow(hint, callbacks, wl.get(), &egl, &events);
+}
+
 auto WaylandApplication::close_window_impl(Window* const window) -> void {
     events.push<impl::CloseWindowArgs>(window);
 }
@@ -26,13 +30,6 @@ loop:
         return;
     }
     goto loop;
-}
-
-auto WaylandApplication::open_window(const WindowCreateHint& hint, WindowCallbacks* const callbacks) -> WaylandWindow* {
-    const auto ptr       = new WaylandWindow(hint, callbacks, wl.get(), &egl, &events);
-    auto [lock, windows] = critical_windows.access();
-    windows.emplace_back(ptr);
-    return ptr;
 }
 
 auto WaylandApplication::run() -> void {

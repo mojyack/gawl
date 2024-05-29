@@ -1,4 +1,5 @@
 #pragma once
+#include "window-creat-hint.hpp"
 #include "window.hpp"
 
 namespace gawl {
@@ -16,10 +17,17 @@ class Application {
         }
     }
 
-    virtual auto close_window_impl(Window* window) -> void = 0;
+    virtual auto create_window(const WindowCreateHint& hint, WindowCallbacks* callbacks) -> Window* = 0;
+    virtual auto close_window_impl(Window* window) -> void                                          = 0;
 
   public:
-    // open_window is provided by backend class
+    auto open_window(const WindowCreateHint& hint, WindowCallbacks* const callbacks) -> Window* {
+        const auto ptr       = create_window(hint, callbacks);
+        auto [lock, windows] = critical_windows.access();
+        windows.emplace_back(ptr);
+        callbacks->application = this;
+        return ptr;
+    }
 
     auto close_window(Window* const window) -> void {
         window->set_state(impl::WindowState::Destructing);
@@ -32,6 +40,8 @@ class Application {
             close_window(w.get());
         }
     }
+
+    virtual auto quit() -> void = 0;
 
     virtual ~Application() {}
 };
