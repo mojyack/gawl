@@ -48,6 +48,10 @@ class Callbacks : public gawl::WindowCallbacks {
         }
     }
 
+    auto close() -> void override {
+        application->quit();
+    }
+
     Callbacks()
         : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 32) {}
 };

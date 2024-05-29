@@ -21,6 +21,10 @@ class Callbacks : public gawl::WindowCallbacks {
         font.draw_fit_rect(*window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, str.data());
     }
 
+    auto close() -> void override {
+        application->quit();
+    }
+
     auto on_pointer(const gawl::Point& point) -> void override {
         pointer = point;
         window->refresh();
