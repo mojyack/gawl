@@ -22,6 +22,7 @@ gawl_files = files(
   'polygon-shader.cpp',
   'graphic-base.cpp',
   'graphic.cpp',
+  'textrender.cpp',
   'misc.cpp',
   'jxl-decoder.cpp',
 )
