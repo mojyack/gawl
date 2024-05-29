@@ -8,7 +8,7 @@ auto TextRenderShader::set_text_color(const Color& text_color) -> void {
     color = text_color;
 }
 
-auto TextRenderShader::set_shader_parameters(const GLuint shader) -> void {
+auto TextRenderShader::set_parameters(const GLuint shader) -> void {
     const auto l = glGetUniformLocation(shader, "text_color");
     glUniform4f(l, color[0], color[1], color[2], color[3]);
 };

@@ -11,7 +11,7 @@ class TextRenderShader : public GraphicShader {
     void* freetype = nullptr; // FT_Library
 
     auto set_text_color(const Color& text_color) -> void;
-    auto set_shader_parameters(const GLuint shader) -> void;
+    auto set_parameters(const GLuint shader) -> void override;
 
     TextRenderShader();
     ~TextRenderShader();

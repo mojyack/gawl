@@ -17,11 +17,11 @@ executable(
   dependencies: common_deps
 )
 
-#executable(
-#  'textrender',
-#  files('examples/textrender.cpp') + common_files,
-#  dependencies: common_deps + gawl_fc_deps
-#)
+executable(
+  'textrender',
+  files('examples/textrender.cpp') + common_files,
+  dependencies: common_deps + gawl_fc_deps
+)
 
 executable(
   'keyboard',
