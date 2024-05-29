@@ -22,13 +22,13 @@ executable(
 #  files('examples/textrender.cpp') + common_files,
 #  dependencies: common_deps + gawl_fc_deps
 #)
-#
-#executable(
-#  'keyboard',
-#  files('examples/keyboard.cpp') + common_files,
-#  dependencies: common_deps + gawl_keysym_deps
-#)
-#
+
+executable(
+  'keyboard',
+  files('examples/keyboard.cpp') + common_files,
+  dependencies: common_deps + gawl_keysym_deps
+)
+
 #executable(
 #  'mouse',
 #  files('examples/mouse.cpp') + common_files,
