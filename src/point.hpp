@@ -8,8 +8,8 @@ struct Point {
     double x;
     double y;
 
-    auto magnify(const double scale) -> void;
-    auto rotate(const Point& origin, const double angle) -> void;
+    auto magnify(double scale) -> void;
+    auto rotate(const Point& origin, double angle) -> void;
 
     auto operator+=(const Point& o) -> Point&;
 };
