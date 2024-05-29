@@ -1,5 +1,4 @@
 #include "gawl/misc.hpp"
-#include "gawl/polygon.hpp"
 #include "gawl/wayland/application.hpp"
 
 #include <iostream>

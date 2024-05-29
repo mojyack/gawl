@@ -29,12 +29,12 @@ executable(
   dependencies: common_deps + gawl_keysym_deps
 )
 
-#executable(
-#  'mouse',
-#  files('examples/mouse.cpp') + common_files,
-#  dependencies: common_deps + gawl_fc_deps
-#)
-#
+executable(
+  'mouse',
+  files('examples/mouse.cpp') + common_files,
+  dependencies: common_deps + gawl_fc_deps
+)
+
 #executable(
 #  'multiwindow',
 #  files('examples/multiwindow.cpp') + common_files,

@@ -1,44 +1,40 @@
-#define GAWL_MOUSE
-#include <gawl/fc.hpp>
-#include <gawl/textrender.hpp>
-#include <gawl/wayland/gawl.hpp>
+#include <linux/input.h>
 
-class Impl {
+#include "gawl/fc.hpp"
+#include "gawl/misc.hpp"
+#include "gawl/textrender.hpp"
+#include "gawl/wayland/application.hpp"
+
+class Callbacks : public gawl::WindowCallbacks {
   private:
-    gawl::Window<Impl>&   window;
     gawl::TextRender      font;
     gawl::Point           pointer;
     std::array<bool, 3>   click  = {false, false};
     std::array<double, 2> scroll = {0.0, 0.0};
 
-    template <class... Args>
-    auto build_string(Args... args) -> std::string {
-        auto ss = std::stringstream();
-        (ss << ... << args);
-        return ss.str();
-    }
-
   public:
-    auto refresh_callback() -> void {
+    auto refresh() -> void override {
+        const auto str = gawl::build_string(int(pointer.x), ",", int(pointer.y));
+
         gawl::clear_screen({0, 0, 0, 1});
-        gawl::draw_rect(window, {{pointer.x - 10 - scroll[1], pointer.y - 10 - scroll[0]}, {pointer.x + 10 + scroll[1], pointer.y + 10 + scroll[0]}}, {click[0] ? 0.0 : 1.0, click[1] ? 0.0 : 1.0, click[2] ? 0.0 : 1.0, 1});
-        font.draw_fit_rect(window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, build_string(static_cast<int>(pointer.x), ",", static_cast<int>(pointer.y)).data());
+        gawl::draw_rect(*window, {{pointer.x - 10 - scroll[1], pointer.y - 10 - scroll[0]}, {pointer.x + 10 + scroll[1], pointer.y + 10 + scroll[0]}}, {click[0] ? 0.0 : 1.0, click[1] ? 0.0 : 1.0, click[2] ? 0.0 : 1.0, 1});
+        font.draw_fit_rect(*window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, str.data());
     }
 
-    auto pointer_move_callback(const gawl::Point& point) -> void {
+    auto on_pointer(const gawl::Point& point) -> void override {
         pointer = point;
-        window.refresh();
+        window->refresh();
     }
 
-    auto click_callback(const uint32_t button, const gawl::ButtonState state) -> void {
+    auto on_click(const uint32_t button, const gawl::ButtonState state) -> void override {
         if(button < BTN_LEFT && button > BTN_MIDDLE) {
             return;
         }
         click[button - BTN_LEFT] = state == gawl::ButtonState::Press;
-        window.refresh();
+        window->refresh();
     }
 
-    auto scroll_callback(const gawl::WheelAxis axis, const double value) -> void {
+    auto on_scroll(const gawl::WheelAxis axis, const double value) -> void override {
         auto& s = scroll[axis == gawl::WheelAxis::Horizontal];
         s += value;
         if(s < 0.0) {
@@ -46,14 +42,13 @@ class Impl {
         }
     }
 
-    Impl(gawl::Window<Impl>& window)
-        : window(window),
-          font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 16) {}
+    Callbacks()
+        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 16) {}
 };
 
 auto main() -> int {
-    auto app = gawl::Application();
-    app.open_window<Impl>({.manual_refresh = false});
+    auto app = gawl::WaylandApplication();
+    app.open_window({}, new Callbacks());
     app.run();
     return 0;
 }

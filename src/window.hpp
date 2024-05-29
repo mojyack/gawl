@@ -100,6 +100,8 @@ class Window : public Screen {
     }
 
     // user apis
+    virtual auto refresh() -> void = 0;
+
     auto get_window_size() const -> const std::array<int, 2>& {
         return window_size;
     }
