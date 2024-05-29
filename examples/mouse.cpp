@@ -4,6 +4,7 @@
 #include "gawl/misc.hpp"
 #include "gawl/textrender.hpp"
 #include "gawl/wayland/application.hpp"
+#include "util/print.hpp"
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
@@ -14,7 +15,7 @@ class Callbacks : public gawl::WindowCallbacks {
 
   public:
     auto refresh() -> void override {
-        const auto str = gawl::build_string(int(pointer.x), ",", int(pointer.y));
+        const auto str = build_string(int(pointer.x), ",", int(pointer.y));
 
         gawl::clear_screen({0, 0, 0, 1});
         gawl::draw_rect(*window, {{pointer.x - 10 - scroll[1], pointer.y - 10 - scroll[0]}, {pointer.x + 10 + scroll[1], pointer.y + 10 + scroll[0]}}, {click[0] ? 0.0 : 1.0, click[1] ? 0.0 : 1.0, click[2] ? 0.0 : 1.0, 1});
@@ -47,7 +48,7 @@ class Callbacks : public gawl::WindowCallbacks {
     }
 
     Callbacks()
-        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 16) {}
+        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").value().data()}, 16) {}
 };
 
 auto main() -> int {

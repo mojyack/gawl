@@ -3,26 +3,46 @@ subdir('wayland')
 freetype_dep = dependency('freetype2')
 magick_dep = dependency('Magick++')
 jxl_dep = dependency('libjxl')
-xkbcommon_dep = dependency('xkbcommon')
 fc_dep = dependency('fontconfig')
 
-gawl_deps = gawl_wayland_deps + [freetype_dep, magick_dep, jxl_dep]
-gawl_keysym_deps = [xkbcommon_dep]
-gawl_fc_deps = [fc_dep]
-gawl_files = files(
-  'application.cpp',
+gawl_shader_files = files(
+)
+
+gawl_core_deps = gawl_wayland_deps + [freetype_dep]
+gawl_core_files = files(
+  # core
   'point.cpp',
   'rect.cpp',
+  'application.cpp',
   'window-callbacks.cpp',
-  'pixelbuffer.cpp',
+  'window.cpp',
+  'misc.cpp',
+  'graphic-base.cpp',
+  # shader
   'shader.cpp',
-  'polygon.cpp',
   'graphic-shader.cpp',
   'textrender-shader.cpp',
   'polygon-shader.cpp',
-  'graphic-base.cpp',
+) + gawl_wayland_files
+
+gawl_graphic_deps = [magick_dep, jxl_dep]
+gawl_graphic_files = files(
+  'pixelbuffer.cpp',
   'graphic.cpp',
-  'textrender.cpp',
-  'misc.cpp',
   'jxl-decoder.cpp',
+) + gawl_shader_files
+
+gawl_textrender_deps = []
+gawl_textrender_files = files(
+  'textrender.cpp',
+) + gawl_shader_files
+
+gawl_polygon_deps = []
+gawl_polygon_files = files(
+  'polygon.cpp',
+) + gawl_shader_files
+
+gawl_fc_deps = [fc_dep]
+gawl_fc_files = files(
+  'fc.cpp',
 )

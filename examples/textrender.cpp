@@ -53,7 +53,7 @@ class Callbacks : public gawl::WindowCallbacks {
     }
 
     Callbacks()
-        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").unwrap().data()}, 32) {}
+        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").value().data()}, 32) {}
 };
 
 auto main() -> int {
