@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-class Keycode : public gawl::WindowCallbacks {
+class Callbacks : public gawl::WindowCallbacks {
   public:
     auto refresh() -> void override {
         gawl::clear_screen({0, 0, 0, 1});
@@ -20,7 +20,7 @@ class Keycode : public gawl::WindowCallbacks {
 
 auto main() -> int {
     auto app = gawl::WaylandApplication();
-    app.open_window({}, new Keycode());
+    app.open_window({}, std::shared_ptr<Callbacks>(new Callbacks()));
     app.run();
     return 0;
 }

@@ -35,8 +35,8 @@ class Window : public Screen {
     Viewport                   viewport = {{0, 0}, {800, 600}};
 
   protected:
-    WindowCallbacks* callbacks;
-    bool             event_driven = false;
+    std::shared_ptr<WindowCallbacks> callbacks;
+    bool                             event_driven = false;
 
     auto on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
         constexpr auto MIN_SCALE = 0.01;
@@ -126,8 +126,9 @@ class Window : public Screen {
         return event_driven;
     }
 
-    Window(WindowCallbacks* callbacks) : callbacks(callbacks) {
-        callbacks->window = this;
+    Window(std::shared_ptr<WindowCallbacks> callbacks)
+        : callbacks(std::move(callbacks)) {
+        this->callbacks->window = this;
     }
 
     virtual ~Window() {}

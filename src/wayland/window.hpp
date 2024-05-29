@@ -77,8 +77,8 @@ class WaylandWindow : public Window {
     auto refresh() -> void override;
     auto fork_context() -> EGLSubObject;
 
-    WaylandWindow(const WindowCreateHint& hint, WindowCallbacks* callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, impl::AppEventQueue* app_event_queue);
+    WaylandWindow(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, impl::AppEventQueue* app_event_queue);
 
-    ~WaylandWindow() {}
+    ~WaylandWindow();
 };
 }; // namespace gawl

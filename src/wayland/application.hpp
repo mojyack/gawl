@@ -18,7 +18,7 @@ class WaylandApplication : public Application {
     std::atomic_bool                            running = false;
     bool                                        quitted = false;
 
-    auto create_window(const WindowCreateHint& hint, WindowCallbacks* callbacks) -> Window* override;
+    auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window* override;
     auto close_window_impl(Window* window) -> void override;
     auto wayland_main() -> void;
 

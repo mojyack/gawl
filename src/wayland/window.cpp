@@ -260,11 +260,11 @@ auto WaylandWindow::fork_context() -> EGLSubObject {
 
 WaylandWindow::WaylandWindow(
     const WindowCreateHint&           hint,
-    WindowCallbacks* const            callbacks,
+    std::shared_ptr<WindowCallbacks>  callbacks,
     impl::WaylandClientObjects* const wl,
     impl::EGLObject* const            egl,
     impl::AppEventQueue* const        app_event_queue)
-    : Window(callbacks),
+    : Window(std::move(callbacks)),
       wl(wl), egl(egl), app_event_queue(app_event_queue),
       wl_callbacks(new WaylandWindowCallbacks(this)),
       wayland_surface(get_primary_interface<towl::Compositor>(wl->compositor_binder)->create_surface(wl_callbacks)),
@@ -282,5 +282,13 @@ WaylandWindow::WaylandWindow(
 
     set_event_driven(hint.manual_refresh);
     set_state(impl::WindowState::Running);
+}
+
+WaylandWindow::~WaylandWindow() {
+    {
+        auto [lock, repeater] = key_repeater.access();
+        wait_for_key_repeater_exit(repeater);
+    }
+    DYN_ASSERT(eglDestroySurface(egl->display, egl_surface) != EGL_FALSE);
 }
 } // namespace gawl

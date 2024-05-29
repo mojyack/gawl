@@ -4,8 +4,8 @@
 #include "../util/assert.hpp"
 
 namespace gawl {
-auto WaylandApplication::create_window(const WindowCreateHint& hint, WindowCallbacks* callbacks) -> Window* {
-    return new WaylandWindow(hint, callbacks, wl.get(), &egl, &events);
+auto WaylandApplication::create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window* {
+    return new WaylandWindow(hint, std::move(callbacks), wl.get(), &egl, &events);
 }
 
 auto WaylandApplication::close_window_impl(Window* const window) -> void {
@@ -60,7 +60,11 @@ loop:
         } break;
         case impl::AppEventQueue::index_of<impl::QuitApplicationArgs>:
             quitted = true;
-            close_all_windows();
+            if(critical_windows.access().second.empty()) {
+                goto exit;
+            } else {
+                close_all_windows();
+            }
             break;
         }
     }

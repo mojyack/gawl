@@ -9,11 +9,11 @@ class Application {
 
     auto erase_window(const Window* const window) -> void;
 
-    virtual auto create_window(const WindowCreateHint& hint, WindowCallbacks* callbacks) -> Window* = 0;
-    virtual auto close_window_impl(Window* window) -> void                                          = 0;
+    virtual auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window* = 0;
+    virtual auto close_window_impl(Window* window) -> void                                                          = 0;
 
   public:
-    auto open_window(const WindowCreateHint& hint, WindowCallbacks* const callbacks) -> Window*;
+    auto open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window*;
     auto close_window(Window* const window) -> void;
     auto close_all_windows() -> void;
 

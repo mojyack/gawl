@@ -11,11 +11,11 @@ auto Application::erase_window(const Window* const window) -> void {
     }
 }
 
-auto Application::open_window(const WindowCreateHint& hint, WindowCallbacks* const callbacks) -> Window* {
-    const auto ptr       = create_window(hint, callbacks);
-    auto [lock, windows] = critical_windows.access();
-    windows.emplace_back(ptr);
+auto Application::open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window* {
     callbacks->application = this;
+    const auto ptr         = create_window(hint, std::move(callbacks));
+    auto [lock, windows]   = critical_windows.access();
+    windows.emplace_back(ptr);
     return ptr;
 }
 
