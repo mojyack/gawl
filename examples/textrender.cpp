@@ -58,7 +58,7 @@ class Callbacks : public gawl::WindowCallbacks {
 
 auto main() -> int {
     auto app = gawl::WaylandApplication();
-    app.open_window({}, std::shared_ptr<Callbacks>(new Callbacks()));
+    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
     app.run();
     return 0;
 }
