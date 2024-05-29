@@ -12,14 +12,16 @@ class WaylandWindowCallbacks : public towl::SurfaceCallbacks,
     // SurfaceCallbacks
     auto on_wl_surface_enter(wl_output* const output) -> void override {
         window->output = output;
-        // window->resize_buffer(-1, -1, towl::get_scale(output));
+        // window->resize_buffer(-1, -1, factor);
     }
 
     auto on_wl_surface_leave(wl_output* /*output*/) -> void override {
         window->output = nullptr;
     }
 
-    auto on_wl_surface_preferred_buffer_scale(int32_t /*factor*/) -> void override {}
+    auto on_wl_surface_preferred_buffer_scale(int32_t factor) -> void override {
+        window->resize_buffer(-1, -1, factor);
+    }
 
     auto on_wl_surface_frame() -> void override {
         window->frame_done = true;

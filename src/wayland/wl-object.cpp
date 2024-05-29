@@ -154,7 +154,7 @@ auto WaylandClientObjects::create(Critical<Windows>* const critical_windows) -> 
         .display            = std::move(display),
         .registry           = towl::Registry(registry_ptr),
         .callbacks          = AutoWaylandCallbacks(callbacks),
-        .compositor_binder  = towl::CompositorBinder(4),
+        .compositor_binder  = towl::CompositorBinder(6),
         .xdg_wm_base_binder = towl::XDGWMBaseBinder(2),
         .seat_binder        = towl::SeatBinder(4, callbacks, callbacks, callbacks),
         .output_binder      = towl::OutputBinder(2, callbacks),
