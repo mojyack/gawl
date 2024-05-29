@@ -11,12 +11,12 @@ executable(
   dependencies: common_deps
 )
 
-#executable(
-#  'graphics',
-#  files('examples/graphics.cpp') + common_files,
-#  dependencies: common_deps
-#)
-#
+executable(
+  'graphics',
+  files('examples/graphics.cpp') + common_files,
+  dependencies: common_deps
+)
+
 #executable(
 #  'textrender',
 #  files('examples/textrender.cpp') + common_files,
