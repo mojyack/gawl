@@ -1,18 +1,16 @@
 #pragma once
-#include <array>
-
-#include "binder.hpp"
-#include "internal-type.hpp"
+#include "screen.hpp"
 
 namespace gawl {
-class NullScreen {
+class NullScreen : MetaScreen {
   public:
-    auto get_scale() const -> double {
+    auto get_scale() const -> double override {
         return 1.0;
     }
 
-    auto get_viewport() const -> internal::Viewport {
-        return {{0, 0}, {0, 0}};
+    auto get_viewport() const -> const Viewport& override {
+        static const auto vp = Viewport{{0, 0}, {0, 0}};
+        return vp;
     }
 };
 } // namespace gawl
