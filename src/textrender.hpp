@@ -68,6 +68,6 @@ class TextRender {
     auto calc_wrapped_text_height(Screen& screen, double width, double line_height, std::string_view text, WrappedText& wrapped_text, int size = 0) -> double;
     auto draw_wrapped(Screen& screen, const Rectangle& rect, double line_height, const Color& color, std::string_view text, WrappedText& wrapped_text, int size = 0, gawl::Align alignx = gawl::Align::Center, gawl::Align aligny = gawl::Align::Center) -> void;
 
-    TextRender(std::vector<std::string> font_names, int default_size) : font_names(std::move(font_names)), default_size(default_size) {}
+    TextRender(std::vector<std::string> font_names, int default_size);
 };
 } // namespace gawl
