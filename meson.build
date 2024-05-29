@@ -40,13 +40,13 @@ executable(
 #  files('examples/multiwindow.cpp') + common_files,
 #  dependencies: common_deps
 #)
-#
-#executable(
-#  'mtloading',
-#  files('examples/background-texture-loading.cpp') + common_files,
-#  dependencies: common_deps
-#)
-#
+
+executable(
+  'mtloading',
+  files('examples/background-texture-loading.cpp') + common_files,
+  dependencies: common_deps
+)
+
 #executable(
 #  'touch',
 #  files('examples/touch.cpp') + common_files,
