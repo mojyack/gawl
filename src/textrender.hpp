@@ -18,12 +18,13 @@ class Character : public impl::GraphicBase {
 
 class CharacterCache {
   public:
-    std::vector<FT_Face>                                     faces;
-    std::unordered_map<char32_t, std::unique_ptr<Character>> cache;
+    std::vector<FT_Face>                    faces;
+    std::unordered_map<char32_t, Character> cache;
 
     auto get_character(char32_t c) -> Character&;
 
     CharacterCache(const std::vector<std::string>& font_names, int size);
+    CharacterCache(CharacterCache&& o) = default;
     ~CharacterCache();
 };
 
@@ -47,9 +48,9 @@ class WrappedText {
 
 class TextRender {
   private:
-    std::unordered_map<int, std::unique_ptr<impl::CharacterCache>> caches;
-    std::vector<std::string>                                       font_names;
-    int                                                            default_size;
+    std::unordered_map<int, impl::CharacterCache> caches;
+    std::vector<std::string>                      font_names;
+    int                                           default_size;
 
     auto clear() -> void;
     auto get_chara(int size) -> impl::CharacterCache&;

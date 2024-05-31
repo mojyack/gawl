@@ -45,9 +45,9 @@ Character::Character(char32_t code, const std::vector<FT_Face>& faces) : Graphic
 
 auto CharacterCache::get_character(const char32_t c) -> Character& {
     if(const auto f = cache.find(c); f != cache.end()) {
-        return *f->second.get();
+        return f->second;
     } else {
-        return *cache.insert(std::make_pair(c, new Character(c, faces))).first->second.get();
+        return cache.insert(std::make_pair(c, Character(c, faces))).first->second;
     }
 }
 
@@ -134,9 +134,9 @@ auto TextRender::clear() -> void {
 
 auto TextRender::get_chara(const int size) -> impl::CharacterCache& {
     if(const auto p = caches.find(size); p != caches.end()) {
-        return *p->second.get();
+        return p->second;
     }
-    return *caches.insert(std::make_pair(size, new impl::CharacterCache(font_names, size))).first->second.get();
+    return caches.insert(std::make_pair(size, impl::CharacterCache(font_names, size))).first->second;
 }
 
 auto TextRender::get_chara_graphic(const int size, const char32_t chara) -> impl::Character& {
