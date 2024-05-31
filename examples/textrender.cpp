@@ -2,6 +2,8 @@
 #include "gawl/fc.hpp"
 #include "gawl/misc.hpp"
 #include "gawl/wayland/application.hpp"
+#include "macros/unwrap.hpp"
+#include "util/assert.hpp"
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
@@ -52,8 +54,10 @@ class Callbacks : public gawl::WindowCallbacks {
         application->quit();
     }
 
-    Callbacks()
-        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").value().data()}, 32) {}
+    Callbacks() {
+        unwrap_on_mut(font_path, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
+        font.init({std::move(font_path)}, 32);
+    }
 };
 
 auto main() -> int {

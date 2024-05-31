@@ -174,6 +174,11 @@ done:
     return WrappedText(width, screen.get_scale(), std::move(lines));
 }
 
+auto TextRender::init(std::vector<std::string> font_names, const int default_size) -> void {
+    this->font_names   = std::move(font_names);
+    this->default_size = default_size;
+}
+
 auto TextRender::set_char_color(const Color& color) -> void {
     impl::global->textrender_shader.set_text_color(color);
 }
@@ -313,5 +318,7 @@ auto TextRender::draw_wrapped(Screen& screen, const Rectangle& rect, const doubl
     }
 }
 
-TextRender::TextRender(std::vector<std::string> font_names, const int default_size) : font_names(std::move(font_names)), default_size(default_size) {}
+TextRender::TextRender(std::vector<std::string> font_names, const int default_size) {
+    init(std::move(font_names), default_size);
+}
 } // namespace gawl

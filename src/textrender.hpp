@@ -48,7 +48,7 @@ class WrappedText {
 class TextRender {
   private:
     std::unordered_map<int, std::unique_ptr<impl::CharacterCache>> caches;
-    const std::vector<std::string>                                 font_names;
+    std::vector<std::string>                                       font_names;
     int                                                            default_size;
 
     auto clear() -> void;
@@ -59,6 +59,7 @@ class TextRender {
   public:
     using Callback = std::function<bool(size_t, const gawl::Rectangle&, impl::Character&)>;
 
+    auto init(std::vector<std::string> font_names, int default_size) -> void;
     auto set_char_color(const Color& color) -> void;
     auto get_rect(const MetaScreen& screen, std::string_view text, int size = 0) -> Rectangle;
     auto get_rect(const MetaScreen& screen, std::u32string_view text, int size = 0) -> Rectangle;
@@ -68,6 +69,7 @@ class TextRender {
     auto calc_wrapped_text_height(Screen& screen, double width, double line_height, std::string_view text, WrappedText& wrapped_text, int size = 0) -> double;
     auto draw_wrapped(Screen& screen, const Rectangle& rect, double line_height, const Color& color, std::string_view text, WrappedText& wrapped_text, int size = 0, gawl::Align alignx = gawl::Align::Center, gawl::Align aligny = gawl::Align::Center) -> void;
 
+    TextRender() {}
     TextRender(std::vector<std::string> font_names, int default_size);
 };
 } // namespace gawl
