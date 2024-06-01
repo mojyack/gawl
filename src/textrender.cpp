@@ -179,6 +179,10 @@ auto TextRender::init(std::vector<std::string> font_names, const int default_siz
     this->default_size = default_size;
 }
 
+auto TextRender::get_default_size() const -> int {
+    return default_size;
+}
+
 auto TextRender::set_char_color(const Color& color) -> void {
     impl::global->textrender_shader.set_text_color(color);
 }

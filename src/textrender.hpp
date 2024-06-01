@@ -61,6 +61,7 @@ class TextRender {
     using Callback = std::function<bool(size_t, const gawl::Rectangle&, impl::Character&)>;
 
     auto init(std::vector<std::string> font_names, int default_size) -> void;
+    auto get_default_size() const -> int;
     auto set_char_color(const Color& color) -> void;
     auto get_rect(const MetaScreen& screen, std::string_view text, int size = 0) -> Rectangle;
     auto get_rect(const MetaScreen& screen, std::u32string_view text, int size = 0) -> Rectangle;
