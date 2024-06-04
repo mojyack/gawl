@@ -4,9 +4,10 @@
 #include "gawl/misc.hpp"
 #include "gawl/textrender.hpp"
 #include "gawl/wayland/application.hpp"
+#include "gawl/window-no-touch-callbacks.hpp"
 #include "util/print.hpp"
 
-class Callbacks : public gawl::WindowCallbacks {
+class Callbacks : public gawl::WindowNoTouchCallbacks {
   private:
     gawl::TextRender      font;
     gawl::Point           pointer;

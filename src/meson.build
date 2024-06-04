@@ -46,3 +46,4 @@ gawl_fc_files = files(
 
 # optional files
 gawl_empty_texture_files = files('empty-texture.cpp')
+gawl_no_touch_callbacks_file = files('window-no-touch-callbacks.cpp')
