@@ -7,7 +7,7 @@ class Graphic : public impl::GraphicBase {
   public:
     auto update_texture(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) -> void;
 
-    Graphic() {}
+    Graphic();
     Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt);
 };
 

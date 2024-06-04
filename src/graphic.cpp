@@ -33,7 +33,11 @@ auto Graphic::update_texture(const PixelBuffer& buffer, std::optional<std::array
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data.data());
 }
 
-Graphic::Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) : GraphicBase(impl::global->graphic_shader) {
+Graphic::Graphic()
+    : GraphicBase(impl::global->graphic_shader) {}
+
+Graphic::Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop)
+    : Graphic() {
     update_texture(buffer, crop);
 }
 } // namespace gawl
