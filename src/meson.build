@@ -5,9 +5,6 @@ magick_dep = dependency('Magick++')
 jxl_dep = dependency('libjxl')
 fc_dep = dependency('fontconfig')
 
-gawl_shader_files = files(
-)
-
 gawl_core_deps = gawl_wayland_deps + [freetype_dep]
 gawl_core_files = files(
   # core
@@ -30,17 +27,17 @@ gawl_graphic_files = files(
   'pixelbuffer.cpp',
   'graphic.cpp',
   'jxl-decoder.cpp',
-) + gawl_shader_files
+)
 
 gawl_textrender_deps = []
 gawl_textrender_files = files(
   'textrender.cpp',
-) + gawl_shader_files
+)
 
 gawl_polygon_deps = []
 gawl_polygon_files = files(
   'polygon.cpp',
-) + gawl_shader_files
+)
 
 gawl_fc_deps = [fc_dep]
 gawl_fc_files = files(
