@@ -1,3 +1,4 @@
+#pragma once
 #include "../application.hpp"
 #include "../window-creat-hint.hpp"
 #include "app-events.hpp"
