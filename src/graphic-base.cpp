@@ -34,20 +34,20 @@ auto GraphicBase::get_height(const MetaScreen& screen) const -> int {
     return height / screen.get_scale();
 }
 
-auto GraphicBase::draw(Screen& screen, const Point& point) -> void {
+auto GraphicBase::draw(Screen& screen, const Point& point) const -> void {
     draw_rect(screen, {{point.x, point.y}, {point.x + width, point.y + height}});
 }
 
-auto GraphicBase::draw_rect(Screen& screen, const Rectangle& rect) -> void {
+auto GraphicBase::draw_rect(Screen& screen, const Rectangle& rect) const -> void {
     shader->move_vertices(screen, Rectangle(rect).magnify(screen.get_scale()), invert_top_bottom);
     do_draw(screen);
 }
 
-auto GraphicBase::draw_fit_rect(Screen& screen, const Rectangle& rect) -> void {
+auto GraphicBase::draw_fit_rect(Screen& screen, const Rectangle& rect) const -> void {
     draw_rect(screen, calc_fit_rect(rect, width, height));
 }
 
-auto GraphicBase::draw_transformed(Screen& screen, const std::array<Point, 4>& vertices) -> void {
+auto GraphicBase::draw_transformed(Screen& screen, const std::array<Point, 4>& vertices) const -> void {
     auto       v = vertices;
     const auto s = screen.get_scale();
     for(auto& p : v) {

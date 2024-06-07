@@ -22,15 +22,15 @@ class GraphicBase {
   public:
     auto get_width(const MetaScreen& screen) const -> int;
     auto get_height(const MetaScreen& screen) const -> int;
-    auto draw(Screen& screen, const Point& point) -> void;
-    auto draw_rect(Screen& screen, const Rectangle& rect) -> void;
-    auto draw_fit_rect(Screen& screen, const Rectangle& rect) -> void;
-    auto draw_transformed(Screen& screen, const std::array<Point, 4>& vertices) -> void;
+    auto draw(Screen& screen, const Point& point) const -> void;
+    auto draw_rect(Screen& screen, const Rectangle& rect) const -> void;
+    auto draw_fit_rect(Screen& screen, const Rectangle& rect) const -> void;
+    auto draw_transformed(Screen& screen, const std::array<Point, 4>& vertices) const -> void;
 
     operator bool() const;
     auto operator=(GraphicBase&& o) -> GraphicBase&;
 
-    GraphicBase() {};
+    GraphicBase(){};
     GraphicBase(GraphicShader& shader);
     GraphicBase(GraphicBase&& o);
     ~GraphicBase();
