@@ -1,3 +1,4 @@
+#pragma once
 #include "window-callbacks.hpp"
 
 namespace gawl {
