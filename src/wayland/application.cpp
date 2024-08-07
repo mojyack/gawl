@@ -1,6 +1,5 @@
 #include "application.hpp"
 #include "../global.hpp"
-#include "../macros/assert.hpp"
 #include "../util/assert.hpp"
 
 namespace gawl {
@@ -87,11 +86,11 @@ WaylandApplication::WaylandApplication()
       egl(wl->display) {
     // bind wayland interfaces
     wl->display.roundtrip();
-    DYN_ASSERT(!wl->compositor_binder.interfaces.empty());
-    DYN_ASSERT(!wl->xdg_wm_base_binder.interfaces.empty());
+    dynamic_assert(!wl->compositor_binder.interfaces.empty());
+    dynamic_assert(!wl->xdg_wm_base_binder.interfaces.empty());
 
     // initialize egl
-    DYN_ASSERT(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
+    dynamic_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
     impl::global = new impl::Shaders();
 
     // start wayland event loop

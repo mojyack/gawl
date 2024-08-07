@@ -1,11 +1,13 @@
 #pragma once
+#include <array>
+
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glext.h>
 
 #include <EGL/egl.h>
 
-#include "towl/towl.hpp"
+#include "towl/display.hpp"
 
 namespace gawl {
 class EGLSubObject {

@@ -4,9 +4,8 @@
 #include "macros/assert.hpp"
 
 #define CUTIL_NS gawl
-#include "macros/assert.hpp"
-#include "util/assert.hpp"
-#include "util/misc.hpp"
+#include "macros/unwrap.hpp"
+#include "util/file-io.hpp"
 #undef CUTIL_NS
 
 namespace gawl::impl::jxl {
@@ -48,9 +47,7 @@ class ParallelRunner {
 };
 
 auto decode_jxl(const char* const path, const uint32_t threads) -> std::optional<JxlImage> {
-    const auto file_r = read_binary(path);
-    assert_o(file_r, file_r.as_error().cstr());
-    const auto& file = file_r.as_value();
+    unwrap_oo(file, read_file(path));
 
     const auto decoder = JxlDecoderMake(NULL);
 

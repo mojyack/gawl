@@ -5,7 +5,7 @@
 #include "window.hpp"
 
 #define CUTIL_NS gawl
-#include "../util/fd.hpp"
+#include "../util/event-fd.hpp"
 #undef CUTIL_NS
 
 namespace gawl {

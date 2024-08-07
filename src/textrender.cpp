@@ -2,7 +2,6 @@
 #include "global.hpp"
 
 #define CUTIL_NS gawl
-#include "macros/assert.hpp"
 #include "util/assert.hpp"
 #undef CUTIL_NS
 
@@ -26,8 +25,8 @@ Character::Character(char32_t code, const std::vector<FT_Face>& faces) : Graphic
         glyph_index = FT_Get_Char_Index(faces[0], code);
     }
 
-    DYN_ASSERT(FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT) == 0);
-    DYN_ASSERT(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL) == 0);
+    dynamic_assert(FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT) == 0);
+    dynamic_assert(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL) == 0);
 
     this->width  = face->glyph->bitmap.width;
     this->height = face->glyph->bitmap.rows;
@@ -54,7 +53,7 @@ auto CharacterCache::get_character(const char32_t c) -> Character& {
 CharacterCache::CharacterCache(const std::vector<std::string>& font_names, const int size) {
     for(const auto& path : font_names) {
         auto face = FT_Face();
-        DYN_ASSERT(FT_New_Face(FT_Library(global->textrender_shader.freetype), path.data(), 0, &(face)) == 0);
+        dynamic_assert(FT_New_Face(FT_Library(global->textrender_shader.freetype), path.data(), 0, &(face)) == 0);
         FT_Set_Pixel_Sizes(face, 0, size);
         faces.emplace_back(face);
     }

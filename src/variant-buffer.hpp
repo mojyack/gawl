@@ -19,7 +19,7 @@ class VariantBuffer : public WritersReaderBuffer<Variant<Ts...>> {
 
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
-        Super::push(Item(Tag<T>(), std::forward<Args>(args)...));
+        Super::push(Item::template create<T>(std::forward<Args>(args)...));
     }
 };
 
@@ -34,12 +34,11 @@ class VariantEventBuffer : public VariantBuffer<Ts...> {
     template <class T, class... Args>
     auto push(Args&&... args) -> void {
         Super::template push<T>(std::forward<Args>(args)...);
-        reader_ready.wakeup();
+        reader_ready.notify();
     }
 
     auto wait() -> void {
         reader_ready.wait();
-        reader_ready.clear();
     }
 };
 } // namespace gawl::impl
