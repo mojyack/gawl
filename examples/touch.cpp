@@ -54,14 +54,17 @@ class Callbacks : public gawl::WindowCallbacks {
 
     auto on_touch_down(const uint32_t id, const gawl::Point& pos) -> void override {
         get_touch(id) = {pos, 1};
+        window->refresh();
     }
 
     auto on_touch_up(const uint32_t id) -> void override {
         get_touch(id) = {{}, 0};
+        window->refresh();
     }
 
     auto on_touch_motion(const uint32_t id, const gawl::Point& pos) -> void override {
         get_touch(id) = {pos, 2};
+        window->refresh();
     }
 };
 

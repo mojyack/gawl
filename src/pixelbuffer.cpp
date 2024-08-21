@@ -5,7 +5,6 @@
 
 #define CUTIL_NS gawl
 #include "macros/unwrap.hpp"
-#include "util/assert.hpp"
 #undef CUTIL_NS
 
 namespace gawl {
@@ -31,15 +30,14 @@ auto PixelBuffer::from_file(const char* const file) -> std::optional<PixelBuffer
     // ImageMagick 7.1.0-44 can't decode grayscale jxl image properly
     // hook and decode it by hand
     if(std::string_view(file).ends_with(".jxl")) {
-        unwrap_oo_mut(jxl, impl::jxl::decode_jxl(file));
+        unwrap_mut(jxl, impl::jxl::decode_jxl(file));
         return PixelBuffer{jxl.width, jxl.height, std::move(jxl.frames[0].buffer)};
     }
 
     try {
         return load_texture_imagemagick(Magick::Image(file));
     } catch(const Magick::Exception& e) {
-        WARN(e.what());
-        return std::nullopt;
+        bail(e.what());
     }
 }
 
@@ -48,8 +46,7 @@ auto PixelBuffer::from_blob(const std::byte* const data, const size_t size) -> s
         auto blob = Magick::Blob(data, size);
         return load_texture_imagemagick(Magick::Image(blob));
     } catch(const Magick::Exception& e) {
-        WARN(e.what());
-        return std::nullopt;
+        bail(e.what());
     }
 }
 

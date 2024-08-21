@@ -47,7 +47,7 @@ auto choose_surface(const EGLSurface eglsurface, const impl::EGLObject& egl) -> 
     if(current_surface == eglsurface) {
         return;
     }
-    dynamic_assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
+    line_assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
     current_surface = eglsurface;
 }
 
@@ -59,13 +59,13 @@ auto get_primary_interface(auto& binder) -> T* {
 
 auto WaylandWindow::init_egl() -> void {
     egl_surface = eglCreateWindowSurface(egl->display, egl->config, std::bit_cast<EGLNativeWindowType>(egl_window.native()), nullptr);
-    dynamic_assert(egl_surface != EGL_NO_SURFACE);
+    line_assert(egl_surface != EGL_NO_SURFACE);
     choose_surface(egl_surface, *egl);
-    dynamic_assert(eglSwapInterval(egl->display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
+    line_assert(eglSwapInterval(egl->display, 0) == EGL_TRUE); // make eglSwapBuffers non-blocking
 }
 
 auto WaylandWindow::swap_buffer() -> void {
-    dynamic_assert(eglSwapBuffers(egl->display, egl_surface) != EGL_FALSE);
+    line_assert(eglSwapBuffers(egl->display, egl_surface) != EGL_FALSE);
 }
 
 auto WaylandWindow::wait_for_key_repeater_exit(std::thread& repeater) -> void {
@@ -273,6 +273,6 @@ WaylandWindow::~WaylandWindow() {
         auto [lock, repeater] = key_repeater.access();
         wait_for_key_repeater_exit(repeater);
     }
-    dynamic_assert(eglDestroySurface(egl->display, egl_surface) != EGL_FALSE);
+    line_assert(eglDestroySurface(egl->display, egl_surface) != EGL_FALSE);
 }
 } // namespace gawl

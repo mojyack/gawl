@@ -4,7 +4,6 @@
 #include "gawl/misc.hpp"
 #include "gawl/wayland/application.hpp"
 #include "macros/unwrap.hpp"
-#include "util/assert.hpp"
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
@@ -38,8 +37,8 @@ class Callbacks : public gawl::WindowCallbacks {
     Callbacks() {
         worker = std::thread([this]() {
             auto       context      = std::bit_cast<gawl::WaylandWindow*>(this->window)->fork_context();
-            const auto load_graphic = [this, &context](gawl::Graphic& graphic) -> void {
-                unwrap_on(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
+            const auto load_graphic = [this, &context](gawl::Graphic& graphic) {
+                unwrap_v(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
                 auto new_graphic = gawl::Graphic(pixbuf);
                 context.flush();
                 const auto lock = std::lock_guard(mutex);
@@ -48,10 +47,13 @@ class Callbacks : public gawl::WindowCallbacks {
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
             load_graphic(graphic1);
+            window->refresh();
             std::this_thread::sleep_for(std::chrono::seconds(1));
             load_graphic(graphic2);
+            window->refresh();
             std::this_thread::sleep_for(std::chrono::seconds(1));
             load_graphic(graphic3);
+            window->refresh();
         });
     }
 

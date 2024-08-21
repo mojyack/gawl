@@ -3,7 +3,6 @@
 
 #define CUTIL_NS gawl
 #include "../macros/unwrap.hpp"
-#include "../util/assert.hpp"
 #undef CUTIL_NS
 
 namespace gawl::impl {
@@ -41,18 +40,18 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
 
     auto on_wl_keyboard_enter(wl_surface* const surface, const towl::Array<uint32_t>& keys) -> void override {
         keyboard_focused = surface;
-        unwrap_pn_mut(window, find_focused_window(keyboard_focused));
+        unwrap_mut(window, find_focused_window(keyboard_focused));
         window.wl_on_keycode_enter(keys);
     }
 
     auto on_wl_keyboard_leave(wl_surface* /*surface*/) -> void override {
-        unwrap_pn_mut(window, find_focused_window(keyboard_focused));
+        unwrap_mut(window, find_focused_window(keyboard_focused));
         window.wl_on_key_leave();
         keyboard_focused = nullptr;
     }
 
     auto on_wl_keyboard_key(const uint32_t key, const uint32_t state) -> void override {
-        unwrap_pn_mut(window, find_focused_window(keyboard_focused));
+        unwrap_mut(window, find_focused_window(keyboard_focused));
         window.wl_on_keycode_input(key, state);
     }
 
@@ -69,8 +68,8 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
     }
 
     auto on_wl_pointer_motion(const double x, const double y) -> void override {
-        assert_n(pointer_focused);
-        unwrap_pn_mut(window, find_focused_window(pointer_focused));
+        ensure(pointer_focused);
+        unwrap_mut(window, find_focused_window(pointer_focused));
         window.wl_on_pointer_motion(x, y);
     }
 
@@ -79,14 +78,14 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
     }
 
     auto on_wl_pointer_button(const uint32_t button, const uint32_t state) -> void override {
-        assert_n(pointer_focused);
-        unwrap_pn_mut(window, find_focused_window(pointer_focused));
+        ensure(pointer_focused);
+        unwrap_mut(window, find_focused_window(pointer_focused));
         window.wl_on_pointer_button(button, state);
     }
 
     auto on_wl_pointer_axis(const uint32_t axis, const double value) -> void override {
-        assert_n(pointer_focused);
-        unwrap_pn_mut(window, find_focused_window(pointer_focused));
+        ensure(pointer_focused);
+        unwrap_mut(window, find_focused_window(pointer_focused));
         window.wl_on_pointer_axis(axis, value);
     }
 
@@ -99,21 +98,21 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
     auto on_wl_touch_down(wl_surface* const surface, const uint32_t id, const double x, const double y) -> void override {
         auto& focused = *get_touch_focused(id);
         focused       = surface;
-        unwrap_pn_mut(window, find_focused_window(focused));
+        unwrap_mut(window, find_focused_window(focused));
         window.wl_on_touch_down(id, x, y);
     }
 
     auto on_wl_touch_motion(const uint32_t id, const double x, const double y) -> void override {
         auto& focused = *get_touch_focused(id);
-        assert_n(focused);
-        unwrap_pn_mut(window, find_focused_window(focused));
+        ensure(focused);
+        unwrap_mut(window, find_focused_window(focused));
         window.wl_on_touch_motion(id, x, y);
     }
 
     auto on_wl_touch_up(const uint32_t id) -> void override {
         auto& focused = *get_touch_focused(id);
-        assert_n(focused);
-        unwrap_pn_mut(window, find_focused_window(focused));
+        ensure(focused);
+        unwrap_mut(window, find_focused_window(focused));
         window.wl_on_touch_up(id);
     }
 
@@ -143,6 +142,7 @@ auto WaylandClientObjects::create(Critical<Windows>* const critical_windows) -> 
         .compositor_binder  = towl::CompositorBinder(6),
         .xdg_wm_base_binder = towl::XDGWMBaseBinder(2),
         .seat_binder        = towl::SeatBinder(4, callbacks, callbacks, callbacks),
+        .repeat_config      = {},
     };
 
     wl->registry.set_binders({&wl->compositor_binder, &wl->xdg_wm_base_binder, &wl->seat_binder});

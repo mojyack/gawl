@@ -16,8 +16,7 @@ auto Shader::compile_shader(const uint32_t type, const char* const source) -> GL
 
         auto error_log = std::vector<GLchar>(max_len);
         glGetShaderInfoLog(shader, max_len, &max_len, error_log.data());
-        printf("shader compile error: %s\n", error_log.data());
-        exit(1);
+        panic("shader compile error: ", error_log.data());
     }
     return shader;
 }
@@ -36,7 +35,7 @@ Shader::Shader(const char* vertex_shader_source, const char* fragment_shader_sou
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
     glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
-    dynamic_assert(status == GL_TRUE);
+    line_assert(status == GL_TRUE);
 }
 
 Shader::~Shader() {

@@ -47,14 +47,14 @@ class ParallelRunner {
 };
 
 auto decode_jxl(const char* const path, const uint32_t threads) -> std::optional<JxlImage> {
-    unwrap_oo(file, read_file(path));
+    unwrap(file, read_file(path));
 
     const auto decoder = JxlDecoderMake(NULL);
 
-    assert_o(JxlDecoderSetInput(decoder.get(), std::bit_cast<uint8_t*>(file.data()), file.size()) == JXL_DEC_SUCCESS);
+    ensure(JxlDecoderSetInput(decoder.get(), std::bit_cast<uint8_t*>(file.data()), file.size()) == JXL_DEC_SUCCESS);
     auto runner = ParallelRunner(threads);
-    assert_o(JxlDecoderSetParallelRunner(decoder.get(), ParallelRunner::entry, &runner) == JXL_DEC_SUCCESS);
-    assert_o(JxlDecoderSubscribeEvents(decoder.get(), JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FRAME | JXL_DEC_FULL_IMAGE) == JXL_DEC_SUCCESS);
+    ensure(JxlDecoderSetParallelRunner(decoder.get(), ParallelRunner::entry, &runner) == JXL_DEC_SUCCESS);
+    ensure(JxlDecoderSubscribeEvents(decoder.get(), JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FRAME | JXL_DEC_FULL_IMAGE) == JXL_DEC_SUCCESS);
 
     static const auto format = JxlPixelFormat{
         .num_channels = 4,
@@ -70,28 +70,26 @@ auto decode_jxl(const char* const path, const uint32_t threads) -> std::optional
     while(true) {
         switch(JxlDecoderProcessInput(decoder.get())) {
         case JXL_DEC_ERROR:
-            WARN("decoder error");
-            return std::nullopt;
+            bail("decoder error");
         case JXL_DEC_NEED_MORE_INPUT:
-            WARN("no more inputs");
-            return std::nullopt;
+            bail("no more inputs");
         case JXL_DEC_BASIC_INFO:
-            assert_o(JxlDecoderGetBasicInfo(decoder.get(), &info) == JXL_DEC_SUCCESS);
+            ensure(JxlDecoderGetBasicInfo(decoder.get(), &info) == JXL_DEC_SUCCESS);
             break;
         case JXL_DEC_COLOR_ENCODING:
             continue;
         case JXL_DEC_NEED_IMAGE_OUT_BUFFER: {
             auto buffer_size = size_t();
-            assert_o(JxlDecoderImageOutBufferSize(decoder.get(), &format, &buffer_size) == JXL_DEC_SUCCESS);
+            ensure(JxlDecoderImageOutBufferSize(decoder.get(), &format, &buffer_size) == JXL_DEC_SUCCESS);
             auto& buffer = frame->buffer;
             buffer.resize(buffer_size);
-            assert_o(JxlDecoderSetImageOutBuffer(decoder.get(), &format, buffer.data(), buffer.size()) == JXL_DEC_SUCCESS);
+            ensure(JxlDecoderSetImageOutBuffer(decoder.get(), &format, buffer.data(), buffer.size()) == JXL_DEC_SUCCESS);
         } break;
         case JXL_DEC_FRAME:
             frame = &frames.emplace_back();
             if(info.have_animation) {
                 auto header = JxlFrameHeader();
-                assert_o(JxlDecoderGetFrameHeader(decoder.get(), &header) == JXL_DEC_SUCCESS);
+                ensure(JxlDecoderGetFrameHeader(decoder.get(), &header) == JXL_DEC_SUCCESS);
                 frame->duration = header.duration;
             } else {
                 frame->duration = 0;
@@ -103,8 +101,7 @@ auto decode_jxl(const char* const path, const uint32_t threads) -> std::optional
             goto finish;
             break;
         default:
-            WARN("unknown state");
-            return std::nullopt;
+            bail("unknown state");
         }
     }
 

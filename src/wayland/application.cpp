@@ -19,7 +19,7 @@ auto WaylandApplication::wayland_main() -> void {
 loop:
     auto read_intent = wl->display.obtain_read_intent();
     wl->display.flush();
-    dynamic_assert(poll(fds.data(), fds.size(), -1) != -1);
+    line_assert(poll(fds.data(), fds.size(), -1) != -1);
     if(wl_display_event_poll.revents & POLLIN) {
         read_intent.read();
         wl->display.dispatch_pending();
@@ -86,11 +86,11 @@ WaylandApplication::WaylandApplication()
       egl(wl->display) {
     // bind wayland interfaces
     wl->display.roundtrip();
-    dynamic_assert(!wl->compositor_binder.interfaces.empty());
-    dynamic_assert(!wl->xdg_wm_base_binder.interfaces.empty());
+    line_assert(!wl->compositor_binder.interfaces.empty());
+    line_assert(!wl->xdg_wm_base_binder.interfaces.empty());
 
     // initialize egl
-    dynamic_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
+    line_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
     impl::global = new impl::Shaders();
 
     // start wayland event loop
