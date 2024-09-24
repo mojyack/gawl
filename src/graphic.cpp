@@ -5,30 +5,19 @@ namespace gawl {
 auto Graphic::update_texture(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop) -> void {
     const auto txbinder = this->bind_texture();
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    if(crop) {
-        if((*crop)[0] < 0) {
-            (*crop)[0] += buffer.width;
-        }
-        if((*crop)[1] < 0) {
-            (*crop)[1] += buffer.height;
-        }
-        if((*crop)[2] < 0) {
-            (*crop)[2] += buffer.width;
-        }
-        if((*crop)[3] < 0) {
-            (*crop)[3] += buffer.height;
-        }
-    }
 
     if(crop) {
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, crop.value()[0]);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, crop.value()[1]);
+        const auto& rect = *crop;
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, rect[0]);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, rect[1]);
+        this->width  = rect[2];
+        this->height = rect[3];
     } else {
         glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
         glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+        this->width  = buffer.width;
+        this->height = buffer.height;
     }
-    this->width  = crop ? (*crop)[2] : buffer.width;
-    this->height = crop ? (*crop)[3] : buffer.height;
     glPixelStorei(GL_UNPACK_ROW_LENGTH, buffer.width);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data.data());
 }
