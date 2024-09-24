@@ -2,6 +2,7 @@
 #include "gawl/fc.hpp"
 #include "gawl/misc.hpp"
 #include "gawl/wayland/application.hpp"
+#include "macros/unwrap.hpp"
 #include "util/assert.hpp"
 
 class Callbacks : public gawl::WindowCallbacks {
@@ -54,16 +55,18 @@ class Callbacks : public gawl::WindowCallbacks {
         return void();
     }
 
-    Callbacks() {
-        const auto font_path = gawl::find_fontpath_from_name("Noto Sans CJK JP");
-        line_assert(font_path.has_value(), "cannot find font");
-        font.init({std::move(*font_path)}, 32);
+    auto init() -> bool {
+        unwrap_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
+        font.init({std::move(fontpath)}, 32);
+        return true;
     }
 };
 
 auto main() -> int {
     auto app = gawl::WaylandApplication();
-    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
+    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
+    ensure(cbs->init());
+    app.open_window({.manual_refresh = true}, std::move(cbs));
     app.run();
     return 0;
 }

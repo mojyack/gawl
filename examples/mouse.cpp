@@ -5,6 +5,7 @@
 #include "gawl/textrender.hpp"
 #include "gawl/wayland/application.hpp"
 #include "gawl/window-no-touch-callbacks.hpp"
+#include "macros/unwrap.hpp"
 #include "util/print.hpp"
 
 class Callbacks : public gawl::WindowNoTouchCallbacks {
@@ -48,13 +49,18 @@ class Callbacks : public gawl::WindowNoTouchCallbacks {
         }
     }
 
-    Callbacks()
-        : font({gawl::find_fontpath_from_name("Noto Sans CJK JP").value().data()}, 16) {}
+    auto init() -> bool {
+        unwrap_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
+        font.init({std::move(fontpath)}, 16);
+        return true;
+    }
 };
 
 auto main() -> int {
     auto app = gawl::WaylandApplication();
-    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
+    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
+    ensure(cbs->init());
+    app.open_window({.manual_refresh = true}, std::move(cbs));
     app.run();
     return 0;
 }

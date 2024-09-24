@@ -1,6 +1,7 @@
 #include "gawl/graphic.hpp"
 #include "gawl/misc.hpp"
 #include "gawl/wayland/application.hpp"
+#include "macros/unwrap.hpp"
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
@@ -20,13 +21,18 @@ class Callbacks : public gawl::WindowCallbacks {
         application->quit();
     }
 
-    Callbacks()
-        : graphic(gawl::PixelBuffer::from_file("examples/image.png").value()) {}
+    auto init() -> bool {
+        unwrap(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
+        graphic.update_texture(pixbuf);
+        return true;
+    }
 };
 
 auto main() -> int {
     auto app = gawl::WaylandApplication();
-    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
+    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
+    ensure(cbs->init());
+    app.open_window({.manual_refresh = true}, std::move(cbs));
     app.run();
     return 0;
 }
