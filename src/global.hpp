@@ -9,10 +9,7 @@ struct Shaders {
     TextRenderShader textrender_shader;
     PolygonShader    polygon_shader;
 
-    Shaders() {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
+    auto init() -> bool;
 };
 
 inline auto global = (Shaders*)(nullptr);

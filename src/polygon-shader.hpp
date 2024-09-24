@@ -10,7 +10,6 @@ class PolygonShader : public Shader {
 
   public:
     auto write_buffer(const std::vector<GLfloat>& buffer) -> void;
-
-    PolygonShader();
+    auto init() -> bool;
 };
 } // namespace gawl::impl

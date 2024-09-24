@@ -1,4 +1,5 @@
 #include "polygon-shader.hpp"
+#include "macros/assert.hpp"
 #include "shader-source.hpp"
 
 namespace gawl::impl {
@@ -12,7 +13,8 @@ auto PolygonShader::write_buffer(const std::vector<GLfloat>& buffer) -> void {
     }
 }
 
-PolygonShader::PolygonShader() : Shader(polygon_vertex_shader_source, polygon_fragment_shader_source) {
+auto PolygonShader::init() -> bool {
+    ensure(Shader::init(polygon_vertex_shader_source, polygon_fragment_shader_source));
     const auto vabinder = bind_vao();
     const auto vbbinder = bind_vbo();
     const auto ebbinder = bind_ebo();
@@ -20,5 +22,6 @@ PolygonShader::PolygonShader() : Shader(polygon_vertex_shader_source, polygon_fr
     const auto pos_attrib = glGetAttribLocation(shader_program, "position");
     glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, 0);
     glEnableVertexAttribArray(pos_attrib);
+    return true;
 }
 } // namespace gawl::impl

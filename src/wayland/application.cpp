@@ -92,6 +92,7 @@ WaylandApplication::WaylandApplication()
     // initialize egl
     line_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
     impl::global = new impl::Shaders();
+    line_assert(impl::global->init());
 
     // start wayland event loop
     wayland_thread = std::thread(std::bind(&WaylandApplication::wayland_main, this));

@@ -16,6 +16,7 @@ gawl_core_files = files(
   'misc.cpp',
   'graphic-base.cpp',
   # shader
+  'global.cpp',
   'shader.cpp',
   'graphic-shader.cpp',
   'textrender-shader.cpp',

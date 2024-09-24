@@ -12,8 +12,6 @@ class Shader {
     GLuint fragment_shader;
     GLuint shader_program;
 
-    static auto compile_shader(uint32_t type, const char* source) -> GLuint;
-
   public:
     auto bind_vao() const -> VArrayBinder {
         return vao;
@@ -35,7 +33,8 @@ class Shader {
         return shader_program;
     }
 
-    Shader(const char* vertex_shader_source, const char* fragment_shader_source);
+    auto init(const char* vertex_shader_source, const char* fragment_shader_source) -> bool;
+
     ~Shader();
 };
 } // namespace gawl::impl

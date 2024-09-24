@@ -1,4 +1,5 @@
 #include "graphic-shader.hpp"
+#include "macros/assert.hpp"
 #include "misc.hpp"
 
 namespace gawl::impl {
@@ -32,8 +33,8 @@ auto GraphicShader::move_vertices(const Screen& screen, const std::array<Point, 
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 }
 
-GraphicShader::GraphicShader(const char* const vertex_shader_source, const char* const fragment_shader_source)
-    : Shader(vertex_shader_source, fragment_shader_source) {
+auto GraphicShader::init(const char* const vertex_shader_source, const char* const fragment_shader_source) -> bool {
+    ensure(Shader::init(vertex_shader_source, fragment_shader_source));
     const auto vabinder = bind_vao();
     const auto vbbinder = bind_vbo();
     const auto ebbinder = bind_ebo();
@@ -60,5 +61,7 @@ GraphicShader::GraphicShader(const char* const vertex_shader_source, const char*
     vertices[2][3] = 1.0;
     vertices[3][2] = 0.0;
     vertices[3][3] = 1.0;
+
+    return true;
 }
 } // namespace gawl::impl

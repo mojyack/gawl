@@ -1,10 +1,10 @@
 #include <vector>
 
+#include "macros/unwrap.hpp"
 #include "shader.hpp"
-#include "util/assert.hpp"
 
-namespace gawl::impl {
-auto Shader::compile_shader(const uint32_t type, const char* const source) -> GLuint {
+namespace {
+auto compile_shader(const uint32_t type, const char* const source) -> std::optional<GLuint> {
     auto status = GLint();
     auto shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
@@ -16,18 +16,20 @@ auto Shader::compile_shader(const uint32_t type, const char* const source) -> GL
 
         auto error_log = std::vector<GLchar>(max_len);
         glGetShaderInfoLog(shader, max_len, &max_len, error_log.data());
-        panic("shader compile error: ", error_log.data());
+        bail("shader compile error: ", std::string_view{error_log.data(), size_t(max_len)});
     }
     return shader;
 }
+} // namespace
 
-Shader::Shader(const char* vertex_shader_source, const char* fragment_shader_source) {
+namespace gawl::impl {
+auto Shader::init(const char* vertex_shader_source, const char* fragment_shader_source) -> bool {
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
 
-    vertex_shader   = compile_shader(GL_VERTEX_SHADER, vertex_shader_source);
-    fragment_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_shader_source);
+    unwrap(vertex_shader, compile_shader(GL_VERTEX_SHADER, vertex_shader_source));
+    unwrap(fragment_shader, compile_shader(GL_FRAGMENT_SHADER, fragment_shader_source));
 
     auto status    = GLint();
     shader_program = glCreateProgram();
@@ -35,7 +37,8 @@ Shader::Shader(const char* vertex_shader_source, const char* fragment_shader_sou
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
     glGetProgramiv(shader_program, GL_LINK_STATUS, &status);
-    line_assert(status == GL_TRUE);
+    ensure(status == GL_TRUE);
+    return true;
 }
 
 Shader::~Shader() {
