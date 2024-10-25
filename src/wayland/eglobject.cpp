@@ -1,8 +1,5 @@
 #include "eglobject.hpp"
-
-#define CUTIL_NS gawl
 #include "../util/assert.hpp"
-#undef CUTIL_NS
 
 namespace gawl {
 auto EGLSubObject::flush() -> void {

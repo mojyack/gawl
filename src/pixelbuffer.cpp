@@ -1,11 +1,8 @@
 #include <ImageMagick-7/Magick++.h>
 
 #include "jxl-decoder.hpp"
-#include "pixelbuffer.hpp"
-
-#define CUTIL_NS gawl
 #include "macros/unwrap.hpp"
-#undef CUTIL_NS
+#include "pixelbuffer.hpp"
 
 namespace gawl {
 auto load_texture_imagemagick(Magick::Image&& image) -> PixelBuffer {

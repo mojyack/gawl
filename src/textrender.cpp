@@ -1,9 +1,6 @@
 #include "textrender.hpp"
 #include "global.hpp"
-
-#define CUTIL_NS gawl
 #include "util/assert.hpp"
-#undef CUTIL_NS
 
 namespace gawl {
 namespace impl {
