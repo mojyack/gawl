@@ -40,6 +40,7 @@ class Window : public Screen {
 
     auto on_buffer_resize(std::optional<std::array<size_t, 2>> size, std::optional<size_t> scale) -> void;
     auto get_buffer_size() const -> const Critical<impl::BufferSize>&;
+    auto set_callbacks(std::shared_ptr<WindowCallbacks> callbacks) -> void;
 
   public:
     // MetaScreen
@@ -55,14 +56,13 @@ class Window : public Screen {
     auto set_state(const impl::WindowState new_state) -> void;
 
     // user apis
-    virtual auto refresh() -> void = 0;
+    virtual auto refresh() -> bool = 0;
     auto         get_window_size() const -> const std::array<int, 2>&;
     auto         set_follow_buffer_scale(bool flag) -> void;
     auto         get_follow_buffer_scale() const -> bool;
     auto         set_event_driven(bool flag) -> void;
     auto         get_event_driven() const -> bool;
 
-    Window(std::shared_ptr<WindowCallbacks> callbacks);
     virtual ~Window() {}
 };
 } // namespace gawl

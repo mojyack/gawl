@@ -1,31 +1,37 @@
 #pragma once
-#include <thread>
-
 #include <EGL/egl.h>
 
 #include "../window-creat-hint.hpp"
 #include "../window.hpp"
-#include "app-events.hpp"
 #include "eglobject.hpp"
-#include "window-events.hpp"
 #include "wl-object.hpp"
 
-#define CUTIL_NS gawl
-#include "../util/timer-event.hpp"
-#undef CUTIL_NS
-
 namespace gawl {
-class WaylandWindowCallbacks;
+class WaylandWindow;
+class WaylandWindowCallbacks : public towl::SurfaceCallbacks,
+                               public towl::XDGToplevelCallbacks {
+  private:
+    WaylandWindow* window;
+    // SurfaceCallbacks
+    auto on_wl_surface_preferred_buffer_scale(int32_t factor) -> void override;
+    auto on_wl_surface_frame() -> void override;
+    // XDGToplevelCallbacks
+    auto on_xdg_toplevel_configure(const int width, const int height) -> void override;
+    auto on_xdg_toplevel_close() -> void override;
+
+  public:
+    WaylandWindowCallbacks(WaylandWindow* window);
+};
+
 class WaylandWindow : public Window {
     friend class WaylandApplication;
     friend class WaylandWindowCallbacks;
 
   private:
-    impl::WaylandClientObjects* wl;
-    impl::EGLObject*            egl;
-    impl::AppEventQueue*        app_event_queue;
-    impl::WindowEvents::Queue   window_event_queue;
-    WaylandWindowCallbacks*     wl_callbacks;
+    impl::WaylandClientObjects*             wl;
+    impl::EGLObject*                        egl;
+    coop::Event*                            application_event;
+    std::unique_ptr<WaylandWindowCallbacks> wl_callbacks;
 
     EGLSurface        egl_surface = nullptr;
     towl::Surface     wayland_surface;
@@ -33,29 +39,18 @@ class WaylandWindow : public Window {
     towl::XDGToplevel xdg_toplevel;
     towl::EGLWindow   egl_window;
 
-    TimerEvent            key_delay_timer;
-    Critical<std::thread> key_repeater;
-    std::atomic_uint32_t  last_pressed_key = -1;
+    std::vector<coop::Async<bool>> pending_callbacks;
 
-    std::atomic_bool obsolete_egl_window_size = true;
-    std::atomic_bool frame_done               = true;
-    std::atomic_bool latest_frame             = true;
+    coop::Runner*    runner;
+    coop::TaskHandle key_repeater;
 
-    auto init_egl() -> void;
-    auto swap_buffer() -> void;
-    auto wait_for_key_repeater_exit(std::thread& repeater) -> void;
-    auto resize_buffer(const int width, const int height, const int scale) -> void;
-    auto handle_event() -> void;
+    bool obsolete_egl_window_size = true;
+    bool frame_done               = true;
+    bool latest_frame             = true;
 
-    template <class T, class... Args>
-    auto push_window_event(Args&&... args) -> void {
-        if(get_state() == impl::WindowState::Destructing) {
-            return;
-        }
-
-        window_event_queue.push<T>(std::forward<Args>(args)...);
-        app_event_queue->push<impl::HandleEventArgs>(this);
-    }
+    auto init_egl() -> bool;
+    auto swap_buffer() -> bool;
+    auto resize_buffer(const int width, const int height, const int scale) -> bool;
 
   public:
     // wayland callbacks
@@ -69,12 +64,13 @@ class WaylandWindow : public Window {
     auto wl_on_touch_down(const uint32_t id, const double x, const double y) -> void;
     auto wl_on_touch_up(const uint32_t id) -> void;
     auto wl_on_touch_motion(const uint32_t id, const double x, const double y) -> void;
+    auto dispatch_pending_callbacks() -> coop::Async<bool>;
 
     // for users
-    auto refresh() -> void override;
+    auto refresh() -> bool override;
     auto fork_context() -> EGLSubObject;
 
-    WaylandWindow(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, impl::AppEventQueue* app_event_queue);
+    auto init(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, coop::Event& application_event) -> coop::Async<bool>;
 
     ~WaylandWindow();
 };

@@ -5,10 +5,10 @@ namespace gawl {
 // touch to mouse emulation
 class WindowNoTouchCallbacks : public WindowCallbacks {
   public:
-    auto on_touch_down(uint32_t id, const Point& pos) -> void override;
-    auto on_touch_motion(uint32_t id, const Point& pos) -> void override;
-    auto on_touch_up(uint32_t id) -> void override;
+    auto on_touch_down(uint32_t id, Point pos) -> coop::Async<bool> override;
+    auto on_touch_motion(uint32_t id, Point pos) -> coop::Async<bool> override;
+    auto on_touch_up(uint32_t id) -> coop::Async<bool> override;
 
-    virtual ~WindowNoTouchCallbacks(){};
+    virtual ~WindowNoTouchCallbacks() {};
 };
 } // namespace gawl

@@ -26,10 +26,11 @@ class Callbacks : public gawl::WindowCallbacks {
         application->quit();
     }
 
-    auto init() -> bool {
-        unwrap(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
-        graphic.update_texture(pixbuf, std::array{50, 50, 120, 100});
-        return true;
+    auto on_created(gawl::Window* /*window*/) -> coop::Async<bool> override {
+        constexpr auto error_value = false;
+        co_unwrap_v(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
+        graphic = gawl::Graphic(pixbuf, std::array{50, 50, 120, 100});
+        co_return true;
     }
 
     Callbacks()
@@ -39,10 +40,10 @@ class Callbacks : public gawl::WindowCallbacks {
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
-    ensure(cbs->init());
-    app.open_window({.manual_refresh = true}, std::move(cbs));
-    app.run();
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
+    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.run();
     return 0;
 }

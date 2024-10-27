@@ -1,4 +1,5 @@
-#include <thread>
+#include <coop/thread.hpp>
+#include <coop/timer.hpp>
 
 #include "gawl/graphic.hpp"
 #include "gawl/misc.hpp"
@@ -7,26 +8,18 @@
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
-    std::mutex    mutex;
-    gawl::Graphic graphic1;
-    gawl::Graphic graphic2;
-    gawl::Graphic graphic3;
-
-    std::thread worker;
+    coop::Runner*                runner;
+    std::array<gawl::Graphic, 3> graphics;
+    coop::TaskHandle             worker;
 
   public:
     auto refresh() -> void override {
         gawl::clear_screen({0, 0, 0, 1});
-
-        const auto lock = std::lock_guard(mutex);
-        if(graphic1) {
-            graphic1.draw(*window, {170 * 0, 0});
-        }
-        if(graphic2) {
-            graphic2.draw(*window, {170 * 1, 0});
-        }
-        if(graphic3) {
-            graphic3.draw(*window, {170 * 2, 0});
+        for(auto i = 0u; i < graphics.size(); i += 1) {
+            if(!graphics[i]) {
+                break;
+            }
+            graphics[i].draw(*window, {170.0 * i, 0});
         }
     }
 
@@ -34,37 +27,44 @@ class Callbacks : public gawl::WindowCallbacks {
         application->quit();
     }
 
-    Callbacks() {
-        worker = std::thread([this]() {
-            auto       context      = std::bit_cast<gawl::WaylandWindow*>(this->window)->fork_context();
-            const auto load_graphic = [this, &context](gawl::Graphic& graphic) {
-                unwrap_v(pixbuf, gawl::PixelBuffer::from_file("examples/image.png"));
-                auto new_graphic = gawl::Graphic(pixbuf);
-                context.flush();
-                const auto lock = std::lock_guard(mutex);
-                graphic         = std::move(new_graphic);
-            };
+    auto on_created(gawl::Window* /*window*/) -> coop::Async<bool> override {
+        runner->push_task(std::array{&worker}, worker_main());
+        co_return true;
+    }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            load_graphic(graphic1);
+    auto worker_main() -> coop::Async<void> {
+        const auto loader = [this](const char* const path) -> std::optional<gawl::Graphic> {
+            constexpr auto error_value = std::nullopt;
+
+            auto context = std::bit_cast<gawl::WaylandWindow*>(window)->fork_context();
+            unwrap_v(pixbuf, gawl::PixelBuffer::from_file(path));
+            auto graphic = gawl::Graphic(pixbuf);
+            context.wait();
+            return graphic;
+        };
+
+        for(auto i = 0u; i < graphics.size(); i += 1) {
+            co_await coop::sleep(std::chrono::seconds(1));
+            co_unwrap_v_mut(result, co_await coop::run_blocking(loader, "examples/image.png"));
+            graphics[i] = std::move(result);
             window->refresh();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            load_graphic(graphic2);
-            window->refresh();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            load_graphic(graphic3);
-            window->refresh();
-        });
+        }
+    }
+
+    Callbacks(coop::Runner& runner)
+        : runner(&runner) {
     }
 
     ~Callbacks() {
-        worker.join();
+        worker.cancel();
     }
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
-    app.run();
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks(runner));
+    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.run();
     return 0;
 }

@@ -20,13 +20,13 @@ class Callbacks : public gawl::WindowCallbacks {
         count += 1;
     }
 
-    auto on_keycode(const uint32_t key, const gawl::ButtonState state) -> void override {
+    auto on_keycode(const uint32_t key, const gawl::ButtonState state) -> coop::Async<bool> override {
         if(state != gawl::ButtonState::Press) {
-            return;
+            co_return true;
         }
         switch(key) {
         case KEY_N:
-            application->open_window({}, std::shared_ptr<Callbacks>(new Callbacks(color + 1)));
+            co_await application->open_window({}, std::shared_ptr<Callbacks>(new Callbacks(color + 1)));
             break;
         case KEY_M:
             application->close_window(window);
@@ -35,6 +35,7 @@ class Callbacks : public gawl::WindowCallbacks {
             application->quit();
             break;
         }
+        co_return true;
     }
 
     Callbacks(const int color) : color(color) {
@@ -50,8 +51,9 @@ class Callbacks : public gawl::WindowCallbacks {
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    app.open_window({}, std::shared_ptr<Callbacks>(new Callbacks(0)));
-    app.run();
-    return 0;
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks(0));
+    runner.push_task(app.run(), app.open_window({}, std::move(cbs)));
+    runner.run();
 }

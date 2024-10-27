@@ -10,6 +10,8 @@
 
 class Callbacks : public gawl::WindowNoTouchCallbacks {
   private:
+    constexpr static auto error_value = false;
+
     gawl::TextRender      font;
     gawl::Point           pointer;
     std::array<bool, 3>   click  = {false, false};
@@ -28,39 +30,42 @@ class Callbacks : public gawl::WindowNoTouchCallbacks {
         application->quit();
     }
 
-    auto on_pointer(const gawl::Point& point) -> void override {
+    auto on_created(gawl::Window* /*window*/) -> coop::Async<bool> override {
+        co_unwrap_v_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
+        font.init({std::move(fontpath)}, 16);
+        co_return true;
+    }
+
+    auto on_pointer(const gawl::Point point) -> coop::Async<bool> override {
+        print("point ", point.x, " ", point.y);
         pointer = point;
         window->refresh();
+        co_return true;
     }
 
-    auto on_click(const uint32_t button, const gawl::ButtonState state) -> void override {
+    auto on_click(const uint32_t button, const gawl::ButtonState state) -> coop::Async<bool> override {
         if(button < BTN_LEFT && button > BTN_MIDDLE) {
-            return;
+            co_return true;
         }
         click[button - BTN_LEFT] = state == gawl::ButtonState::Press;
-        window->refresh();
+        co_ensure_v(window->refresh());
+        co_return true;
     }
 
-    auto on_scroll(const gawl::WheelAxis axis, const double value) -> void override {
+    auto on_scroll(const gawl::WheelAxis axis, const double value) -> coop::Async<bool> override {
         auto& s = scroll[axis == gawl::WheelAxis::Horizontal];
         s += value;
         if(s < 0.0) {
             s = 0;
         }
-    }
-
-    auto init() -> bool {
-        unwrap_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
-        font.init({std::move(fontpath)}, 16);
-        return true;
+        co_return true;
     }
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
-    ensure(cbs->init());
-    app.open_window({.manual_refresh = true}, std::move(cbs));
-    app.run();
-    return 0;
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
+    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.run();
 }

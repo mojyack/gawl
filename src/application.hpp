@@ -1,19 +1,21 @@
 #pragma once
+#include <coop/generator.hpp>
+
 #include "window-creat-hint.hpp"
 #include "window.hpp"
 
 namespace gawl {
 class Application {
   protected:
-    Critical<std::vector<std::unique_ptr<Window>>> critical_windows;
+    std::vector<std::unique_ptr<Window>> windows;
+    std::vector<Window*>                 closing_windows;
 
-    auto erase_window(const Window* const window) -> void;
+    auto erase_window(const Window* const window) -> bool;
 
-    virtual auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window* = 0;
-    virtual auto close_window_impl(Window* window) -> void                                                          = 0;
+    virtual auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> = 0;
 
   public:
-    auto open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> Window*;
+    auto open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*>;
     auto close_window(Window* const window) -> void;
     auto close_all_windows() -> void;
 

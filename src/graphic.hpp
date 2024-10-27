@@ -4,10 +4,11 @@
 
 namespace gawl {
 class Graphic : public impl::GraphicBase {
-  public:
+  private:
     auto update_texture(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt) -> void;
 
-    Graphic();
+  public:
+    Graphic() = default;
     Graphic(const PixelBuffer& buffer, std::optional<std::array<int, 4>> crop = std::nullopt);
 };
 

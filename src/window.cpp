@@ -62,6 +62,11 @@ auto Window::get_window_size() const -> const std::array<int, 2>& {
     return window_size;
 }
 
+auto Window::set_callbacks(std::shared_ptr<WindowCallbacks> callbacks) -> void {
+    this->callbacks         = std::move(callbacks);
+    this->callbacks->window = this;
+}
+
 auto Window::set_follow_buffer_scale(const bool flag) -> void {
     if(flag == follow_buffer_scale) {
         return;
@@ -80,10 +85,5 @@ auto Window::set_event_driven(const bool flag) -> void {
 
 auto Window::get_event_driven() const -> bool {
     return event_driven;
-}
-
-Window::Window(std::shared_ptr<WindowCallbacks> callbacks)
-    : callbacks(std::move(callbacks)) {
-    this->callbacks->window = this;
 }
 } // namespace gawl

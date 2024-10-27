@@ -8,15 +8,14 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
                          public towl::PointerCallbacks,
                          public towl::TouchCallbacks {
   private:
-    Critical<Windows>*              critical_windows;
+    Windows*                        windows;
     std::optional<KeyRepeatConfig>* keyboard_repeat_config;
     wl_surface*                     keyboard_focused = nullptr;
     wl_surface*                     pointer_focused  = nullptr;
     std::vector<wl_surface*>        touch_focused;
 
     auto find_focused_window(const wl_surface* const surface) -> WaylandWindow* {
-        auto [lock, windows] = critical_windows->access();
-        for(const auto& window : windows) {
+        for(const auto& window : *windows) {
             const auto wl_window = std::bit_cast<WaylandWindow*>(window.get());
             if(wl_window->wl_get_surface() == surface) {
                 return wl_window;
@@ -119,18 +118,18 @@ class WaylandCallbacks : public towl::KeyboardCallbacks,
     auto set_keyboard_repeat_config(std::optional<KeyRepeatConfig>* keyboard_repeat_config) -> void {
         this->keyboard_repeat_config = keyboard_repeat_config;
     }
-    WaylandCallbacks(Critical<Windows>* critical_windows)
-        : critical_windows(critical_windows) {}
+    WaylandCallbacks(Windows& windows)
+        : windows(&windows) {}
 };
 
 auto delete_wayland_callbacks(WaylandCallbacks* callbacks) -> void {
     delete callbacks;
 }
 
-auto WaylandClientObjects::create(Critical<Windows>* const critical_windows) -> std::unique_ptr<WaylandClientObjects> {
+auto WaylandClientObjects::create(Windows& windows) -> std::unique_ptr<WaylandClientObjects> {
     auto       display      = towl::Display();
     const auto registry_ptr = display.get_registry();
-    const auto callbacks    = new WaylandCallbacks(critical_windows);
+    const auto callbacks    = new WaylandCallbacks(windows);
 
     const auto wl = new WaylandClientObjects{
         .display            = std::move(display),

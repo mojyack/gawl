@@ -52,25 +52,29 @@ class Callbacks : public gawl::WindowCallbacks {
         application->quit();
     }
 
-    auto on_touch_down(const uint32_t id, const gawl::Point& pos) -> void override {
+    auto on_touch_down(const uint32_t id, const gawl::Point pos) -> coop::Async<bool> override {
         get_touch(id) = {pos, 1};
         window->refresh();
+        co_return true;
     }
 
-    auto on_touch_up(const uint32_t id) -> void override {
+    auto on_touch_up(const uint32_t id) -> coop::Async<bool> override {
         get_touch(id) = {{}, 0};
         window->refresh();
+        co_return true;
     }
 
-    auto on_touch_motion(const uint32_t id, const gawl::Point& pos) -> void override {
+    auto on_touch_motion(const uint32_t id, const gawl::Point pos) -> coop::Async<bool> override {
         get_touch(id) = {pos, 2};
         window->refresh();
+        co_return true;
     }
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    app.open_window({.manual_refresh = true}, std::shared_ptr<Callbacks>(new Callbacks()));
-    app.run();
-    return 0;
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
+    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.run();
 }

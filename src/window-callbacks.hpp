@@ -1,4 +1,6 @@
 #pragma once
+#include <coop/generator.hpp>
+#include <coop/promise.hpp>
 #include <xkbcommon/xkbcommon.h>
 
 #include "buttons.hpp"
@@ -22,15 +24,15 @@ class WindowCallbacks {
     // ask user to close the window
     virtual auto close() -> void;
     // event handlers
-    virtual auto on_resize() -> void{};
-    virtual auto on_keycode(uint32_t /*keycode*/, gawl::ButtonState /*state*/) -> void{};
-    virtual auto on_pointer(const Point& /*pos*/) -> void{};
-    virtual auto on_click(uint32_t /*button*/, gawl::ButtonState /*state*/) -> void{};
-    virtual auto on_scroll(gawl::WheelAxis /*axis*/, double /*value*/) -> void{};
-    virtual auto on_touch_down(uint32_t /*id*/, const Point& /*pos*/) -> void{};
-    virtual auto on_touch_motion(uint32_t /*id*/, const Point& /*pos*/) -> void{};
-    virtual auto on_touch_up(uint32_t /*id*/) -> void{};
+    virtual auto on_created(Window* /*window*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_keycode(uint32_t /*keycode*/, gawl::ButtonState /*state*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_pointer(Point /*pos*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_click(uint32_t /*button*/, gawl::ButtonState /*state*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_scroll(gawl::WheelAxis /*axis*/, double /*value*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_touch_down(uint32_t /*id*/, const Point /*pos*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_touch_motion(uint32_t /*id*/, const Point /*pos*/) -> coop::Async<bool> { co_return true; }
+    virtual auto on_touch_up(uint32_t /*id*/) -> coop::Async<bool> { co_return true; }
 
-    virtual ~WindowCallbacks(){};
+    virtual ~WindowCallbacks() {};
 };
 } // namespace gawl

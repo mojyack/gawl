@@ -55,18 +55,19 @@ class Callbacks : public gawl::WindowCallbacks {
         return void();
     }
 
-    auto init() -> bool {
-        unwrap_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
+    auto on_created(gawl::Window* /*window*/) -> coop::Async<bool> override {
+        constexpr auto error_value = false;
+
+        co_unwrap_v_mut(fontpath, gawl::find_fontpath_from_name("Noto Sans CJK JP"));
         font.init({std::move(fontpath)}, 32);
-        return true;
+        co_return true;
     }
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    auto cbs = std::shared_ptr<Callbacks>(new Callbacks());
-    ensure(cbs->init());
-    app.open_window({.manual_refresh = true}, std::move(cbs));
-    app.run();
-    return 0;
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
+    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.run();
 }

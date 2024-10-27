@@ -34,8 +34,9 @@ class Callbacks : public gawl::WindowCallbacks {
 };
 
 auto main() -> int {
-    auto app = gawl::WaylandApplication();
-    app.open_window({}, std::shared_ptr<Callbacks>(new Callbacks()));
-    app.run();
-    return 0;
+    auto runner = coop::Runner();
+    auto app    = gawl::WaylandApplication();
+    auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
+    runner.push_task(app.run(), app.open_window({}, std::move(cbs)));
+    runner.run();
 }
