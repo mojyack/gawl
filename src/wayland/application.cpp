@@ -15,7 +15,7 @@ auto WaylandApplication::create_window(const WindowCreateHint& hint, std::shared
 
 auto WaylandApplication::run() -> coop::Async<void> {
     auto wayland_thread = coop::TaskHandle();
-    co_await coop::run_args([](const int fd, coop::Event& event, impl::WaylandClientObjects* wl) -> coop::Async<void> {
+    co_await coop::run_args([](const int fd, coop::SingleEvent& event, impl::WaylandClientObjects* wl) -> coop::Async<void> {
         while(true) {
             wl->display.flush();
             const auto result = co_await coop::wait_for_file(fd, true, false);

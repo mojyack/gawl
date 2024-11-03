@@ -1,3 +1,4 @@
+#include <coop/single-event.hpp>
 #include <coop/timer.hpp>
 
 #include "../macros/assert.hpp"
@@ -192,7 +193,7 @@ auto WaylandWindow::init(
     std::shared_ptr<WindowCallbacks>  callbacks,
     impl::WaylandClientObjects* const wl,
     impl::EGLObject* const            egl,
-    coop::Event&                      application_event) -> coop::Async<bool> {
+    coop::SingleEvent&                application_event) -> coop::Async<bool> {
     constexpr auto error_value = false;
 
     runner = co_await coop::reveal_runner();
