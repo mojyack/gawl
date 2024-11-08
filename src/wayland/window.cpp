@@ -219,7 +219,6 @@ auto WaylandWindow::init(
     co_await wl->display.wait_sync();
 
     set_event_driven(hint.manual_refresh);
-    set_state(impl::WindowState::Running);
     co_return true;
 }
 

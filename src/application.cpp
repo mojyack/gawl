@@ -22,7 +22,6 @@ auto Application::open_window(const WindowCreateHint hint, std::shared_ptr<Windo
 }
 
 auto Application::close_window(Window* const window) -> void {
-    window->set_state(impl::WindowState::Destructing);
     closing_windows.push_back(window);
 }
 

@@ -52,14 +52,6 @@ auto Window::unset_viewport() -> void {
     viewport.unset(buffer_size.size);
 }
 
-auto Window::get_state() const -> impl::WindowState {
-    return state;
-}
-
-auto Window::set_state(const impl::WindowState new_state) -> void {
-    state = new_state;
-}
-
 auto Window::get_window_size() const -> const std::array<int, 2>& {
     return window_size;
 }

@@ -7,12 +7,6 @@
 #include "window-callbacks.hpp"
 
 namespace gawl::impl {
-enum class WindowState {
-    Constructing,
-    Running,
-    Destructing,
-};
-
 struct BufferSize {
     std::array<size_t, 2> size  = {800, 600};
     size_t                scale = 1;
@@ -22,7 +16,6 @@ struct BufferSize {
 namespace gawl {
 class Window : public Screen {
   private:
-    impl::WindowState  state               = impl::WindowState::Constructing;
     bool               follow_buffer_scale = true;
     double             specified_scale     = 0;
     double             draw_scale          = 1.0;
@@ -47,9 +40,6 @@ class Window : public Screen {
     auto get_viewport() const -> const Viewport& override;
     auto set_viewport(const gawl::Rectangle& region) -> void override;
     auto unset_viewport() -> void override;
-    // for application
-    auto get_state() const -> impl::WindowState;
-    auto set_state(const impl::WindowState new_state) -> void;
 
     // user apis
     virtual auto refresh() -> bool = 0;
