@@ -189,7 +189,7 @@ auto WaylandWindow::fork_context() -> EGLSubObject {
 }
 
 auto WaylandWindow::init(
-    const WindowCreateHint&           hint,
+    const WindowCreateHint            hint,
     std::shared_ptr<WindowCallbacks>  callbacks,
     impl::WaylandClientObjects* const wl,
     impl::EGLObject* const            egl,

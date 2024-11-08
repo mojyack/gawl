@@ -12,10 +12,10 @@ class Application {
 
     auto erase_window(const Window* const window) -> bool;
 
-    virtual auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> = 0;
+    virtual auto create_window(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> = 0;
 
   public:
-    auto open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*>;
+    auto open_window(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*>;
     auto close_window(Window* const window) -> void;
     auto close_all_windows() -> void;
 

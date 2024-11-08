@@ -14,7 +14,7 @@ auto Application::erase_window(const Window* const window) -> bool {
     return false;
 }
 
-auto Application::open_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> {
+auto Application::open_window(const WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> {
     callbacks->application = this;
     const auto ptr         = co_await create_window(hint, std::move(callbacks));
     windows.emplace_back(ptr);

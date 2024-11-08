@@ -14,7 +14,7 @@ class WaylandApplication : public Application {
     coop::SingleEvent                           application_event;
     bool                                        running = false;
 
-    auto create_window(const WindowCreateHint& hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> override;
+    auto create_window(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> override;
     auto wayland_main() -> coop::Async<void>;
 
   public:
