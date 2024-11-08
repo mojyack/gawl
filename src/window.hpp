@@ -6,10 +6,6 @@
 #include "viewport.hpp"
 #include "window-callbacks.hpp"
 
-#define CUTIL_NS gawl
-#include "util/critical.hpp"
-#undef CUTIL_NS
-
 namespace gawl::impl {
 enum class WindowState {
     Constructing,
@@ -26,20 +22,20 @@ struct BufferSize {
 namespace gawl {
 class Window : public Screen {
   private:
-    impl::WindowState          state               = impl::WindowState::Constructing;
-    bool                       follow_buffer_scale = true;
-    double                     specified_scale     = 0;
-    double                     draw_scale          = 1.0;
-    Critical<impl::BufferSize> buffer_size;
-    std::array<int, 2>         window_size;
-    Viewport                   viewport = {{0, 0}, {800, 600}};
+    impl::WindowState  state               = impl::WindowState::Constructing;
+    bool               follow_buffer_scale = true;
+    double             specified_scale     = 0;
+    double             draw_scale          = 1.0;
+    impl::BufferSize   buffer_size;
+    std::array<int, 2> window_size;
+    Viewport           viewport = {{0, 0}, {800, 600}};
 
   protected:
     std::shared_ptr<WindowCallbacks> callbacks;
     bool                             event_driven = false;
 
     auto on_buffer_resize(std::optional<std::array<size_t, 2>> size, std::optional<size_t> scale) -> void;
-    auto get_buffer_size() const -> const Critical<impl::BufferSize>&;
+    auto get_buffer_size() const -> const impl::BufferSize&;
     auto set_callbacks(std::shared_ptr<WindowCallbacks> callbacks) -> void;
 
   public:

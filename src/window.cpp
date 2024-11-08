@@ -3,21 +3,25 @@
 namespace gawl {
 auto Window::on_buffer_resize(const std::optional<std::array<size_t, 2>> size, const std::optional<size_t> scale) -> void {
     constexpr auto MIN_SCALE = 0.01;
-    const auto [lock, data]  = buffer_size.access();
     if(size) {
-        data.size = *size;
+        buffer_size.size = *size;
     }
     if(scale) {
-        data.scale = *scale;
-        draw_scale = specified_scale >= MIN_SCALE ? specified_scale : follow_buffer_scale ? data.scale
-                                                                                          : 1;
+        buffer_size.scale = *scale;
+        if(specified_scale >= MIN_SCALE) {
+            draw_scale = specified_scale;
+        } else if(follow_buffer_scale) {
+            draw_scale = buffer_size.scale;
+        } else {
+            draw_scale = 1;
+        }
     }
-    viewport.unset(data.size);
+    viewport.unset(buffer_size.size);
     window_size[0] = viewport.size[0] / draw_scale;
     window_size[1] = viewport.size[1] / draw_scale;
 }
 
-auto Window::get_buffer_size() const -> const Critical<impl::BufferSize>& {
+auto Window::get_buffer_size() const -> const impl::BufferSize& {
     return buffer_size;
 }
 
@@ -41,13 +45,11 @@ auto Window::get_viewport() const -> const Viewport& {
 }
 
 auto Window::set_viewport(const gawl::Rectangle& region) -> void {
-    const auto [lock, data] = buffer_size.access();
-    viewport.set(Rectangle(region).magnify(draw_scale), data.size);
+    viewport.set(Rectangle(region).magnify(draw_scale), buffer_size.size);
 }
 
 auto Window::unset_viewport() -> void {
-    const auto [lock, data] = buffer_size.access();
-    viewport.unset(data.size);
+    viewport.unset(buffer_size.size);
 }
 
 auto Window::get_state() const -> impl::WindowState {

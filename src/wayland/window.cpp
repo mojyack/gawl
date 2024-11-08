@@ -21,8 +21,7 @@ auto WaylandWindowCallbacks::on_wl_surface_frame() -> void {
 auto WaylandWindowCallbacks::on_xdg_toplevel_configure(const int width, const int height) -> void {
     {
         const auto& buffer_size = window->get_buffer_size();
-        const auto [lock, data] = buffer_size.access();
-        if(data.size[0] == static_cast<size_t>(width) * data.scale && data.size[1] == static_cast<size_t>(height) * data.scale) {
+        if(buffer_size.size[0] == static_cast<size_t>(width) * buffer_size.scale && buffer_size.size[1] == static_cast<size_t>(height) * buffer_size.scale) {
             return;
         }
     }
@@ -70,19 +69,18 @@ auto WaylandWindow::resize_buffer(const int width, const int height, const int s
     auto new_width  = size_t();
     auto new_height = size_t();
     {
-        const auto& buffer      = get_buffer_size();
-        const auto [lock, data] = buffer.access();
+        const auto& buffer_size = get_buffer_size();
         if(width != -1 && height != -1) {
             // update buffer size
-            new_scale  = data.scale;
+            new_scale  = buffer_size.scale;
             new_width  = width;
             new_height = height;
         }
         if(scale != -1) {
             // update scale
             new_scale  = scale;
-            new_width  = data.size[0];
-            new_height = data.size[1];
+            new_width  = buffer_size.size[0];
+            new_height = buffer_size.size[1];
         }
     }
     new_width *= new_scale;
@@ -171,9 +169,8 @@ auto WaylandWindow::refresh() -> bool {
 
     choose_surface(egl_surface, *egl);
     if(obsolete_egl_window_size) {
-        obsolete_egl_window_size         = false;
-        const auto& critical_buffer_size = this->get_buffer_size();
-        const auto [lock, buffer_size]   = critical_buffer_size.access();
+        obsolete_egl_window_size = false;
+        const auto& buffer_size  = this->get_buffer_size();
         egl_window.resize(buffer_size.size[0], buffer_size.size[1], 0, 0);
         swap_buffer(); // ensure buffer sizes are changed to prevent "Buffer size is not divisible by scale" error
         wayland_surface.set_buffer_scale(buffer_size.scale);
