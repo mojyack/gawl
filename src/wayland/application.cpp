@@ -41,7 +41,7 @@ auto WaylandApplication::run() -> coop::Async<void> {
         if(closing_windows.empty()) {
             continue;
         }
-        for(const auto window : closing_windows) {
+        for(const auto window : std::exchange(closing_windows, {})) {
             erase_window(window);
         }
     }
