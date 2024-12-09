@@ -41,7 +41,7 @@ auto choose_surface(const EGLSurface eglsurface, const impl::EGLObject& egl) -> 
     if(current_surface == eglsurface) {
         return;
     }
-    line_assert(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
+    ASSERT(eglMakeCurrent(egl.display, eglsurface, eglsurface, egl.context) != EGL_FALSE);
     current_surface = eglsurface;
 }
 
@@ -224,6 +224,6 @@ auto WaylandWindow::init(
 
 WaylandWindow::~WaylandWindow() {
     key_repeater.cancel();
-    line_assert(eglDestroySurface(egl->display, egl_surface) == EGL_TRUE);
+    ASSERT(eglDestroySurface(egl->display, egl_surface) == EGL_TRUE);
 }
 } // namespace gawl

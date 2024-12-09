@@ -1,5 +1,5 @@
 #include "eglobject.hpp"
-#include "../util/assert.hpp"
+#include "../macros/assert.hpp"
 
 namespace gawl {
 auto EGLSubObject::flush() -> void {
@@ -11,12 +11,12 @@ auto EGLSubObject::wait() -> void {
 }
 
 EGLSubObject::EGLSubObject(const EGLDisplay display, const EGLContext context) : display(display), context(context) {
-    line_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
+    ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
 }
 
 EGLSubObject::~EGLSubObject() {
-    line_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
-    line_assert(eglDestroyContext(display, context) != EGL_FALSE);
+    ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+    ASSERT(eglDestroyContext(display, context) != EGL_FALSE);
 }
 
 namespace impl {
@@ -26,13 +26,13 @@ auto EGLObject::fork() const -> EGLSubObject {
 
 EGLObject::EGLObject(towl::Display& wl_display) {
     display = eglGetDisplay(wl_display.native());
-    line_assert(display != EGL_NO_DISPLAY);
+    ASSERT(display != EGL_NO_DISPLAY);
 
     auto major = EGLint(0);
     auto minor = EGLint(0);
-    line_assert(eglInitialize(display, &major, &minor) != EGL_FALSE);
-    line_assert((major == 1 && minor >= 4) || major >= 2);
-    line_assert(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
+    ASSERT(eglInitialize(display, &major, &minor) != EGL_FALSE);
+    ASSERT((major == 1 && minor >= 4) || major >= 2);
+    ASSERT(eglBindAPI(EGL_OPENGL_API) != EGL_FALSE);
 
     constexpr auto config_attribs = std::array<EGLint, 15>{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                                                            EGL_RED_SIZE, 8,
@@ -44,16 +44,16 @@ EGLObject::EGLObject(towl::Display& wl_display) {
                                                            EGL_NONE};
 
     auto num = EGLint(0);
-    line_assert(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
+    ASSERT(eglChooseConfig(display, config_attribs.data(), &config, 1, &num) != EGL_FALSE && num != 0);
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs.data());
-    line_assert(context != EGL_NO_CONTEXT);
+    ASSERT(context != EGL_NO_CONTEXT);
 }
 
 EGLObject::~EGLObject() {
-    line_assert(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
-    line_assert(eglDestroyContext(display, context) != EGL_FALSE);
-    line_assert(eglTerminate(display) != EGL_FALSE);
-    line_assert(eglReleaseThread() != EGL_FALSE);
+    ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+    ASSERT(eglDestroyContext(display, context) != EGL_FALSE);
+    ASSERT(eglTerminate(display) != EGL_FALSE);
+    ASSERT(eglReleaseThread() != EGL_FALSE);
 }
 } // namespace impl
 } // namespace gawl

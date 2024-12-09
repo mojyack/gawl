@@ -3,13 +3,13 @@
 #include <coop/promise.hpp>
 
 #include "../global.hpp"
-#include "../util/assert.hpp"
+#include "../macros/assert.hpp"
 #include "application.hpp"
 
 namespace gawl {
 auto WaylandApplication::create_window(const WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> {
     auto window = new WaylandWindow();
-    line_assert(co_await window->init(hint, std::move(callbacks), wl.get(), &egl, application_event));
+    ASSERT(co_await window->init(hint, std::move(callbacks), wl.get(), &egl, application_event));
     co_return window;
 }
 
@@ -19,7 +19,7 @@ auto WaylandApplication::run() -> coop::Async<void> {
         while(true) {
             wl->display.flush();
             const auto result = co_await coop::wait_for_file(fd, true, false);
-            line_assert(result.read && !result.error);
+            ASSERT(result.read && !result.error);
             wl->display.dispatch();
             event.notify();
         }
@@ -63,13 +63,13 @@ WaylandApplication::WaylandApplication()
       egl(wl->display) {
     // bind wayland interfaces
     wl->display.roundtrip();
-    line_assert(!wl->compositor_binder.interfaces.empty());
-    line_assert(!wl->xdg_wm_base_binder.interfaces.empty());
+    ASSERT(!wl->compositor_binder.interfaces.empty());
+    ASSERT(!wl->xdg_wm_base_binder.interfaces.empty());
 
     // initialize egl
-    line_assert(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
+    ASSERT(eglMakeCurrent(egl.display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl.context) != EGL_FALSE);
     impl::global = new impl::Shaders();
-    line_assert(impl::global->init());
+    ASSERT(impl::global->init());
 }
 
 WaylandApplication::~WaylandApplication() {
