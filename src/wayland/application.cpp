@@ -9,6 +9,7 @@
 namespace gawl {
 auto WaylandApplication::create_window(const WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> {
     auto window = new WaylandWindow();
+    windows.emplace_back(window);
     ASSERT(co_await window->init(hint, std::move(callbacks), wl.get(), &egl, application_event));
     co_return window;
 }
