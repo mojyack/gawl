@@ -2,7 +2,6 @@
 #include "align.hpp"
 #include "color.hpp"
 #include "graphic-base.hpp"
-#include "viewport.hpp"
 
 #include <freetype/freetype.h>
 
@@ -10,8 +9,10 @@ namespace gawl {
 namespace impl {
 class Character : public impl::GraphicBase {
   public:
-    int offset[2];
-    int advance;
+    int left;
+    int top;
+    int advance_x;
+    int advance_y;
 
     Character(char32_t code, const std::vector<FT_Face>& faces);
 };
@@ -46,6 +47,13 @@ class WrappedText {
     WrappedText(double width, double screen_scale, const std::vector<std::u32string> lines);
 };
 
+struct GlyphMeta {
+    double left;
+    double top;
+    double advance_x;
+    double advance_y;
+};
+
 class TextRender {
   private:
     std::unordered_map<int, impl::CharacterCache> caches;
@@ -65,6 +73,7 @@ class TextRender {
     auto set_char_color(const Color& color) -> void;
     auto get_rect(const MetaScreen& screen, std::string_view text, int size = 0) -> Rectangle;
     auto get_rect(const MetaScreen& screen, std::u32string_view text, int size = 0) -> Rectangle;
+    auto get_glyph_meta(const MetaScreen& screen, char character, int size = 0) -> GlyphMeta;
     auto draw(Screen& screen, const Point& point, const Color& color, std::string_view text, int size = 0, Callback callback = nullptr) -> Rectangle;
     auto draw(Screen& screen, const Point& point, const Color& color, std::u32string_view text, int size = 0, Callback callback = nullptr) -> Rectangle;
     auto draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, std::string_view text, int size = 0, gawl::Align alignx = gawl::Align::Center, gawl::Align aligny = gawl::Align::Center, Callback callback = nullptr) -> Rectangle;

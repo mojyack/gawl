@@ -1,6 +1,6 @@
 #include "textrender.hpp"
 #include "global.hpp"
-#include "util/assert.hpp"
+#include "macros/assert.hpp"
 
 namespace gawl {
 namespace impl {
@@ -22,14 +22,15 @@ Character::Character(char32_t code, const std::vector<FT_Face>& faces) : Graphic
         glyph_index = FT_Get_Char_Index(faces[0], code);
     }
 
-    dynamic_assert(FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT) == 0);
-    dynamic_assert(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL) == 0);
+    ASSERT(FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT) == 0);
+    ASSERT(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL) == 0);
 
-    this->width  = face->glyph->bitmap.width;
-    this->height = face->glyph->bitmap.rows;
-    offset[0]    = face->glyph->bitmap_left;
-    offset[1]    = face->glyph->bitmap_top;
-    advance      = static_cast<int>(face->glyph->advance.x) >> 6;
+    this->width     = face->glyph->bitmap.width;
+    this->height    = face->glyph->bitmap.rows;
+    this->left      = face->glyph->bitmap_left;
+    this->top       = face->glyph->bitmap_top;
+    this->advance_x = int(face->glyph->advance.x) >> 6;
+    this->advance_y = int(face->glyph->advance.y) >> 6;
 
     const auto txbinder = this->bind_texture();
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
@@ -50,7 +51,7 @@ auto CharacterCache::get_character(const char32_t c) -> Character& {
 CharacterCache::CharacterCache(const std::vector<std::string>& font_names, const int size) {
     for(const auto& path : font_names) {
         auto face = FT_Face();
-        dynamic_assert(FT_New_Face(FT_Library(global->textrender_shader.freetype), path.data(), 0, &(face)) == 0);
+        ASSERT(FT_New_Face(FT_Library(global->textrender_shader.freetype), path.data(), 0, &(face)) == 0);
         FT_Set_Pixel_Sizes(face, 0, size);
         faces.emplace_back(face);
     }
@@ -205,22 +206,36 @@ auto TextRender::get_rect(const MetaScreen& screen, const std::u32string_view te
 
         const auto& chara = get_chara_graphic(size * scale, c);
 
-        const auto x_a = pen_x + (!first ? chara.offset[0] : 0);
+        const auto x_a = pen_x + (!first ? chara.left : 0);
         const auto x_b = x_a + chara.get_width(screen) * scale;
-        rx.a.x         = rx.a.x > x_a ? x_a : rx.a.x;
-        rx.b.x         = first ? x_b : (rx.b.x < x_b ? x_b : rx.b.x);
+        rx.a.x         = std::min(rx.a.x, x_a);
+        rx.b.x         = first ? x_b : std::max(rx.b.x, x_b);
 
-        const auto y_a = pen_y - chara.offset[1];
+        const auto y_a = pen_y - chara.top;
         const auto y_b = y_a + chara.get_height(screen) * scale;
-        rx.a.y         = rx.a.y > y_a ? y_a : rx.a.y;
-        rx.b.y         = first ? y_b : (rx.b.y < y_b ? y_b : rx.b.y);
+        rx.a.y         = std::min(rx.a.y, y_a);
+        rx.b.y         = first ? y_b : std::max(rx.b.y, y_b);
 
         // wprintf(L"%c, {{%f,%f},{%f,%f}}\n", *c, x_a, y_a, x_b, y_b);
 
-        pen_x += chara.advance;
+        pen_x += chara.advance_x;
+        pen_y += chara.advance_x;
     }
 
     return rx.magnify(1 / scale);
+}
+
+auto TextRender::get_glyph_meta(const MetaScreen& screen, const char character, int size) -> GlyphMeta {
+    size = size != 0 ? size : default_size;
+
+    const auto  scale = screen.get_scale();
+    const auto& chara = get_chara_graphic(size * scale, character);
+    return GlyphMeta{
+        .left      = chara.left / scale,
+        .top       = chara.top / scale,
+        .advance_x = chara.advance_x / scale,
+        .advance_y = chara.advance_y / scale,
+    };
 }
 
 auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::string_view text, const int size, const Callback callback) -> Rectangle {
@@ -243,12 +258,12 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
         const auto c = text[i];
 
         auto&      chara = get_chara_graphic(size * scale, c);
-        const auto x_a   = pen.x + chara.offset[0] / scale;
+        const auto x_a   = pen.x + chara.left / scale;
         const auto x_b   = x_a + chara.get_width(screen);
         drawed_area.a.x  = drawed_area.a.x < x_a ? drawed_area.a.x : x_a;
         drawed_area.b.x  = drawed_area.b.x > x_b ? drawed_area.b.x : x_b;
 
-        const auto y_a  = pen.y - chara.offset[1] / scale;
+        const auto y_a  = pen.y - chara.top / scale;
         const auto y_b  = y_a + chara.get_height(screen);
         drawed_area.a.y = drawed_area.a.y < y_a ? drawed_area.a.y : y_a;
         drawed_area.b.y = drawed_area.b.y > y_b ? drawed_area.b.y : y_b;
@@ -257,7 +272,8 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
             chara.draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
         }
 
-        pen.x += chara.advance / scale;
+        pen.x += chara.advance_x / scale;
+        pen.y += chara.advance_y / scale;
     }
 
     return drawed_area;
