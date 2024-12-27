@@ -213,12 +213,12 @@ auto WaylandWindow::init(
     wayland_surface.commit();
 
     co_ensure_v(init_egl());
+    co_ensure_v(co_await callbacks->on_created(this));
     co_ensure_v(resize_buffer(hint.width, hint.height, -1));
 
     co_await wl->display.wait_sync();
 
     set_event_driven(hint.manual_refresh);
-    co_ensure_v(co_await callbacks->on_created(this));
     co_return true;
 }
 
