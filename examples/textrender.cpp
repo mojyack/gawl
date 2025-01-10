@@ -3,7 +3,37 @@
 #include "gawl/misc.hpp"
 #include "gawl/wayland/application.hpp"
 #include "macros/unwrap.hpp"
-#include "util/assert.hpp"
+
+constexpr auto poem = R"(雨ニモマケズ
+風ニモマケズ
+雪ニモ夏ノ暑サニモマケヌ
+丈夫ナカラダヲモチ
+慾ハナク
+決シテ瞋ラズ
+イツモシヅカニワラッテヰル
+一日ニ玄米四合ト
+味噌ト少シノ野菜ヲタベ
+アラユルコトヲ
+ジブンヲカンジョウニ入レズニ
+ヨクミキキシワカリ
+ソシテワスレズ
+野原ノ松ノ林ノ䕃ノ
+小サナ萱ブキノ小屋ニヰテ
+東ニ病気ノコドモアレバ
+行ッテ看病シテヤリ
+西ニツカレタ母アレバ
+行ッテソノ稲ノ束ヲ負ヒ
+南ニ死ニサウナ人アレバ
+行ッテコハガラナクテモイヽトイヒ
+北ニケンクヮヤソショウガアレバ
+ツマラナイカラヤメロトイヒ
+ヒデリノトキハナミダヲナガシ
+サムサノナツハオロオロアルキ
+ミンナニデクノボートヨバレ
+ホメラレモセズ
+クニモサレズ
+サウイフモノニ
+ワタシハナリタイ)";
 
 class Callbacks : public gawl::WindowCallbacks {
   private:
@@ -15,38 +45,63 @@ class Callbacks : public gawl::WindowCallbacks {
         gawl::clear_screen({0, 0, 0, 1});
 
         gawl::draw_rect(*window, {{0, 0}, {300, 40}}, {1, 1, 1, 1});
-        font.draw_fit_rect(*window, {{0, 0}, {300, 40}}, {0, 0, 0, 1}, "Hello, World!", 0, gawl::Align::Center, gawl::Align::Center);
+        font.draw_fit_rect(*window, {{0, 0}, {300, 40}}, {0, 0, 0, 1}, "Hello, World!", {
+                                                                                            .align_x = gawl::Align::Center,
+                                                                                            .align_y = gawl::Align::Center,
+                                                                                        });
 
         gawl::draw_rect(*window, {{0, 50}, {300, 90}}, {1, 1, 1, 1});
-        font.draw_fit_rect(*window, {{0, 50}, {300, 90}}, {0, 0, 0, 1}, "Hello, World!", 0, gawl::Align::Right, gawl::Align::Center);
+        font.draw_fit_rect(*window, {{0, 50}, {300, 90}}, {0, 0, 0, 1}, "Hello, World!", {
+                                                                                             .align_x = gawl::Align::Right,
+                                                                                             .align_y = gawl::Align::Center,
+                                                                                         });
 
         gawl::draw_rect(*window, {{0, 100}, {300, 140}}, {1, 1, 1, 1});
-        font.draw_fit_rect(*window, {{0, 100}, {300, 140}}, {0, 0, 0, 1}, "Hello, World!", 0, gawl::Align::Left, gawl::Align::Center);
+        font.draw_fit_rect(*window, {{0, 100}, {300, 140}}, {0, 0, 0, 1}, "Hello, World!", {
+                                                                                               .align_x = gawl::Align::Left,
+                                                                                               .align_y = gawl::Align::Center,
+                                                                                           });
 
         gawl::draw_rect(*window, {{0, 150}, {300, 190}}, {1, 1, 1, 1});
-        font.draw_fit_rect(*window, {{0, 150}, {300, 190}}, {0, 0, 0, 1}, "Hello, World!", 0, gawl::Align::Center, gawl::Align::Right);
+        font.draw_fit_rect(*window, {{0, 150}, {300, 190}}, {0, 0, 0, 1}, "Hello, World!", {
+                                                                                               .align_x = gawl::Align::Center,
+                                                                                               .align_y = gawl::Align::Right,
+                                                                                           });
 
         gawl::draw_rect(*window, {{0, 200}, {300, 240}}, {1, 1, 1, 1});
-        font.draw_fit_rect(*window, {{0, 200}, {300, 240}}, {0, 0, 0, 1}, "Hello, World!", 0, gawl::Align::Center, gawl::Align::Left);
-
-        constexpr auto poem = "雨ニモマケズ\n風ニモマケズ\n雪ニモ夏ノ暑サニモマケヌ\n丈夫ナカラダヲモチ\n慾ハナク\n決シテ瞋ラズ\nイツモシヅカニワラッテヰル\n一日ニ玄米四合ト\n味噌ト少シノ野菜ヲタベ\nアラユルコトヲ\nジブンヲカンジョウニ入レズニ\nヨクミキキシワカリ\nソシテワスレズ\n野原ノ松ノ林ノ䕃ノ\n小サナ萱ブキノ小屋ニヰテ\n東ニ病気ノコドモアレバ\n行ッテ看病シテヤリ\n西ニツカレタ母アレバ\n行ッテソノ稲ノ束ヲ負ヒ\n南ニ死ニサウナ人アレバ\n行ッテコハガラナクテモイヽトイヒ\n北ニケンクヮヤソショウガアレバ\nツマラナイカラヤメロトイヒ\nヒデリノトキハナミダヲナガシ\nサムサノナツハオロオロアルキ\nミンナニデクノボートヨバレ\nホメラレモセズ\nクニモサレズ\nサウイフモノニ\nワタシハナリタイ";
+        font.draw_fit_rect(*window, {{0, 200}, {300, 240}}, {0, 0, 0, 1}, "Hello, World!", {
+                                                                                               .align_x = gawl::Align::Center,
+                                                                                               .align_y = gawl::Align::Left,
+                                                                                           });
 
         {
             const auto area = gawl::Rectangle{{310, 0}, {610, 640}};
             gawl::draw_rect(*window, area, {1, 1, 1, 1});
-            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Left, gawl::Align::Left);
+            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, {
+                                                                                       .size    = 16,
+                                                                                       .align_x = gawl::Align::Left,
+                                                                                       .align_y = gawl::Align::Left,
+                                                                                   });
         }
 
         {
             const auto area = gawl::Rectangle{{620, 0}, {920, 640}};
             gawl::draw_rect(*window, area, {1, 1, 1, 1});
-            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Center, gawl::Align::Center);
+            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, {
+                                                                                       .size    = 16,
+                                                                                       .align_x = gawl::Align::Center,
+                                                                                       .align_y = gawl::Align::Center,
+                                                                                   });
         }
 
         {
             const auto area = gawl::Rectangle{{930, 0}, {1230, 640}};
             gawl::draw_rect(*window, area, {1, 1, 1, 1});
-            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, 16, gawl::Align::Right, gawl::Align::Right);
+            font.draw_wrapped(*window, area, 18, {0, 0, 0, 1}, poem, wrapped_text, {
+                                                                                       .size    = 16,
+                                                                                       .align_x = gawl::Align::Right,
+                                                                                       .align_y = gawl::Align::Right,
+                                                                                   });
         }
     }
 

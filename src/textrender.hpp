@@ -47,6 +47,26 @@ class WrappedText {
     WrappedText(double width, double screen_scale, const std::vector<std::u32string> lines);
 };
 
+using Callback = std::function<bool(size_t, const gawl::Rectangle&, impl::Character&)>;
+
+struct DrawParams {
+    int      size     = 0;
+    Callback callback = nullptr;
+};
+
+struct DrawFitRectParams {
+    int         size     = 0;
+    gawl::Align align_x  = gawl::Align::Center;
+    gawl::Align align_y  = gawl::Align::Center;
+    Callback    callback = nullptr;
+};
+
+struct DrawWrappedParams {
+    int         size    = 0;
+    gawl::Align align_x = gawl::Align::Center;
+    gawl::Align align_y = gawl::Align::Center;
+};
+
 struct GlyphMeta {
     double left;
     double top;
@@ -66,19 +86,17 @@ class TextRender {
     auto create_wrapped_text(const MetaScreen& screen, double width, std::string_view text, int size) -> WrappedText;
 
   public:
-    using Callback = std::function<bool(size_t, const gawl::Rectangle&, impl::Character&)>;
-
     auto init(std::vector<std::string> font_names, int default_size) -> void;
     auto get_default_size() const -> int;
     auto set_char_color(const Color& color) -> void;
     auto get_rect(const MetaScreen& screen, std::string_view text, int size = 0) -> Rectangle;
     auto get_rect(const MetaScreen& screen, std::u32string_view text, int size = 0) -> Rectangle;
     auto get_glyph_meta(const MetaScreen& screen, char character, int size = 0) -> GlyphMeta;
-    auto draw(Screen& screen, const Point& point, const Color& color, std::string_view text, int size = 0, Callback callback = nullptr) -> Rectangle;
-    auto draw(Screen& screen, const Point& point, const Color& color, std::u32string_view text, int size = 0, Callback callback = nullptr) -> Rectangle;
-    auto draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, std::string_view text, int size = 0, gawl::Align alignx = gawl::Align::Center, gawl::Align aligny = gawl::Align::Center, Callback callback = nullptr) -> Rectangle;
+    auto draw(Screen& screen, const Point& point, const Color& color, std::string_view text, const DrawParams& params = {}) -> Rectangle;
+    auto draw(Screen& screen, const Point& point, const Color& color, std::u32string_view text, const DrawParams& params = {}) -> Rectangle;
+    auto draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, std::string_view text, const DrawFitRectParams& params = {}) -> Rectangle;
     auto calc_wrapped_text_height(Screen& screen, double width, double line_height, std::string_view text, WrappedText& wrapped_text, int size = 0) -> double;
-    auto draw_wrapped(Screen& screen, const Rectangle& rect, double line_height, const Color& color, std::string_view text, WrappedText& wrapped_text, int size = 0, gawl::Align alignx = gawl::Align::Center, gawl::Align aligny = gawl::Align::Center) -> void;
+    auto draw_wrapped(Screen& screen, const Rectangle& rect, double line_height, const Color& color, std::string_view text, WrappedText& wrapped_text, const DrawWrappedParams& params = {}) -> void;
 
     TextRender() {}
     TextRender(std::vector<std::string> font_names, int default_size);

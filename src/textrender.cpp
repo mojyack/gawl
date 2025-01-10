@@ -234,13 +234,13 @@ auto TextRender::get_glyph_meta(const MetaScreen& screen, const char character, 
     };
 }
 
-auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::string_view text, const int size, const Callback callback) -> Rectangle {
+auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::string_view text, const DrawParams& params) -> Rectangle {
     const auto uni = impl::convert_utf8_to_unicode32(text);
-    return draw(screen, point, color, uni.data(), size, callback);
+    return draw(screen, point, color, uni.data(), params);
 }
 
-auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::u32string_view text, int size, const Callback callback) -> Rectangle {
-    size = size != 0 ? size : default_size;
+auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::u32string_view text, const DrawParams& params) -> Rectangle {
+    const auto size = params.size != 0 ? params.size : default_size;
     if(size <= 0) {
         return Rectangle{point, point};
     }
@@ -263,7 +263,7 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
         rx.a.y         = std::min(rx.a.y, y_a);
         rx.b.y         = std::max(rx.b.y, y_b);
 
-        if(!callback || !callback(i, {{x_a, y_a}, {x_b, y_b}}, chara)) {
+        if(!params.callback || !params.callback(i, {{x_a, y_a}, {x_b, y_b}}, chara)) {
             chara.draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
         }
 
@@ -274,19 +274,19 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
     return rx;
 }
 
-auto TextRender::draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, const std::string_view text, const int size, const gawl::Align alignx, const gawl::Align aligny, const Callback callback) -> Rectangle {
+auto TextRender::draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, const std::string_view text, const DrawFitRectParams& params) -> Rectangle {
     const auto scale     = screen.get_scale();
     const auto r         = Rectangle(rect).magnify(scale);
-    const auto font_area = get_rect(screen, text, size).magnify(scale);
+    const auto font_area = get_rect(screen, text, params.size).magnify(scale);
     const auto pad       = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
-    auto x = alignx == Align::Left ? r.a.x - font_area.a.x : alignx == Align::Center ? r.a.x + pad[0] / 2
-                                                                                     : r.b.x - font_area.width();
-    auto y = aligny == Align::Left ? r.a.y - font_area.a.y : aligny == Align::Center ? r.a.y - font_area.a.y + pad[1] / 2
-                                                                                     : r.b.y - font_area.b.y;
+    auto x = params.align_x == Align::Left ? r.a.x - font_area.a.x : params.align_x == Align::Center ? r.a.x + pad[0] / 2
+                                                                                                     : r.b.x - font_area.width();
+    auto y = params.align_y == Align::Left ? r.a.y - font_area.a.y : params.align_y == Align::Center ? r.a.y - font_area.a.y + pad[1] / 2
+                                                                                                     : r.b.y - font_area.b.y;
     x /= scale;
     y /= scale;
-    return draw(screen, {x, y}, color, text, size, callback);
+    return draw(screen, {x, y}, color, text, {.size = params.size, .callback = params.callback});
 }
 
 auto TextRender::calc_wrapped_text_height(Screen& screen, const double width, const double line_height, const std::string_view text, WrappedText& wrapped_text, const int size) -> double {
@@ -300,19 +300,19 @@ auto TextRender::calc_wrapped_text_height(Screen& screen, const double width, co
     return total_height;
 }
 
-auto TextRender::draw_wrapped(Screen& screen, const Rectangle& rect, const double line_height, const Color& color, const std::string_view text, WrappedText& wrapped_text, const int size, const gawl::Align alignx, const gawl::Align aligny) -> void {
+auto TextRender::draw_wrapped(Screen& screen, const Rectangle& rect, const double line_height, const Color& color, const std::string_view text, WrappedText& wrapped_text, const DrawWrappedParams& params) -> void {
     const auto rect_width  = rect.width();
     const auto rect_height = rect.height();
 
     if(wrapped_text.is_changed(rect_width, screen.get_scale())) {
-        wrapped_text = create_wrapped_text(screen, rect_width, text, size);
+        wrapped_text = create_wrapped_text(screen, rect_width, text, params.size);
     }
 
     const auto& lines = wrapped_text.get_lines();
 
     const auto total_height = lines.size() * line_height;
-    const auto y_offset     = aligny == Align::Left ? 0.0 : aligny == Align::Right ? rect_height - total_height
-                                                                                   : (rect_height - total_height) / 2.0;
+    const auto y_offset     = params.align_y == Align::Left ? 0.0 : params.align_y == Align::Right ? rect_height - total_height
+                                                                                                   : (rect_height - total_height) / 2.0;
 
     const auto visible_rect = Viewport(screen.get_viewport()).to_rectangle().magnify(1.0 / screen.get_scale()) &= rect;
     const auto y_pos_begin  = rect.a.y + y_offset;
@@ -320,12 +320,12 @@ auto TextRender::draw_wrapped(Screen& screen, const Rectangle& rect, const doubl
     const auto index_end    = int(std::min(double(lines.size()), index_begin + (visible_rect.height() + line_height - 1) / line_height));
     for(auto i = index_begin; i < index_end; i += 1) {
         const auto& line        = lines[i];
-        const auto  area        = get_rect(screen, line, size);
+        const auto  area        = get_rect(screen, line, params.size);
         const auto  total_width = area.width();
 
-        const auto x_offset = alignx == Align::Left ? -area.a.x : alignx == Align::Right ? rect_width - total_width
-                                                                                         : (rect_width - total_width) / 2.0;
-        draw(screen, {rect.a.x + x_offset, y_pos_begin + i * line_height - area.a.y}, color, line.data(), size);
+        const auto x_offset = params.align_x == Align::Left ? -area.a.x : params.align_x == Align::Right ? rect_width - total_width
+                                                                                                         : (rect_width - total_width) / 2.0;
+        draw(screen, {rect.a.x + x_offset, y_pos_begin + i * line_height - area.a.y}, color, line.data(), {.size = params.size});
     }
 }
 
