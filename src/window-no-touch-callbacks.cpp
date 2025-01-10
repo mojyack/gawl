@@ -1,3 +1,4 @@
+#include <coop/runner.hpp>
 #include <linux/input.h>
 
 #include "window-no-touch-callbacks.hpp"
