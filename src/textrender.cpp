@@ -189,36 +189,8 @@ auto TextRender::get_rect(const MetaScreen& screen, const std::string_view text,
     return get_rect(screen, uni.data(), size);
 }
 
-auto TextRender::get_rect(const MetaScreen& screen, const std::u32string_view text, int size) -> Rectangle {
-    size = size != 0 ? size : default_size;
-    if(size <= 0) {
-        return {{0, 0}, {0, 0}};
-    }
-
-    const auto scale = screen.get_scale();
-    auto       pen   = Point{0, 0};
-    auto       rx    = Rectangle{{0, 0}, {0, 0}};
-
-    for(auto i = size_t(0); i < text.size(); i += 1) {
-        const auto& chara = get_chara_graphic(size * scale, text[i]);
-
-        const auto x_a = pen.x + chara.left;
-        const auto x_b = x_a + chara.get_width(screen) * scale;
-        rx.a.x         = std::min(rx.a.x, x_a);
-        rx.b.x         = std::max(rx.b.x, x_b);
-
-        const auto y_a = pen.y - chara.top;
-        const auto y_b = y_a + chara.get_height(screen) * scale;
-        rx.a.y         = std::min(rx.a.y, y_a);
-        rx.b.y         = std::max(rx.b.y, y_b);
-
-        // wprintf(L"%c, {{%f,%f},{%f,%f}}\n", *c, x_a, y_a, x_b, y_b);
-
-        pen.x += chara.advance_x;
-        pen.y += chara.advance_y;
-    }
-
-    return rx.magnify(1 / scale);
+auto TextRender::get_rect(const MetaScreen& screen, const std::u32string_view text, const int size) -> Rectangle {
+    return draw(*std::bit_cast<Screen*>(&screen), Point{}, Color{}, text, {.size = size, .dry = true});
 }
 
 auto TextRender::get_glyph_meta(const MetaScreen& screen, const char character, int size) -> GlyphMeta {
@@ -240,15 +212,14 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
 }
 
 auto TextRender::draw(Screen& screen, const Point& point, const Color& color, const std::u32string_view text, const DrawParams& params) -> Rectangle {
-    const auto size = params.size != 0 ? params.size : default_size;
-    if(size <= 0) {
-        return Rectangle{point, point};
-    }
+    const auto size  = params.size != 0 ? params.size : default_size;
     const auto scale = screen.get_scale();
     auto       pen   = point;
     auto       rx    = Rectangle{point, point};
 
-    set_char_color(color);
+    if(!params.dry) {
+        set_char_color(color);
+    }
 
     for(auto i = size_t(0); i < text.size(); i += 1) {
         auto& chara = get_chara_graphic(size * scale, text[i]);
@@ -263,8 +234,10 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
         rx.a.y         = std::min(rx.a.y, y_a);
         rx.b.y         = std::max(rx.b.y, y_b);
 
-        if(!params.callback || !params.callback(i, {{x_a, y_a}, {x_b, y_b}}, chara)) {
-            chara.draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
+        if(!params.dry) {
+            if(!params.callback || !params.callback(i, {{x_a, y_a}, {x_b, y_b}}, chara)) {
+                chara.draw_rect(screen, {{x_a, y_a}, {x_b, y_b}});
+            }
         }
 
         pen.x += chara.advance_x / scale;

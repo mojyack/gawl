@@ -51,6 +51,7 @@ using Callback = std::function<bool(size_t, const gawl::Rectangle&, impl::Charac
 
 struct DrawParams {
     int      size     = 0;
+    bool     dry      = false;
     Callback callback = nullptr;
 };
 
