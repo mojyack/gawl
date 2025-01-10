@@ -219,7 +219,7 @@ auto TextRender::get_rect(const MetaScreen& screen, const std::u32string_view te
         // wprintf(L"%c, {{%f,%f},{%f,%f}}\n", *c, x_a, y_a, x_b, y_b);
 
         pen_x += chara.advance_x;
-        pen_y += chara.advance_x;
+        pen_y += chara.advance_y;
     }
 
     return rx.magnify(1 / scale);
