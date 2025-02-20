@@ -1,4 +1,8 @@
 #pragma once
+#include <functional>
+#include <unordered_map>
+#include <vector>
+
 #include "align.hpp"
 #include "color.hpp"
 #include "graphic-base.hpp"

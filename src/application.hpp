@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+
 #include <coop/generator.hpp>
 
 #include "window-creat-hint.hpp"

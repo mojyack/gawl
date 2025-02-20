@@ -16,7 +16,7 @@ auto compile_shader(const uint32_t type, const char* const source) -> std::optio
 
         auto error_log = std::vector<GLchar>(max_len);
         glGetShaderInfoLog(shader, max_len, &max_len, error_log.data());
-        bail("shader compile error: ", std::string_view{error_log.data(), size_t(max_len)});
+        bail("shader compile error: {}", std::string_view{error_log.data(), size_t(max_len)});
     }
     return shader;
 }

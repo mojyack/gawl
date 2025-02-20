@@ -34,7 +34,7 @@ auto PixelBuffer::from_file(const char* const file) -> std::optional<PixelBuffer
     try {
         return load_texture_imagemagick(Magick::Image(file));
     } catch(const Magick::Exception& e) {
-        bail(e.what());
+        bail("imagemagick error: {}", e.what());
     }
 }
 
@@ -43,7 +43,7 @@ auto PixelBuffer::from_blob(const std::byte* const data, const size_t size) -> s
         auto blob = Magick::Blob(data, size);
         return load_texture_imagemagick(Magick::Image(blob));
     } catch(const Magick::Exception& e) {
-        bail(e.what());
+        bail("imagemagick error: {}", e.what());
     }
 }
 

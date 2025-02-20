@@ -6,7 +6,6 @@
 #include "gawl/wayland/application.hpp"
 #include "gawl/window-no-touch-callbacks.hpp"
 #include "macros/unwrap.hpp"
-#include "util/print.hpp"
 
 class Callbacks : public gawl::WindowNoTouchCallbacks {
   private:
@@ -19,11 +18,9 @@ class Callbacks : public gawl::WindowNoTouchCallbacks {
 
   public:
     auto refresh() -> void override {
-        const auto str = build_string(int(pointer.x), ",", int(pointer.y));
-
         gawl::clear_screen({0, 0, 0, 1});
         gawl::draw_rect(*window, {{pointer.x - 10 - scroll[1], pointer.y - 10 - scroll[0]}, {pointer.x + 10 + scroll[1], pointer.y + 10 + scroll[0]}}, {click[0] ? 0.0 : 1.0, click[1] ? 0.0 : 1.0, click[2] ? 0.0 : 1.0, 1});
-        font.draw_fit_rect(*window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, str.data());
+        font.draw_fit_rect(*window, {pointer, {pointer.x + 100, pointer.y + 30}}, {1, 1, 1, 1}, std::format("{:.4},{:.4}", pointer.x, pointer.y));
     }
 
     auto close() -> void override {
@@ -37,7 +34,7 @@ class Callbacks : public gawl::WindowNoTouchCallbacks {
     }
 
     auto on_pointer(const gawl::Point point) -> coop::Async<bool> override {
-        print("point ", point.x, " ", point.y);
+        std::println("point {:.4} {:.4}", point.x, point.y);
         pointer = point;
         window->refresh();
         co_return true;
