@@ -97,8 +97,8 @@ auto WaylandWindow::wl_get_surface() -> wl_surface* {
 }
 
 auto WaylandWindow::wl_on_keycode_enter(const towl::Array<uint32_t>& keys) -> void {
-    for(auto i = size_t(0); i < keys.size; i += 1) {
-        pending_callbacks.emplace_back(callbacks->on_keycode(keys.data[i], gawl::ButtonState::Enter));
+    for(const auto key : std::span{keys.data, keys.size}) {
+        pending_callbacks.emplace_back(callbacks->on_keycode(key, gawl::ButtonState::Enter));
     }
 }
 

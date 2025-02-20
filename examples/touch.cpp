@@ -23,7 +23,7 @@ class Callbacks : public gawl::WindowCallbacks {
         const auto [screen_w, screen_h] = window->get_window_size();
 
         gawl::clear_screen({0, 0, 0, 1});
-        for(auto i = 0u; i < touchs.size(); i += 1) {
+        for(auto i = 0uz; i < touchs.size(); i += 1) {
             const auto& t = touchs[i];
             if(t.state == 0) {
                 continue;

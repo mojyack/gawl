@@ -10,7 +10,7 @@ auto generic_draw(Screen& screen, const std::span<const Point> vertices, const C
     auto&       gl     = global->polygon_shader;
     const auto& s      = screen.get_viewport();
     const auto  scale  = screen.get_scale();
-    for(auto i = size_t(0); i < vertices.size(); i += 1) {
+    for(auto i = 0uz; i < vertices.size(); i += 1) {
         auto x            = vertices[i].x * scale;
         auto y            = vertices[i].y * scale;
         buffer[i * 2 + 0] = ((x - s.base[0]) * 2 - s.size[0]) / static_cast<int>(s.size[0]);
@@ -52,7 +52,7 @@ auto triangulate_circle_angle(const Point& point, const double radius, const std
     const auto n = size_t((1 + radius * 2) * angle.second);
     auto       r = std::vector<Point>(n + 1);
     r[0]         = point;
-    for(auto i = size_t(0); i < n; i += 1) {
+    for(auto i = 0uz; i < n; i += 1) {
         const auto a = (angle.first + angle.second * i / (n - 1)) * 2 * std::numbers::pi;
         r[i + 1]     = {point.x + radius * std::cos(a), point.y + radius * std::sin(a)};
     }

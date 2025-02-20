@@ -15,7 +15,7 @@ class Callbacks : public gawl::WindowCallbacks {
   public:
     auto refresh() -> void override {
         gawl::clear_screen({0, 0, 0, 1});
-        for(auto i = 0u; i < graphics.size(); i += 1) {
+        for(auto i = 0uz; i < graphics.size(); i += 1) {
             if(!graphics[i]) {
                 break;
             }
@@ -43,10 +43,10 @@ class Callbacks : public gawl::WindowCallbacks {
             return graphic;
         };
 
-        for(auto i = 0u; i < graphics.size(); i += 1) {
+        for(auto& graphic : graphics) {
             co_await coop::sleep(std::chrono::seconds(1));
             co_unwrap_v_mut(result, co_await coop::run_blocking(loader, "examples/image.png"));
-            graphics[i] = std::move(result);
+            graphic = std::move(result);
             window->refresh();
         }
     }

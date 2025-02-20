@@ -66,7 +66,7 @@ CharacterCache::~CharacterCache() {
 auto convert_utf8_to_unicode32(const std::string_view utf8) -> std::u32string {
     auto uni32 = std::u32string();
 
-    for(auto i = size_t(0); i < utf8.size(); i += 1) {
+    for(auto i = 0uz; i < utf8.size(); i += 1) {
         auto c = (uint32_t)utf8[i];
 
         if((0x80 & c) == 0) {
@@ -146,7 +146,7 @@ auto TextRender::create_wrapped_text(const MetaScreen& screen, const double widt
     const auto len   = str.size();
 
     auto line = &lines.back();
-    for(auto i = size_t(0); i < len; i += 1) {
+    for(auto i = 0uz; i < len; i += 1) {
         auto chara = str[i];
         switch(chara) {
         case U'\n':
@@ -221,7 +221,7 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
         set_char_color(color);
     }
 
-    for(auto i = size_t(0); i < text.size(); i += 1) {
+    for(auto i = 0uz; i < text.size(); i += 1) {
         auto& chara = get_chara_graphic(size * scale, text[i]);
 
         const auto x_a = pen.x + chara.left / scale;

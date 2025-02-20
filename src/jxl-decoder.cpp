@@ -24,7 +24,7 @@ class ParallelRunner {
         auto value_index = std::atomic_uint32_t(start_range);
         auto workers     = std::vector<std::thread>(self.threads);
 
-        for(auto w = size_t(0); w < workers.size(); w += 1) {
+        for(auto w = 0uz; w < workers.size(); w += 1) {
             workers[w] = std::thread([&value_index, jpegxl_opaque, func, end_range, w]() {
                 loop:
                     const auto value = value_index.fetch_add(1);
