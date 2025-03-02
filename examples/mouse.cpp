@@ -55,6 +55,7 @@ class Callbacks : public gawl::WindowNoTouchCallbacks {
         if(s < 0.0) {
             s = 0;
         }
+        co_ensure_v(window->refresh());
         co_return true;
     }
 };
