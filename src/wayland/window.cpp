@@ -1,4 +1,5 @@
 #include <coop/single-event.hpp>
+#include <coop/task-handle.hpp>
 #include <coop/timer.hpp>
 
 #include "../macros/assert.hpp"
@@ -115,15 +116,15 @@ auto WaylandWindow::wl_on_keycode_input(const uint32_t keycode, const uint32_t s
     if(!wl->repeat_config || key_state != ButtonState::Press) {
         return;
     }
-    runner->push_task(std::array{&key_repeater},
-                      [](WaylandWindow& self, uint32_t keycode) -> coop::Async<void> {
-                          co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->delay_in_milisec));
-                          while(true) {
-                              self.pending_callbacks.emplace_back(self.callbacks->on_keycode(keycode, ButtonState::Repeat));
-                              self.application_event->notify();
-                              co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->interval));
-                          }
-                      }(*this, keycode));
+    runner->push_task([](WaylandWindow& self, uint32_t keycode) -> coop::Async<void> {
+        co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->delay_in_milisec));
+        while(true) {
+            self.pending_callbacks.emplace_back(self.callbacks->on_keycode(keycode, ButtonState::Repeat));
+            self.application_event->notify();
+            co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->interval));
+        }
+    }(*this, keycode),
+                      &key_repeater);
 }
 
 auto WaylandWindow::wl_on_pointer_motion(const double x, const double y) -> void {

@@ -23,7 +23,8 @@ auto main() -> int {
     auto runner = coop::Runner();
     auto app    = gawl::WaylandApplication();
     auto cbs    = std::shared_ptr<Callbacks>(new Callbacks());
-    runner.push_task(app.run(), app.open_window({.manual_refresh = true}, std::move(cbs)));
+    runner.push_task(app.run());
+    runner.push_task(app.open_window({.manual_refresh = true}, std::move(cbs)));
     runner.run();
     return 0;
 }

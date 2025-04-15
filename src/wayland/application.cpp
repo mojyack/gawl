@@ -15,17 +15,18 @@ auto WaylandApplication::create_window(const WindowCreateHint hint, std::shared_
 }
 
 auto WaylandApplication::run() -> coop::Async<void> {
-    auto wayland_thread = coop::TaskHandle();
-    co_await coop::run_args([](const int fd, coop::SingleEvent& event, impl::WaylandClientObjects* wl) -> coop::Async<void> {
-        while(true) {
+    auto& runner       = *(co_await coop::reveal_runner());
+    auto  wayland_task = coop::TaskHandle();
+    runner.push_task([](const int fd, coop::SingleEvent& event, impl::WaylandClientObjects* wl) -> coop::Async<void> {
+        loop:
             wl->display.flush();
             const auto result = co_await coop::wait_for_file(fd, true, false);
             ASSERT(result.read && !result.error);
             wl->display.dispatch();
             event.notify();
-        }
-    }(wl->display.get_fd(), application_event, wl.get()))
-        .detach({&wayland_thread});
+            goto loop;
+    }(wl->display.get_fd(), application_event, wl.get()),
+                     &wayland_task);
 
     running = true;
 
@@ -47,7 +48,7 @@ auto WaylandApplication::run() -> coop::Async<void> {
         }
     }
 
-    wayland_thread.cancel();
+    wayland_task.cancel();
     windows.clear();
 }
 
