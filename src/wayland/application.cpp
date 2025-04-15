@@ -2,6 +2,7 @@
 #include <coop/parallel.hpp>
 #include <coop/promise.hpp>
 #include <coop/single-event.hpp>
+#include <coop/task-handle.hpp>
 
 #include "../global.hpp"
 #include "../macros/assert.hpp"
