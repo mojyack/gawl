@@ -1,6 +1,7 @@
 #include <coop/io.hpp>
 #include <coop/parallel.hpp>
 #include <coop/promise.hpp>
+#include <coop/single-event.hpp>
 
 #include "../global.hpp"
 #include "../macros/assert.hpp"
@@ -10,14 +11,14 @@ namespace gawl {
 auto WaylandApplication::create_window(const WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> {
     auto window = new WaylandWindow();
     windows.emplace_back(window);
-    ASSERT(co_await window->init(hint, std::move(callbacks), wl.get(), &egl, application_event));
+    ASSERT(co_await window->init(hint, std::move(callbacks), wl.get(), &egl));
     co_return window;
 }
 
 auto WaylandApplication::run() -> coop::Async<void> {
-    auto& runner       = *(co_await coop::reveal_runner());
-    auto  wayland_task = coop::TaskHandle();
-    runner.push_task([](const int fd, coop::SingleEvent& event, impl::WaylandClientObjects* wl) -> coop::Async<void> {
+    auto event        = coop::SingleEvent();
+    auto wayland_task = coop::TaskHandle();
+    auto wayland_func = [this, &event, fd = wl->display.get_fd()]() -> coop::Async<void> {
         loop:
             wl->display.flush();
             const auto result = co_await coop::wait_for_file(fd, true, false);
@@ -25,13 +26,13 @@ auto WaylandApplication::run() -> coop::Async<void> {
             wl->display.dispatch();
             event.notify();
             goto loop;
-    }(wl->display.get_fd(), application_event, wl.get()),
-                     &wayland_task);
+    };
+    (co_await coop::reveal_runner())->push_task(wayland_func(), &wayland_task);
 
     running = true;
 
     while(running) {
-        co_await application_event;
+        co_await event;
 
         for(auto& window : windows) {
             auto& wl_window = *std::bit_cast<WaylandWindow*>(window.get());

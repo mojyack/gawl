@@ -1,6 +1,5 @@
 #pragma once
 #include <coop/generator.hpp>
-#include <coop/single-event.hpp>
 
 #include "../application.hpp"
 #include "../window-creat-hint.hpp"
@@ -11,7 +10,6 @@ class WaylandApplication : public Application {
   private:
     std::unique_ptr<impl::WaylandClientObjects> wl;
     impl::EGLObject                             egl;
-    coop::SingleEvent                           application_event;
     bool                                        running = false;
 
     auto create_window(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> override;

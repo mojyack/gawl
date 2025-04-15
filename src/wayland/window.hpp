@@ -30,7 +30,6 @@ class WaylandWindow : public Window {
   private:
     impl::WaylandClientObjects*             wl;
     impl::EGLObject*                        egl;
-    coop::SingleEvent*                      application_event;
     std::unique_ptr<WaylandWindowCallbacks> wl_callbacks;
 
     EGLSurface        egl_surface = nullptr;
@@ -70,7 +69,7 @@ class WaylandWindow : public Window {
     auto refresh() -> bool override;
     auto fork_context() -> EGLSubObject;
 
-    auto init(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl, coop::SingleEvent& application_event) -> coop::Async<bool>;
+    auto init(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks, impl::WaylandClientObjects* wl, impl::EGLObject* egl) -> coop::Async<bool>;
 
     ~WaylandWindow();
 };

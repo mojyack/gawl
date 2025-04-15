@@ -118,10 +118,14 @@ auto WaylandWindow::wl_on_keycode_input(const uint32_t keycode, const uint32_t s
     }
     runner->push_task([](WaylandWindow& self, uint32_t keycode) -> coop::Async<void> {
         co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->delay_in_milisec));
+        const auto interval = std::chrono::milliseconds(self.wl->repeat_config->interval);
         while(true) {
-            self.pending_callbacks.emplace_back(self.callbacks->on_keycode(keycode, ButtonState::Repeat));
-            self.application_event->notify();
-            co_await coop::sleep(std::chrono::milliseconds(self.wl->repeat_config->interval));
+            const auto begin = std::chrono::system_clock::now();
+            co_await self.callbacks->on_keycode(keycode, ButtonState::Repeat);
+            const auto elapsed = std::chrono::system_clock::now() - begin;
+            if(elapsed < interval) {
+                co_await coop::sleep(interval - elapsed);
+            }
         }
     }(*this, keycode),
                       &key_repeater);
@@ -190,16 +194,14 @@ auto WaylandWindow::init(
     const WindowCreateHint            hint,
     std::shared_ptr<WindowCallbacks>  callbacks,
     impl::WaylandClientObjects* const wl,
-    impl::EGLObject* const            egl,
-    coop::SingleEvent&                application_event) -> coop::Async<bool> {
+    impl::EGLObject* const            egl) -> coop::Async<bool> {
     constexpr auto error_value = false;
 
     runner = co_await coop::reveal_runner();
 
     set_callbacks(callbacks);
-    this->wl                = wl;
-    this->egl               = egl;
-    this->application_event = &application_event;
+    this->wl  = wl;
+    this->egl = egl;
     wl_callbacks.reset(new WaylandWindowCallbacks(this));
     wayland_surface = get_primary_interface<towl::Compositor>(wl->compositor_binder)->create_surface();
     co_ensure_v(wayland_surface.init(wl_callbacks.get()));
