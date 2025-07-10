@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "rect.hpp"
 
 namespace gawl {

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <memory>
 
 #include "binder.hpp"
 #include "screen.hpp"
