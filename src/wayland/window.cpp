@@ -19,14 +19,19 @@ auto WaylandWindowCallbacks::on_wl_surface_frame() -> void {
     }
 }
 
-auto WaylandWindowCallbacks::on_xdg_toplevel_configure(const int width, const int height) -> void {
+auto WaylandWindowCallbacks::on_xdg_surface_configure() -> void {
     {
         const auto& buffer_size = window->get_buffer_size();
-        if(buffer_size.size[0] == static_cast<size_t>(width) * buffer_size.scale && buffer_size.size[1] == static_cast<size_t>(height) * buffer_size.scale) {
+        if(buffer_size.size[0] == static_cast<size_t>(pending_width) * buffer_size.scale && buffer_size.size[1] == static_cast<size_t>(pending_height) * buffer_size.scale) {
             return;
         }
     }
-    window->resize_buffer(width, height, -1);
+    window->resize_buffer(pending_width, pending_height, -1);
+}
+
+auto WaylandWindowCallbacks::on_xdg_toplevel_configure(const int width, const int height) -> void {
+    pending_width  = width;
+    pending_height = height;
 }
 
 auto WaylandWindowCallbacks::on_xdg_toplevel_close() -> void {
@@ -177,7 +182,6 @@ auto WaylandWindow::refresh() -> bool {
         obsolete_egl_window_size = false;
         const auto& buffer_size  = this->get_buffer_size();
         egl_window.resize(buffer_size.size[0], buffer_size.size[1], 0, 0);
-        swap_buffer(); // ensure buffer sizes are changed to prevent "Buffer size is not divisible by scale" error
         wayland_surface.set_buffer_scale(buffer_size.scale);
     }
     callbacks->refresh();
@@ -206,7 +210,7 @@ auto WaylandWindow::init(
     wayland_surface = get_primary_interface<towl::Compositor>(wl->compositor_binder)->create_surface();
     co_ensure_v(wayland_surface.init(wl_callbacks.get()));
     xdg_surface = get_primary_interface<towl::XDGWMBase>(wl->xdg_wm_base_binder)->create_xdg_surface(wayland_surface.native());
-    co_ensure_v(xdg_surface.init());
+    co_ensure_v(xdg_surface.init(wl_callbacks.get()));
     xdg_toplevel = xdg_surface.create_xdg_toplevel();
     co_ensure_v(xdg_toplevel.init(wl_callbacks.get()));
     egl_window = towl::EGLWindow(wayland_surface.native(), hint.width, hint.height);

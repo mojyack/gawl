@@ -9,12 +9,18 @@
 namespace gawl {
 class WaylandWindow;
 class WaylandWindowCallbacks : public towl::SurfaceCallbacks,
+                               public towl::XDGSurfaceCallbacks,
                                public towl::XDGToplevelCallbacks {
   private:
     WaylandWindow* window;
+    int            pending_width  = 0;
+    int            pending_height = 0;
+
     // SurfaceCallbacks
     auto on_wl_surface_preferred_buffer_scale(int32_t factor) -> void override;
     auto on_wl_surface_frame() -> void override;
+    // XDGSurfaceCallbacks
+    auto on_xdg_surface_configure() -> void override;
     // XDGToplevelCallbacks
     auto on_xdg_toplevel_configure(const int width, const int height) -> void override;
     auto on_xdg_toplevel_close() -> void override;
