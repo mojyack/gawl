@@ -20,7 +20,7 @@ class Callbacks : public gawl::WindowCallbacks {
 
   public:
     auto refresh() -> void override {
-        const auto [screen_w, screen_h] = window->get_window_size();
+        const auto [screen_w, screen_h] = window->window_size;
 
         gawl::clear_screen({0, 0, 0, 1});
         for(auto i = 0uz; i < touchs.size(); i += 1) {
