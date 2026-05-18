@@ -20,7 +20,7 @@ class WaylandApplication : public Application {
     auto quit() -> void override;
     auto is_running() const -> bool;
 
-    WaylandApplication();
+    WaylandApplication(std::vector<towl::impl::InterfaceBinder*> binders = {});
     ~WaylandApplication();
 };
 } // namespace gawl

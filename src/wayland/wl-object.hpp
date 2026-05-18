@@ -23,6 +23,6 @@ struct WaylandClientObjects {
     towl::SeatBinder               seat_binder;
     std::optional<KeyRepeatConfig> repeat_config;
 
-    static auto create(Windows& windows) -> std::unique_ptr<WaylandClientObjects>;
+    static auto create(Windows& windows, std::vector<towl::impl::InterfaceBinder*> binders) -> std::unique_ptr<WaylandClientObjects>;
 };
 } // namespace gawl::impl

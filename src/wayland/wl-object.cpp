@@ -126,7 +126,7 @@ auto delete_wayland_callbacks(WaylandCallbacks* callbacks) -> void {
     delete callbacks;
 }
 
-auto WaylandClientObjects::create(Windows& windows) -> std::unique_ptr<WaylandClientObjects> {
+auto WaylandClientObjects::create(Windows& windows, std::vector<towl::impl::InterfaceBinder*> binders) -> std::unique_ptr<WaylandClientObjects> {
     auto       display      = towl::Display();
     const auto registry_ptr = display.get_registry();
     const auto callbacks    = new WaylandCallbacks(windows);
@@ -141,7 +141,10 @@ auto WaylandClientObjects::create(Windows& windows) -> std::unique_ptr<WaylandCl
         .repeat_config      = {},
     };
 
-    wl->registry.set_binders({&wl->compositor_binder, &wl->xdg_wm_base_binder, &wl->seat_binder});
+    binders.push_back(&wl->compositor_binder);
+    binders.push_back(&wl->xdg_wm_base_binder);
+    binders.push_back(&wl->seat_binder);
+    wl->registry.set_binders(std::move(binders));
     callbacks->set_keyboard_repeat_config(&wl->repeat_config);
 
     return std::unique_ptr<WaylandClientObjects>(wl);

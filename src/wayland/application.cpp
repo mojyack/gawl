@@ -62,8 +62,8 @@ auto WaylandApplication::is_running() const -> bool {
     return running;
 }
 
-WaylandApplication::WaylandApplication()
-    : wl(impl::WaylandClientObjects::create(windows)),
+WaylandApplication::WaylandApplication(std::vector<towl::impl::InterfaceBinder*> binders)
+    : wl(impl::WaylandClientObjects::create(windows, std::move(binders))),
       egl(wl->display) {
     // bind wayland interfaces
     wl->display.roundtrip();
