@@ -58,10 +58,6 @@ auto WaylandApplication::quit() -> void {
     running = false;
 }
 
-auto WaylandApplication::is_running() const -> bool {
-    return running;
-}
-
 WaylandApplication::WaylandApplication(std::vector<towl::impl::InterfaceBinder*> binders)
     : wl(impl::WaylandClientObjects::create(windows, std::move(binders))),
       egl(wl->display) {

@@ -7,18 +7,19 @@
 
 namespace gawl {
 class WaylandApplication : public Application {
-  private:
+  public:
+    // read-only from user
     std::unique_ptr<impl::WaylandClientObjects> wl;
     impl::EGLObject                             egl;
     bool                                        running = false;
 
+    // internal
     auto create_window(WindowCreateHint hint, std::shared_ptr<WindowCallbacks> callbacks) -> coop::Async<Window*> override;
     auto wayland_main() -> coop::Async<void>;
 
-  public:
+    // public
     auto run() -> coop::Async<void>;
     auto quit() -> void override;
-    auto is_running() const -> bool;
 
     WaylandApplication(std::vector<towl::impl::InterfaceBinder*> binders = {});
     ~WaylandApplication();
