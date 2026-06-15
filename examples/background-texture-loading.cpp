@@ -33,10 +33,14 @@ class Callbacks : public gawl::WindowCallbacks {
     }
 
     auto worker_main() -> coop::Async<void> {
-        const auto loader = [this](const char* const path) -> std::optional<gawl::Graphic> {
+        auto context = gawl::EGLSubObject();
+        auto thread  = coop::Thread([this, &context] {
+            context = std::bit_cast<gawl::WaylandWindow*>(window)->fork_context();
+        });
+
+        const auto loader = [&context](const char* const path) -> std::optional<gawl::Graphic> {
             constexpr auto error_value = std::nullopt;
 
-            auto context = std::bit_cast<gawl::WaylandWindow*>(window)->fork_context();
             unwrap_v(pixbuf, gawl::PixelBuffer::from_file(path));
             auto graphic = gawl::Graphic(pixbuf);
             context.wait();
@@ -45,7 +49,7 @@ class Callbacks : public gawl::WindowCallbacks {
 
         for(auto& graphic : graphics) {
             co_await coop::sleep(std::chrono::seconds(1));
-            co_unwrap_v_mut(result, co_await coop::run_blocking(loader, "examples/image.png"));
+            co_unwrap_v_mut(result, co_await thread.run(std::bind(loader, "examples/image.png")));
             graphic = std::move(result);
             window->refresh();
         }
