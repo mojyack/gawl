@@ -10,15 +10,18 @@
 #include "towl/display.hpp"
 
 namespace gawl {
-class EGLSubObject {
-  private:
-    const EGLDisplay display;
-    const EGLContext context;
+struct EGLSubObject {
+    EGLDisplay display;
+    EGLContext context = nullptr;
 
-  public:
     auto flush() -> void;
     auto wait() -> void;
+    auto destroy() -> void;
 
+    auto operator=(EGLSubObject&& o) -> EGLSubObject&;
+
+    EGLSubObject() = default;
+    EGLSubObject(EGLSubObject&& o);
     EGLSubObject(const EGLDisplay display, const EGLContext context);
     ~EGLSubObject();
 };

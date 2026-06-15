@@ -10,13 +10,33 @@ auto EGLSubObject::wait() -> void {
     glFinish();
 }
 
-EGLSubObject::EGLSubObject(const EGLDisplay display, const EGLContext context) : display(display), context(context) {
+auto EGLSubObject::destroy() -> void {
+    if(context != nullptr) {
+        ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
+        ASSERT(eglDestroyContext(display, context) != EGL_FALSE);
+        context = nullptr;
+    }
+}
+
+auto EGLSubObject::operator=(EGLSubObject&& o) -> EGLSubObject& {
+    destroy();
+    this->display = o.display;
+    this->context = std::exchange(o.context, nullptr);
+    return *this;
+}
+
+EGLSubObject::EGLSubObject(EGLSubObject&& o) {
+    *this = std::move(o);
+}
+
+EGLSubObject::EGLSubObject(const EGLDisplay display, const EGLContext context)
+    : display(display),
+      context(context) {
     ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) != EGL_FALSE);
 }
 
 EGLSubObject::~EGLSubObject() {
-    ASSERT(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_FALSE);
-    ASSERT(eglDestroyContext(display, context) != EGL_FALSE);
+    destroy();
 }
 
 namespace impl {
