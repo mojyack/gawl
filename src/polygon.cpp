@@ -1,6 +1,9 @@
-#include "polygon.hpp"
+#include <cmath>
+#include <numbers>
+
 #include "global.hpp"
 #include "polygon-shader.hpp"
+#include "polygon.hpp"
 
 namespace gawl::impl {
 namespace {

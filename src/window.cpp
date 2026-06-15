@@ -46,7 +46,7 @@ auto Window::get_viewport() const -> const Viewport& {
 }
 
 auto Window::set_viewport(const gawl::Rectangle& region) -> void {
-    viewport.set(Rectangle(region).magnify(draw_scale), buffer_size.size);
+    viewport.set(region * draw_scale, buffer_size.size);
 }
 
 auto Window::unset_viewport() -> void {

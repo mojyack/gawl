@@ -1,11 +1,9 @@
+#include <cmath>
+#include <numbers>
+
 #include "point.hpp"
 
 namespace gawl {
-auto Point::magnify(const double scale) -> void {
-    x *= scale;
-    y *= scale;
-}
-
 auto Point::rotate(const Point& origin, const double angle) -> void {
     const auto a  = angle * 2 * std::numbers::pi;
     const auto s  = std::sin(a);
@@ -16,9 +14,30 @@ auto Point::rotate(const Point& origin, const double angle) -> void {
     y             = origin.y + rx * s + ry * c;
 }
 
+auto Point::operator+(const Point& o) const -> Point {
+    return Point{x + o.x, y + o.y};
+}
+
 auto Point::operator+=(const Point& o) -> Point& {
-    x += o.x;
-    y += o.y;
+    *this = *this + o;
+    return *this;
+}
+
+auto Point::operator-(const Point& o) const -> Point {
+    return Point{x - o.x, y - o.y};
+}
+
+auto Point::operator-=(const Point& o) -> Point& {
+    *this = *this - o;
+    return *this;
+}
+
+auto Point::operator*(const double n) const -> Point {
+    return Point{x * n, y * n};
+}
+
+auto Point::operator*=(const double n) -> Point& {
+    *this = *this * n;
     return *this;
 }
 

@@ -249,8 +249,8 @@ auto TextRender::draw(Screen& screen, const Point& point, const Color& color, co
 
 auto TextRender::draw_fit_rect(Screen& screen, const Rectangle& rect, const Color& color, const std::string_view text, const DrawFitRectParams& params) -> Rectangle {
     const auto scale     = screen.get_scale();
-    const auto r         = Rectangle(rect).magnify(scale);
-    const auto font_area = get_rect(screen, text, params.size).magnify(scale);
+    const auto r         = rect * scale;
+    const auto font_area = get_rect(screen, text, params.size) * scale;
     const auto pad       = std::array{r.width() - font_area.width(), r.height() - font_area.height()};
 
     auto x = params.align_x == Align::Left ? r.a.x - font_area.a.x : params.align_x == Align::Center ? r.a.x + pad[0] / 2
@@ -287,7 +287,7 @@ auto TextRender::draw_wrapped(Screen& screen, const Rectangle& rect, const doubl
     const auto y_offset     = params.align_y == Align::Left ? 0.0 : params.align_y == Align::Right ? rect_height - total_height
                                                                                                    : (rect_height - total_height) / 2.0;
 
-    const auto visible_rect = Viewport(screen.get_viewport()).to_rectangle().magnify(1.0 / screen.get_scale()) &= rect;
+    const auto visible_rect = Viewport(screen.get_viewport()).to_rectangle() * (1.0 / screen.get_scale()) &= rect;
     const auto y_pos_begin  = rect.a.y + y_offset;
     const auto index_begin  = int(std::max(0.0, -(y_pos_begin - visible_rect.a.y) / line_height));
     const auto index_end    = int(std::min(double(lines.size()), index_begin + (visible_rect.height() + line_height - 1) / line_height));

@@ -43,7 +43,7 @@ auto clear_screen(const Color& color) -> void {
 }
 
 auto draw_rect(Screen& screen, const Rectangle& rect, const Color& color) -> void {
-    auto r = Rectangle(rect).magnify(screen.get_scale());
+    auto r = rect * screen.get_scale();
     gawl::convert_screen_to_viewport(screen, r);
     const auto fbbinder = screen.prepare();
     glColor4f(color[0], color[1], color[2], color[3]);

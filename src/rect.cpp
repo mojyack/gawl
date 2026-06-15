@@ -3,12 +3,6 @@
 #include "rect.hpp"
 
 namespace gawl {
-auto Rectangle::magnify(const double scale) -> Rectangle& {
-    a.magnify(scale);
-    b.magnify(scale);
-    return *this;
-}
-
 auto Rectangle::expand(const double w, const double h) -> Rectangle& {
     a.x -= w;
     a.y -= h;
@@ -29,9 +23,30 @@ auto Rectangle::height() const -> double {
     return b.y - a.y;
 }
 
+auto Rectangle::operator+(const Point& o) const -> Rectangle {
+    return {a + o, b + o};
+}
+
 auto Rectangle::operator+=(const Point& o) -> Rectangle& {
-    a += o;
-    b += o;
+    *this = *this + o;
+    return *this;
+}
+
+auto Rectangle::operator-(const Point& o) const -> Rectangle {
+    return {a - o, b - o};
+}
+
+auto Rectangle::operator-=(const Point& o) -> Rectangle& {
+    *this = *this - o;
+    return *this;
+}
+
+auto Rectangle::operator*(double n) const -> Rectangle {
+    return Rectangle{a * n, b * n};
+}
+
+auto Rectangle::operator*=(double n) -> Rectangle {
+    *this = *this * n;
     return *this;
 }
 

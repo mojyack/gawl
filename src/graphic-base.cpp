@@ -39,7 +39,7 @@ auto GraphicBase::draw(Screen& screen, const Point& point) const -> void {
 }
 
 auto GraphicBase::draw_rect(Screen& screen, const Rectangle& rect) const -> void {
-    shader->move_vertices(screen, Rectangle(rect).magnify(screen.get_scale()), invert_top_bottom);
+    shader->move_vertices(screen, Rectangle(rect) * screen.get_scale(), invert_top_bottom);
     do_draw(screen);
 }
 
@@ -51,7 +51,7 @@ auto GraphicBase::draw_transformed(Screen& screen, const std::array<Point, 4>& v
     auto       v = vertices;
     const auto s = screen.get_scale();
     for(auto& p : v) {
-        p.magnify(s);
+        p *= s;
     }
     shader->move_vertices(screen, v, invert_top_bottom);
     do_draw(screen);
