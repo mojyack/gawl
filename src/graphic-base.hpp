@@ -15,11 +15,11 @@ class GraphicBase {
     int  height;
     bool invert_top_bottom = false;
 
-    auto get_texture() const -> GLuint;
     auto bind_texture() const -> TextureBinder;
     auto release_texture() -> void;
 
   public:
+    auto get_texture() const -> GLuint;
     auto get_width(const MetaScreen& screen) const -> int;
     auto get_height(const MetaScreen& screen) const -> int;
     auto draw(Screen& screen, const Point& point) const -> void;

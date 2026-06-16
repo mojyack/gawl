@@ -12,10 +12,6 @@ auto GraphicBase::do_draw(Screen& screen) const -> void {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-auto GraphicBase::get_texture() const -> GLuint {
-    return texture;
-}
-
 auto GraphicBase::bind_texture() const -> TextureBinder {
     return texture;
 }
@@ -24,6 +20,10 @@ auto GraphicBase::release_texture() -> void {
     if(texture != 0) {
         glDeleteTextures(1, &texture);
     }
+}
+
+auto GraphicBase::get_texture() const -> GLuint {
+    return texture;
 }
 
 auto GraphicBase::get_width(const MetaScreen& screen) const -> int {
