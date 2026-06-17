@@ -1,3 +1,3 @@
-cutil https://github.com/mojyack/cutil.git d3c64048ac2635b231d6c733a5a15dae4e28b22d
+cutil https://github.com/mojyack/cutil.git 78136c2386d4e4d33eb77354d418512ce43d28fd
 cutil-macros https://github.com/mojyack/cutil-macros.git e3d95d06be45548f4bd5a195a6c9a54a7b24f072
-towl https://github.com/mojyack/towl.git ad72d4db89824478961d29ec3716dc55a2da9065
+towl https://github.com/mojyack/towl.git 1eec344c4d865383a3f265237f4efee06d19cdfb
