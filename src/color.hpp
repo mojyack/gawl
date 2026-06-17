@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstdint>
 
 namespace gawl {
 using Color = std::array<double, 4>;
